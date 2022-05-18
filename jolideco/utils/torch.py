@@ -1,6 +1,6 @@
 import torch
 
-__all__ = ["convolve_fft_torch", "view_as_overlapping_patches_torch"]
+__all__ = ["convolve_fft_torch"]
 
 
 def _centered(arr, newshape):
@@ -11,30 +11,6 @@ def _centered(arr, newshape):
     endind = startind + newshape
     myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
     return arr[tuple(myslice)]
-
-
-def view_as_overlapping_patches_torch(image, shape):
-    """View tensor as overlapping rectangular patches
-
-    Parameters
-    ----------
-    image : `~torch.Tensor`
-        Image tensor
-    shape : tuple
-        Shape of the patches.
-
-    Returns
-    -------
-    patches : `~torch.Tensor`
-        Tensor of overlapping patches of shape
-        (n_patches, patch_shape_flat)
-
-    """
-    step = shape[0] // 2
-    patches = image.unfold(2, shape[0], step)
-    patches = patches.unfold(3, shape[0], step)
-    ncols = shape[0] * shape[1]
-    return torch.reshape(patches, (-1, ncols))
 
 
 def convolve_fft_torch(image, kernel):
