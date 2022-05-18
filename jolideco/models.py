@@ -1,8 +1,9 @@
 import torch.nn as nn
+from .utils.torch import convolve_fft_torch
 
 
 class SimpleNPredModel(nn.Module):
-    """Simple npred net
+    """Simple npred model
 
     Parameters
     ----------

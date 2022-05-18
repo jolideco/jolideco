@@ -1,5 +1,6 @@
 import torch
 
+
 class UniformPrior:
     """Uniform prior"""
     def __init__(self):
