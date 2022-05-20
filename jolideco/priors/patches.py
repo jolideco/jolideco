@@ -1,5 +1,10 @@
 import torch
 
+__all__ = [
+    "view_as_overlapping_patches_torch",
+    "GMMPatchPrior"
+]
+
 
 def view_as_overlapping_patches_torch(image, shape):
     """View tensor as overlapping rectangular patches

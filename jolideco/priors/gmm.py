@@ -6,6 +6,8 @@ from scipy import linalg
 from astropy.utils import lazyproperty
 from astropy.table import Table
 
+__all__ = ["GaussianMixtureModel"]
+
 
 class GaussianMixtureModel:
     """Gaussian mixture model
