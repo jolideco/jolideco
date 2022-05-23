@@ -47,6 +47,8 @@ class MAPDeconvolver:
         Learning rate
     upsampling_factor : int
         Internal spatial upsampling factor for the reconstructed flux.
+    use_log_flux : bool
+        Use log scaling for flux
     """
 
     def __init__(
@@ -56,6 +58,7 @@ class MAPDeconvolver:
         loss_function_prior=None,
         learning_rate=0.1,
         upsampling_factor=None,
+        use_log_flux=True
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -66,6 +69,7 @@ class MAPDeconvolver:
         self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
+        self.use_log_flux = use_log_flux
         self.log = logging.getLogger(__name__)
 
     def to_dict(self):
@@ -125,7 +129,9 @@ class MAPDeconvolver:
         )
 
         npred_model = SimpleNPredModel(
-            flux_init=flux_init, upsampling_factor=self.upsampling_factor
+            flux_init=flux_init,
+            upsampling_factor=self.upsampling_factor,
+            use_log_flux=self.use_log_flux,
         )
 
         optimizer = torch.optim.Adam(
