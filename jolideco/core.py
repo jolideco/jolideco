@@ -30,12 +30,20 @@ def dataset_to_pytorch(dataset, scale_factor=None):
 
 
 class MAPDeconvolver:
-    """Maximum A-Posteriori Deconvolver
+    """Maximum A-Posteriori deconvolver
 
     Parameters
     ----------
     n_epochs : int
         Number of epochs to train
+    beta : float
+        Scale factor for the prior.
+    loss_function_prior : `~jolideco.priors.Prior`
+        Loss function for the prior (optional).
+    learning_rate : float
+        Learning rate
+    upsampling_factor : int
+        Internal spatial upsampling factor for the reconstructed flux.
     """
 
     def __init__(
@@ -54,7 +62,20 @@ class MAPDeconvolver:
         self.log = logging.getLogger(__name__)
 
     def run(self, flux_init, datasets):
-        """"""
+        """Run the MAP deconvolver
+
+        Parameters
+        ----------
+        flux_init : `~numpy.ndarray`
+            Initial flux estimate.
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+
+        Returns
+        -------
+        flux : `~numpy.ndarray`
+            Reconstructed flux.
+        """
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         datasets = [dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets]
