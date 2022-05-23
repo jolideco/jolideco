@@ -1,8 +1,10 @@
+from math import sqrt
+from astropy.utils import lazyproperty
 import torch
 
 __all__ = [
     "view_as_overlapping_patches_torch",
-    "GMMPatchPrior"
+    "GMMPatchPrior",
 ]
 
 
@@ -35,15 +37,32 @@ class GMMPatchPrior:
 
     Attributes
     ----------
-    gmm :
+    gmm : `GaussianMixtureModel`
+        Gaussian mixture model.
     """
     def __init__(self, gmm):
         self.gmm = gmm
 
+    @lazyproperty
+    def patch_shape(self):
+        """Patch shape (tuple)"""
+        shape_mean = self.gmm.shape
+        npix = int(sqrt(shape_mean[-1]))
+        return npix, npix
+
     def __call__(self, flux):
+        """Evaluate the prior
+
+        Parameters
+        ----------
+        flux : `~pytorch.Tensor`
+            Reconstructed flux
+        """
         # TODO: how to norm? per patch?
         normed = flux / flux.max()
-        patches = view_as_overlapping_patches_torch(normed, shape=(8, 8))
+        patches = view_as_overlapping_patches_torch(
+            image=normed, shape=self.patch_shape
+        )
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
         loglike = self.gmm.estimate_log_prob_torch(patches)

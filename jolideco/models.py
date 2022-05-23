@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from .utils.torch import convolve_fft_torch
 
@@ -12,7 +13,7 @@ class SimpleNPredModel(nn.Module):
     use_log_flux : bool
         Use log scaling for flux
     upsampling_factor : None
-        Upsampling factor for the flux
+        Spatial upsampling factor for the flux
 
     """
 
@@ -39,7 +40,7 @@ class SimpleNPredModel(nn.Module):
         else:
             return self._flux
 
-    def forward(self, psf, background, exposure):
+    def forward(self, psf, background, exposure, rmf=None):
         """Forward folding model evaluation.
 
         Parameters
@@ -50,11 +51,13 @@ class SimpleNPredModel(nn.Module):
             Background tensor
         exposure : `~torch.Tensor`
             Exposure tensor
+        rmf : `~torch.Tensor`
+            Energy redistribution matrix.
 
         Returns
         -------
         npred : `~torch.Tensor`
-            Predicetd number of counts
+            Predicted number of counts
         """
         npred = (self.flux + background) * exposure
         npred = convolve_fft_torch(npred, psf)
@@ -63,5 +66,8 @@ class SimpleNPredModel(nn.Module):
             npred = F.avg_pool2d(
                 npred, kernel_size=self.upsampling_factor, divisor_override=1
             )
+
+        if rmf:
+            npred = torch.matmul(npred, rmf)
 
         return npred

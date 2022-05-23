@@ -1,6 +1,6 @@
 from .gmm import *
 from .patches import *
-from .uniform import *
+from .core import *
 
 
 PRIOR_REGISTRY = {
