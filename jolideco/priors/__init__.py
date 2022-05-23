@@ -6,6 +6,6 @@ from .core import *
 PRIOR_REGISTRY = {
     "uniform": UniformPrior,
     "image": ImagePrior,
-    "gmmp-patches": GMMPatchPrior
+    "gmm-patches": GMMPatchPrior
 }
 

@@ -40,17 +40,17 @@ class SimpleNPredModel(nn.Module):
         else:
             return self._flux
 
-    def forward(self, psf, background, exposure, rmf=None):
+    def forward(self,background, exposure,  psf=None, rmf=None):
         """Forward folding model evaluation.
 
         Parameters
         ----------
-        psf : `~torch.Tensor`
-            Point spread function
         background : `~torch.Tensor`
             Background tensor
         exposure : `~torch.Tensor`
             Exposure tensor
+        psf : `~torch.Tensor`
+            Point spread function
         rmf : `~torch.Tensor`
             Energy redistribution matrix.
 
@@ -60,14 +60,16 @@ class SimpleNPredModel(nn.Module):
             Predicted number of counts
         """
         npred = (self.flux + background) * exposure
-        npred = convolve_fft_torch(npred, psf)
+
+        if psf is not None:
+            npred = convolve_fft_torch(npred, psf)
 
         if self.upsampling_factor:
             npred = F.avg_pool2d(
                 npred, kernel_size=self.upsampling_factor, divisor_override=1
             )
 
-        if rmf:
+        if rmf is not None:
             npred = torch.matmul(npred, rmf)
 
         return npred

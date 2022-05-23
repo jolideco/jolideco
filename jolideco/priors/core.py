@@ -2,6 +2,8 @@ import torch
 
 __all__ = [
     "UniformPrior",
+    "ImagePrior",
+    "LIRAPrior",
 ]
 
 

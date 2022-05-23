@@ -5,6 +5,9 @@ import torch.nn.functional as F
 import logging
 import matplotlib.pyplot as plt
 from astropy.visualization import simple_norm
+from astropy.table import Table
+from .models import SimpleNPredModel
+from .priors import UniformPrior, PRIOR_REGISTRY
 
 logging.basicConfig(level=logging.INFO)
 
@@ -56,10 +59,44 @@ class MAPDeconvolver:
     ):
         self.n_epochs = n_epochs
         self.beta = beta
+
+        if loss_function_prior is None:
+            loss_function_prior = UniformPrior()
+
         self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.log = logging.getLogger(__name__)
+
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = {}
+        data.update(self.__dict__)
+
+        for key, value in PRIOR_REGISTRY.items():
+            if isinstance(self.loss_function_prior, value):
+                data["loss_function_prior"] = key
+
+        data.pop("log")
+        return data
+
+    def __str__(self):
+        """String representation"""
+        cls_name = self.__class__.__name__
+        info = cls_name + "\n"
+        info += len(cls_name) * "-" + "\n\n"
+        data = self.to_dict()
+
+        for key, value in data.items():
+            info += f"\t{key:21s}: {value}\n"
+
+        return info.expandtabs(tabsize=4)
 
     def run(self, flux_init, datasets):
         """Run the MAP deconvolver
@@ -80,8 +117,12 @@ class MAPDeconvolver:
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         datasets = [dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets]
 
-        trace_loss = []
-        trace_validation_loss = []
+        names = ["total", "prior",]
+        names += [f"dataset-{idx}" for idx in range(len(datasets))]
+
+        trace_loss = Table(
+            names=names
+        )
 
         npred_model = SimpleNPredModel(
             flux_init=flux_init, upsampling_factor=self.upsampling_factor
@@ -99,20 +140,23 @@ class MAPDeconvolver:
 
             npred_model.train(True)
 
+            loss_datasets = []
+
             for data in datasets:
                 optimizer.zero_grad()
 
                 npred = npred_model(
-                    psf=data["psf"],
                     exposure=data["exposure"],
                     background=data["background"],
+                    psf=data.get("psf", None),
                 )
 
                 loss = loss_function(npred, data["counts"])
+                loss_datasets.append(loss.item())
                 loss_prior = self.loss_function_prior(flux=npred_model.flux)
                 loss_total = loss - self.beta * loss_prior
 
-                value_loss_total += loss_total.item() / len(datasets)
+                value_loss_total += loss_total.item()
                 value_loss_prior += self.beta * loss_prior.item()
 
                 loss_total.backward()
@@ -124,10 +168,31 @@ class MAPDeconvolver:
             )
             self.log.info(message)
 
-            trace_loss.append(value_loss_total)
+            row = {
+                "total": value_loss_total,
+                "prior": value_loss_prior,
+            }
 
-        return {
-            "flux": npred_model.flux.detach().numpy()[0][0],
-            "trace-loss": trace_loss,
-            "trace-validation-loss": trace_validation_loss,
-        }
+            for idx, value in enumerate(loss_datasets):
+                row[f"dataset-{idx}"] = value
+
+            trace_loss.add_row(row)
+
+        return MAPDeconvolverResult(
+            config=self.to_dict(),
+            flux=npred_model.flux.detach().numpy()[0][0],
+            trace_loss=trace_loss,
+        )
+
+
+class MAPDeconvolverResult:
+    """MAP deconvolver result"""
+    def __init__(self, config, flux, trace_loss):
+        self.flux = flux
+        self.trace_loss = trace_loss
+        self._config = config
+
+    @property
+    def config(self):
+        """Configuration data (`dict`)"""
+        return self._config
