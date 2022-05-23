@@ -202,3 +202,12 @@ class MAPDeconvolverResult:
     def config(self):
         """Configuration data (`dict`)"""
         return self._config
+
+    def plot_trace_loss(self, ax=None, **kwargs):
+        """Plot traces"""
+        from .utils.plot import plot_trace_loss
+
+        ax = plt.gca() if ax is None else ax
+
+        plot_trace_loss(ax=ax, trace_loss=self.trace_loss, **kwargs)
+        return ax
