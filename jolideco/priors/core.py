@@ -13,6 +13,18 @@ class UniformPrior:
         pass
 
     def __call__(self, flux):
+        """Evaluate the prior
+
+        Parameters
+        ----------
+        flux : `~pytorch.Tensor`
+            Reconstructed flux
+
+        Returns
+        -------
+        log_prior ; `~torch.tensor`
+            Log prior set to zero.
+        """
         return torch.tensor(0)
 
 
@@ -21,8 +33,10 @@ class ImagePrior:
 
     Parameters
     ----------
-    flux_prior : `~numpy.ndarray`
+    flux_prior : `~pytorch.Tensor`
         Prior image
+    flux_prior_error : `~pytorch.Tensor`
+        Prior error image
     beta : float
         Weight factor
     """
@@ -32,7 +46,13 @@ class ImagePrior:
         self.beta = beta
 
     def __call__(self, flux):
+        """Evaluate the prior
 
+        Parameters
+        ----------
+        flux : `~pytorch.Tensor`
+            Reconstructed flux
+        """
         return self.beta * (flux - flux_prior) ** 2
 
 
