@@ -1,9 +1,12 @@
 import torch
+from jolideco.utils.torch import convolve_fft_torch
+from astropy.convolution import RickerWavelet2DKernel
 
 __all__ = [
     "UniformPrior",
     "ImagePrior",
     "LIRAPrior",
+    "SmoothnessPrior",
 ]
 
 
@@ -54,6 +57,17 @@ class ImagePrior:
             Reconstructed flux
         """
         return self.beta * (flux - flux_prior) ** 2
+
+
+class SmoothnessPrior:
+    """Gradient based smoothness prior"""
+    def __init__(self, width=2):
+        kernel = RickerWavelet2DKernel(width=width)
+        self.kernel = torch.from_numpy(kernel.array[None, None])
+
+    def __call__(self, flux):
+        grad = convolve_fft_torch(flux, self.kernel)
+        return -torch.sum(grad ** 2)
 
 
 class LIRAPrior:

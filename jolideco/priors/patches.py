@@ -46,7 +46,7 @@ class GMMPatchPrior:
     @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
-        shape_mean = self.gmm.shape
+        shape_mean = self.gmm.means.shape
         npix = int(sqrt(shape_mean[-1]))
         return npix, npix
 
