@@ -8,7 +8,7 @@ __all__ = [
 ]
 
 
-def view_as_overlapping_patches_torch(image, shape):
+def view_as_overlapping_patches_torch(image, shape, stride=None):
     """View tensor as overlapping rectangular patches
 
     Parameters
@@ -17,6 +17,8 @@ def view_as_overlapping_patches_torch(image, shape):
         Image tensor
     shape : tuple
         Shape of the patches.
+    stride : int
+        Stride of the patches. By default it is half of the patch size.
 
     Returns
     -------
@@ -25,9 +27,11 @@ def view_as_overlapping_patches_torch(image, shape):
         (n_patches, patch_shape_flat)
 
     """
-    step = shape[0] // 2
-    patches = image.unfold(2, shape[0], step)
-    patches = patches.unfold(3, shape[0], step)
+    if stride is None:
+        stride = shape[0] // 2
+
+    patches = image.unfold(2, shape[0], stride)
+    patches = patches.unfold(3, shape[0], stride)
     ncols = shape[0] * shape[1]
     return torch.reshape(patches, (-1, ncols))
 
@@ -39,9 +43,12 @@ class GMMPatchPrior:
     ----------
     gmm : `GaussianMixtureModel`
         Gaussian mixture model.
+    stride : int
+        Stride of the patches. By default it is half of the patch size.
     """
-    def __init__(self, gmm):
+    def __init__(self, gmm, stride=None):
         self.gmm = gmm
+        self.stride = stride
 
     @lazyproperty
     def patch_shape(self):
@@ -61,7 +68,7 @@ class GMMPatchPrior:
         # TODO: how to norm? per patch?
         normed = flux / flux.max()
         patches = view_as_overlapping_patches_torch(
-            image=normed, shape=self.patch_shape
+            image=normed, shape=self.patch_shape, stride=self.stride
         )
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
