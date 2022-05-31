@@ -93,6 +93,19 @@ class GaussianMixtureModel:
         return torch.from_numpy(self.precisions_cholesky.astype(np.float32))
 
     @lazyproperty
+    def means_precisions_cholesky_torch(self):
+        """Precisison matrix pytoch"""
+        means_precisions = []
+
+        iterate = zip(self.means_torch, self.precisions_cholesky_torch)
+
+        for mu, prec_chol in iterate:
+            y = torch.matmul(mu, prec_chol)
+            means_precisions.append(y)
+
+        return means_precisions
+
+    @lazyproperty
     def log_det_cholesky(self):
         """Compute the log-det of the cholesky decomposition of matrices"""
         reshaped = self.precisions_cholesky.reshape(self.n_components, -1)
@@ -124,10 +137,10 @@ class GaussianMixtureModel:
 
         log_prob = torch.empty((n_samples, self.n_components))
 
-        iterate = zip(self.means_torch, self.precisions_cholesky_torch)
+        iterate = zip(self.means_precisions_cholesky_torch, self.precisions_cholesky_torch)
 
-        for k, (mu, prec_chol) in enumerate(iterate):
-            y = torch.matmul(x, prec_chol) - torch.matmul(mu, prec_chol)
+        for k, (mu_prec, prec_chol) in enumerate(iterate):
+            y = torch.matmul(x, prec_chol) - mu_prec
             log_prob[:, k] = torch.sum(torch.square(y), axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,

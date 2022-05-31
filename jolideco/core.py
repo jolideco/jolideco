@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import logging
+import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from astropy.visualization import simple_norm
 from astropy.table import Table
