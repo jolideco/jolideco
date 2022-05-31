@@ -5,7 +5,6 @@ from astropy.convolution import Gaussian2DKernel
 __all__ = [
     "UniformPrior",
     "ImagePrior",
-    "LIRAPrior",
     "SmoothnessPrior",
 ]
 

@@ -1,6 +1,7 @@
 from .gmm import *
 from .patches import *
 from .core import *
+from .lira import *
 
 
 PRIOR_REGISTRY = {
