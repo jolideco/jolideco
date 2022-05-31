@@ -69,21 +69,3 @@ class SmoothnessPrior:
         smooth = convolve_fft_torch(flux, self.kernel)
         return -torch.sum(flux * smooth)
 
-
-class LIRAPrior:
-    """LIRA multiscale prior
-
-    Parameters
-    ----------
-    """
-    def __init__(self, alpha):
-        self.alpha = alpha
-
-    def cycle_spin(self):
-        pass
-
-    def multiscale(self):
-        pass
-
-    def __call__(self, flux):
-        return 0
