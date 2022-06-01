@@ -30,7 +30,7 @@ class LIRAPrior:
         for alpha in self.alphas:
             # TODO: add downsampling...
             patches = view_as_overlapping_patches_torch(flux, shape=(2, 2), stride=2)
-            patches = pacthes / torch.sum(patches, dim=1, keepdims=True)
+            patches = patches / torch.sum(patches, dim=1, keepdims=True)
             dirichlet = Dirichlet(patches)
             values = dirichlet.log_prob(...)
             log_prior += torch.sum(values)

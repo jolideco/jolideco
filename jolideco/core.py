@@ -4,7 +4,6 @@ import torch.nn as nn
 import logging
 import torch.nn.functional as F
 import matplotlib.pyplot as plt
-from astropy.visualization import simple_norm
 from astropy.table import Table
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
@@ -121,7 +120,7 @@ class MAPDeconvolver:
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         datasets = [dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets]
 
-        names = ["total", "prior",]
+        names = ["total", "prior"]
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
 
         trace_loss = Table(

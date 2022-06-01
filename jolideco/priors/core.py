@@ -55,7 +55,7 @@ class ImagePrior:
         flux : `~pytorch.Tensor`
             Reconstructed flux
         """
-        return self.beta * (flux - flux_prior) ** 2
+        return self.beta * (flux - self.flux_prior) ** 2
 
 
 class SmoothnessPrior:
@@ -67,4 +67,3 @@ class SmoothnessPrior:
     def __call__(self, flux):
         smooth = convolve_fft_torch(flux, self.kernel)
         return -torch.sum(flux * smooth)
-
