@@ -20,5 +20,3 @@ def test_convolve_fft_torch():
 
     result = result_torch.detach().numpy()
     assert_allclose(result_ref, result[0][0], atol=1e-12)
-
-
