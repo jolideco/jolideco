@@ -35,5 +35,5 @@ def convolve_fft_torch(image, kernel):
 
     image_ft = torch.fft.rfft2(image, s=shape)
     kernel_ft = torch.fft.rfft2(kernel, s=shape)
-    result = torch.fft.irfft2(image_ft * kernel_ft)
+    result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
     return _centered(result, image.shape)[None, None]
