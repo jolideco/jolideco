@@ -57,7 +57,7 @@ class MAPDeconvolver:
         loss_function_prior=None,
         learning_rate=0.1,
         upsampling_factor=None,
-        use_log_flux=True
+        use_log_flux=True,
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -118,14 +118,14 @@ class MAPDeconvolver:
         """
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
-        datasets = [dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets]
+        datasets = [
+            dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets
+        ]
 
         names = ["total", "prior"]
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
 
-        trace_loss = Table(
-            names=names
-        )
+        trace_loss = Table(names=names)
 
         npred_model = SimpleNPredModel(
             flux_init=flux_init,
@@ -192,6 +192,7 @@ class MAPDeconvolver:
 
 class MAPDeconvolverResult:
     """MAP deconvolver result"""
+
     def __init__(self, config, flux, trace_loss):
         self.flux = flux
         self.trace_loss = trace_loss

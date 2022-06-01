@@ -11,6 +11,7 @@ __all__ = [
 
 class UniformPrior:
     """Uniform prior"""
+
     def __init__(self):
         pass
 
@@ -42,6 +43,7 @@ class ImagePrior:
     beta : float
         Weight factor
     """
+
     def __init__(self, flux_prior, flux_prior_error=None, beta=1e-6):
         self.flux_prior = flux_prior
         self.flux_prior_error = flux_prior_error
@@ -60,6 +62,7 @@ class ImagePrior:
 
 class SmoothnessPrior:
     """Gradient based smoothness prior"""
+
     def __init__(self, width=2):
         kernel = Gaussian2DKernel(width)
         self.kernel = torch.from_numpy(kernel.array[None, None])

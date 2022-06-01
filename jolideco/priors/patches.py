@@ -46,6 +46,7 @@ class GMMPatchPrior:
     stride : int
         Stride of the patches. By default it is half of the patch size.
     """
+
     def __init__(self, gmm, stride=None):
         self.gmm = gmm
         self.stride = stride

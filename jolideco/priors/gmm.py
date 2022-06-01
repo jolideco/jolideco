@@ -22,6 +22,7 @@ class GaussianMixtureModel:
         Weights
 
     """
+
     def __init__(self, means, covariances, weights):
         # TODO: assert shapes
         self.means = means
@@ -129,7 +130,9 @@ class GaussianMixtureModel:
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-        return -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky
+        return (
+            -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky
+        )
 
     def estimate_log_prob_torch(self, x):
         """Compute log likelihood for given feature vector, assumes means = 0"""
@@ -137,7 +140,9 @@ class GaussianMixtureModel:
 
         log_prob = torch.empty((n_samples, self.n_components))
 
-        iterate = zip(self.means_precisions_cholesky_torch, self.precisions_cholesky_torch)
+        iterate = zip(
+            self.means_precisions_cholesky_torch, self.precisions_cholesky_torch
+        )
 
         for k, (mu_prec, prec_chol) in enumerate(iterate):
             y = torch.matmul(x, prec_chol) - mu_prec
@@ -146,7 +151,10 @@ class GaussianMixtureModel:
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
         two_pi = torch.tensor(2 * np.pi)
-        return -0.5 * (n_features * torch.log(two_pi) + log_prob) + self.log_det_cholesky_torch
+        return (
+            -0.5 * (n_features * torch.log(two_pi) + log_prob)
+            + self.log_det_cholesky_torch
+        )
 
     @classmethod
     def from_sklearn_gmm(cls, gmm):

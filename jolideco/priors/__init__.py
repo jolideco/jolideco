@@ -17,5 +17,5 @@ __all__ = [
     "UniformPrior",
     "SmoothnessPrior",
     "ImagePrior",
-    "LIRAPrior"
+    "LIRAPrior",
 ]

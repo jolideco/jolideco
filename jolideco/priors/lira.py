@@ -9,6 +9,7 @@ class LIRAPrior:
     Parameters
     ----------
     """
+
     def __init__(self, alphas, random_state=None):
         self.alphas = alphas
         self.random_state = random_state

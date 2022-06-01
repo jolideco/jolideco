@@ -41,7 +41,7 @@ class SimpleNPredModel(nn.Module):
         else:
             return self._flux
 
-    def forward(self, background, exposure,  psf=None, rmf=None):
+    def forward(self, background, exposure, psf=None, rmf=None):
         """Forward folding model evaluation.
 
         Parameters
