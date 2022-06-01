@@ -1,7 +1,10 @@
 Jolideco: a Python package for Poisson joint likelihood deconvolution
 -----------------------------------------------------------
 
-![example workflow](https://github.com/adonath/jolideco/actions/workflows/ci_test/badge.svg)
+* .. image:: https://github.com/adonath/jolideco/workflows/CI/badge.svg
+    :target: https://github.com/adonath/jolideco/actions
+    :alt: GitHub actions CI
+
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
