@@ -1,6 +1,6 @@
 import torch
 from torch.distributions import Dirichlet
-from .patches import view_as_overlapping_patches_torch
+from jolideco.utils.torch import view_as_overlapping_patches_torch
 
 
 class LIRAPrior:

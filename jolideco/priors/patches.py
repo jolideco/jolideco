@@ -1,39 +1,10 @@
 from math import sqrt
 from astropy.utils import lazyproperty
 import torch
-
-__all__ = [
-    "view_as_overlapping_patches_torch",
-    "GMMPatchPrior",
-]
+from jolideco.utils.torch import view_as_overlapping_patches_torch
 
 
-def view_as_overlapping_patches_torch(image, shape, stride=None):
-    """View tensor as overlapping rectangular patches
-
-    Parameters
-    ----------
-    image : `~torch.Tensor`
-        Image tensor
-    shape : tuple
-        Shape of the patches.
-    stride : int
-        Stride of the patches. By default it is half of the patch size.
-
-    Returns
-    -------
-    patches : `~torch.Tensor`
-        Tensor of overlapping patches of shape
-        (n_patches, patch_shape_flat)
-
-    """
-    if stride is None:
-        stride = shape[0] // 2
-
-    patches = image.unfold(2, shape[0], stride)
-    patches = patches.unfold(3, shape[0], stride)
-    ncols = shape[0] * shape[1]
-    return torch.reshape(patches, (-1, ncols))
+__all__ = ["GMMPatchPrior"]
 
 
 class GMMPatchPrior:
