@@ -15,7 +15,7 @@ def test_convolve_fft_torch():
 
     result_torch = convolve_fft_torch(
         image=torch.from_numpy(image[None, None]),
-        kernel=torch.from_numpy(kernel[None, None])
+        kernel=torch.from_numpy(kernel[None, None]),
     )
 
     result = result_torch.detach().numpy()
