@@ -71,6 +71,7 @@ class SimpleNPredModel(nn.Module):
             )
 
         if rmf is not None:
-            npred = torch.matmul(npred, rmf)
+            # TODO: simplify if possible
+            npred = torch.matmul(npred[0].T, rmf).T[None]
 
         return npred
