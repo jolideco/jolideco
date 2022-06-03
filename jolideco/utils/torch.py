@@ -57,11 +57,11 @@ def convolve_fft_torch(image, kernel):
         Convolution result
     """
     # TODO: support 4D tensors
-    image, kernel = image[0][0], kernel[0][0]
+    image_2d, kernel_2d = image[0][0], kernel[0][0]
 
-    shape = [image.shape[i] + kernel.shape[i] - 1 for i in range(image.ndim)]
+    shape = [image_2d.shape[i] + kernel_2d.shape[i] - 1 for i in range(image_2d.ndim)]
 
     image_ft = torch.fft.rfft2(image, s=shape)
     kernel_ft = torch.fft.rfft2(kernel, s=shape)
     result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
-    return _centered(result, image.shape)[None, None]
+    return _centered(result, image.shape)
