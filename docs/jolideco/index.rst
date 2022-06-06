@@ -1,10 +1,5 @@
 **********************
-jolideco Documentation
+Jolideco Documentation
 **********************
 
-This is the documentation for jolideco.
-
-Reference/API
-=============
-
-.. automodapi:: jolideco
+This is the documentation for Jolideco.

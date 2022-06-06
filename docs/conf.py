@@ -105,7 +105,7 @@ release = package.__version__
 #html_theme = None
 
 
-html_theme = "pydata-sphinx-theme"
+html_theme = "pydata_sphinx_theme"
 
 
 # Custom sidebar templates, maps document names to template names.
