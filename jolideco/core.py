@@ -2,56 +2,13 @@ import numpy as np
 import torch
 import torch.nn as nn
 import logging
-import torch.nn.functional as F
 import matplotlib.pyplot as plt
 from astropy.table import Table
-from jolideco.utils.torch import convolve_fft_torch
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
+from .utils.torch import dataset_to_torch
 
 logging.basicConfig(level=logging.INFO)
-
-
-def dataset_to_pytorch(dataset, upsampling_factor=None, correct_exposure_edges=False):
-    """Convert dataset to dataset of pytorch tensors
-
-    Parameters
-    ----------
-    dataset : dict of `~numpy.ndarray`
-        Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
-    upsampling_factor : int
-        Upsampling factor for exposure, background and psf.
-    correct_exposure_edges : bool
-        Correct psf leakage at the exposure edges.
-
-    Returns
-    -------
-    datasets : dict of `~torch.Tensor`
-        Dict of pytorch tensors.
-    """
-    dims = (np.newaxis, np.newaxis)
-
-    dataset_torch = {}
-
-    for key, value in dataset.items():
-        tensor = torch.from_numpy(value[dims])
-
-        if key in ["psf", "exposure", "background", "flux"] and upsampling_factor:
-            tensor = F.interpolate(tensor, scale_factor=upsampling_factor)
-
-        if key in ["psf", "background", "flux"] and upsampling_factor:
-            tensor = tensor / upsampling_factor**2
-
-        dataset_torch[key] = tensor
-
-    if correct_exposure_edges:
-        exposure = dataset_torch["exposure"]
-        weights = convolve_fft_torch(
-            image=torch.ones_like(exposure), kernel=dataset_torch["psf"]
-        )
-        dataset_torch["exposure"] = exposure / weights
-
-    return dataset_torch
 
 
 class MAPDeconvolver:
@@ -142,7 +99,7 @@ class MAPDeconvolver:
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         datasets = [
-            dataset_to_pytorch(_, scale_factor=self.upsampling_factor) for _ in datasets
+            dataset_to_torch(_, scale_factor=self.upsampling_factor) for _ in datasets
         ]
 
         names = ["total", "prior"]

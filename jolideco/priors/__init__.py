@@ -1,5 +1,4 @@
-from .gmm import GaussianMixtureModel
-from .patches import GMMPatchPrior
+from .patches import GMMPatchPrior, GaussianMixtureModel
 from .core import UniformPrior, ImagePrior, SmoothnessPrior
 from .lira import LIRAPrior
 
