@@ -40,14 +40,11 @@ class ImagePrior:
         Prior image
     flux_prior_error : `~pytorch.Tensor`
         Prior error image
-    beta : float
-        Weight factor
     """
 
-    def __init__(self, flux_prior, flux_prior_error=None, beta=1e-6):
+    def __init__(self, flux_prior, flux_prior_error=None):
         self.flux_prior = flux_prior
         self.flux_prior_error = flux_prior_error
-        self.beta = beta
 
     def __call__(self, flux):
         """Evaluate the prior
@@ -57,7 +54,7 @@ class ImagePrior:
         flux : `~pytorch.Tensor`
             Reconstructed flux
         """
-        return self.beta * (flux - self.flux_prior) ** 2
+        return (flux - self.flux_prior) ** 2
 
 
 class SmoothnessPrior:
