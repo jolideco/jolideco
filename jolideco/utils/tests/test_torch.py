@@ -2,7 +2,23 @@ import numpy as np
 from numpy.testing import assert_allclose
 import torch
 from astropy.convolution import convolve, Gaussian2DKernel
-from jolideco.utils.torch import convolve_fft_torch
+from jolideco.utils.torch import convolve_fft_torch, view_as_overlapping_patches_torch
+
+
+def test_view_as_overlapping_patches_torch():
+    x = torch.arange(16).reshape((1, 1, 4, 4))
+
+    patches = view_as_overlapping_patches_torch(image=x, shape=(2, 2))
+    patches = patches.detach().numpy()
+
+    assert_allclose(patches[0], [0, 1, 4, 5])
+    assert_allclose(patches[1], [1, 2, 5, 6])
+
+    patches = view_as_overlapping_patches_torch(image=x, shape=(2, 2), stride=2)
+    patches = patches.detach().numpy()
+
+    assert_allclose(patches[0], [0, 1, 4, 5])
+    assert_allclose(patches[1], [2, 3, 6, 7])
 
 
 def test_convolve_fft_torch():

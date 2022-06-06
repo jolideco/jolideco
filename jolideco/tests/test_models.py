@@ -36,9 +36,11 @@ def dataset_3d():
 def dataset_3d_rmf():
     shape = (1, 3, 25, 25)
     exposure = torch.ones(shape)
-    psf = np.stack([Gaussian2DKernel(_, x_size=25) for _ in [1, 2, 3]]).astype(np.float32)
+    psf = np.stack([Gaussian2DKernel(_, x_size=25) for _ in [1, 2, 3]]).astype(
+        np.float32
+    )
     background = torch.zeros(shape)
-    rmf = torch.ones((3, 1)) / 3.
+    rmf = torch.ones((3, 1)) / 3.0
     return {
         "psf": torch.from_numpy(psf[None]),
         "exposure": exposure,
