@@ -99,7 +99,7 @@ class MAPDeconvolver:
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         datasets = [
-            dataset_to_torch(_, scale_factor=self.upsampling_factor) for _ in datasets
+            dataset_to_torch(_, upsampling_factor=self.upsampling_factor) for _ in datasets
         ]
 
         names = ["total", "prior"]

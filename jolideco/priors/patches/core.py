@@ -14,13 +14,23 @@ class GMMPatchPrior:
     ----------
     gmm : `GaussianMixtureModel`
         Gaussian mixture model.
-    stride : int
+    stride : int or "random"
         Stride of the patches. By default it is half of the patch size.
+    cycle_spin : bool
+        Apply cycle spin.
+    generator : `~torch.Generator`
+        Random number generator
     """
 
-    def __init__(self, gmm, stride=None):
+    def __init__(self, gmm, stride=None, cycle_spin=True, generator=None):
         self.gmm = gmm
         self.stride = stride
+        self.cycle_spin = cycle_spin
+
+        if generator is None:
+            generator = torch.Generator()
+
+        self.generator = generator
 
     @lazyproperty
     def patch_shape(self):
@@ -36,9 +46,21 @@ class GMMPatchPrior:
         ----------
         flux : `~pytorch.Tensor`
             Reconstructed flux
+
+        Returns
+        -------
+        log_prior : float
+            Summed log prior over all overlapping patches.
         """
-        # TODO: how to norm? per patch?
         normed = flux / flux.max()
+
+        if self.cycle_spin:
+            x_max, y_max = self.patch_shape
+            shift_x = torch.randint(0, x_max // 2, (1,), generator=self.generator)
+            shift_y = torch.randint(0, y_max // 2, (1,), generator=self.generator)
+            shifts = (int(shift_x), int(shift_y))
+            normed = torch.roll(normed, shifts=shifts, dims=(2, 3))
+
         patches = view_as_overlapping_patches_torch(
             image=normed, shape=self.patch_shape, stride=self.stride
         )
