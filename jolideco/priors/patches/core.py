@@ -1,13 +1,14 @@
 from math import sqrt
 from astropy.utils import lazyproperty
 import torch
+import torch.nn as nn
 from jolideco.utils.torch import view_as_overlapping_patches_torch
 
 
 __all__ = ["GMMPatchPrior"]
 
 
-class GMMPatchPrior:
+class GMMPatchPrior(nn.Module):
     """Patch prior
 
     Attributes
@@ -23,6 +24,8 @@ class GMMPatchPrior:
     """
 
     def __init__(self, gmm, stride=None, cycle_spin=True, generator=None):
+        super().__init__()
+
         self.gmm = gmm
         self.stride = stride
         self.cycle_spin = cycle_spin

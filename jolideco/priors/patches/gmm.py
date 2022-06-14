@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import torch
+import torch.nn as nn
 import numpy as np
 import scipy.io as sio
 from scipy import linalg
@@ -9,7 +10,7 @@ from astropy.table import Table
 __all__ = ["GaussianMixtureModel"]
 
 
-class GaussianMixtureModel:
+class GaussianMixtureModel(nn.Module):
     """Gaussian mixture model
 
     Attributes
@@ -24,6 +25,8 @@ class GaussianMixtureModel:
     """
 
     def __init__(self, means, covariances, weights):
+        super().__init__()
+
         # TODO: assert shapes
         self.means = means
         self.covariances = covariances

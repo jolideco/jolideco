@@ -73,7 +73,7 @@ def convolve_fft_torch(image, kernel):
     return _centered(result, image.shape)
 
 
-def dataset_to_torch(dataset, upsampling_factor=None, correct_exposure_edges=False):
+def dataset_to_torch(dataset, upsampling_factor=None, correct_exposure_edges=False, device="cpu"):
     """Convert dataset to dataset of pytorch tensors
 
     Parameters
@@ -95,7 +95,7 @@ def dataset_to_torch(dataset, upsampling_factor=None, correct_exposure_edges=Fal
     dataset_torch = {}
 
     for key, value in dataset.items():
-        tensor = torch.from_numpy(value[dims])
+        tensor = torch.from_numpy(value[dims]).to(device)
 
         if key in ["psf", "exposure", "background", "flux"] and upsampling_factor:
             tensor = F.interpolate(tensor, scale_factor=upsampling_factor)

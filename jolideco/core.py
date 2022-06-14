@@ -28,6 +28,8 @@ class MAPDeconvolver:
         Internal spatial upsampling factor for the reconstructed flux.
     use_log_flux : bool
         Use log scaling for flux
+    device : `~pytorch.Device`
+        Pytorch device
     """
 
     def __init__(
@@ -38,6 +40,7 @@ class MAPDeconvolver:
         learning_rate=0.1,
         upsampling_factor=None,
         use_log_flux=True,
+        device="cpu",
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -45,11 +48,12 @@ class MAPDeconvolver:
         if loss_function_prior is None:
             loss_function_prior = UniformPrior()
 
-        self.loss_function_prior = loss_function_prior
+        self.loss_function_prior = loss_function_prior.to(device)
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.use_log_flux = use_log_flux
         self.log = logging.getLogger(__name__)
+        self.device = torch.device(device)
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -98,8 +102,10 @@ class MAPDeconvolver:
         """
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
+        flux_init = flux_init.to(self.device)
+
         datasets = [
-            dataset_to_torch(_, upsampling_factor=self.upsampling_factor) for _ in datasets
+            dataset_to_torch(_, upsampling_factor=self.upsampling_factor, device=self.device) for _ in datasets
         ]
 
         names = ["total", "prior"]
@@ -111,7 +117,7 @@ class MAPDeconvolver:
             flux_init=flux_init,
             upsampling_factor=self.upsampling_factor,
             use_log_flux=self.use_log_flux,
-        )
+        ).to(self.device)
 
         optimizer = torch.optim.Adam(
             params=npred_model.parameters(),
