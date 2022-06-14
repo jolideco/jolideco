@@ -6,7 +6,7 @@ import scipy.io as sio
 from scipy import linalg
 from astropy.utils import lazyproperty
 from astropy.table import Table
-from jolideco.utils.torch import DEVICE_TORCH
+from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
 
 
 __all__ = ["GaussianMixtureModel"]
@@ -27,7 +27,7 @@ class GaussianMixtureModel(nn.Module):
         Pytorch device
     """
 
-    def __init__(self, means, covariances, weights, device=DEVICE_TORCH):
+    def __init__(self, means, covariances, weights, device=TORCH_DEFAULT_DEVICE):
         super().__init__()
 
         # TODO: assert shapes
@@ -177,7 +177,7 @@ class GaussianMixtureModel(nn.Module):
         )
 
     @classmethod
-    def read(cls, filename, format="epll-matlab", device=DEVICE_TORCH):
+    def read(cls, filename, format="epll-matlab", device=TORCH_DEFAULT_DEVICE):
         """Read from matlab file
 
         Parameters

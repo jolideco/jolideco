@@ -4,7 +4,8 @@ from jolideco.utils.torch import convolve_fft_torch
 from astropy.convolution import Gaussian2DKernel
 
 __all__ = [
-    "Prior" "UniformPrior",
+    "Prior",
+    "UniformPrior",
     "ImagePrior",
     "SmoothnessPrior",
 ]

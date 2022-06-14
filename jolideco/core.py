@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
-from .utils.torch import dataset_to_torch, DEVICE_TORCH
+from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
 
 logging.basicConfig(level=logging.INFO)
 
@@ -40,7 +40,7 @@ class MAPDeconvolver:
         learning_rate=0.1,
         upsampling_factor=None,
         use_log_flux=True,
-        device=DEVICE_TORCH,
+        device=TORCH_DEFAULT_DEVICE,
     ):
         self.n_epochs = n_epochs
         self.beta = beta
