@@ -24,18 +24,19 @@ class GaussianMixtureModel(nn.Module):
 
     """
 
-    def __init__(self, means, covariances, weights):
+    def __init__(self, means, covariances, weights, device="cpu"):
         super().__init__()
 
         # TODO: assert shapes
         self.means = means
         self.covariances = covariances
         self.weights = weights
+        self.device = device
 
     @lazyproperty
     def means_torch(self):
         """Number of features"""
-        return torch.from_numpy(self.means.astype(np.float32))
+        return torch.from_numpy(self.means.astype(np.float32)).to(self.device)
 
     @lazyproperty
     def n_features(self):
@@ -94,7 +95,7 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def precisions_cholesky_torch(self):
         """Precisison matrix pytoch"""
-        return torch.from_numpy(self.precisions_cholesky.astype(np.float32))
+        return torch.from_numpy(self.precisions_cholesky.astype(np.float32)).to(self.device)
 
     @lazyproperty
     def means_precisions_cholesky_torch(self):
@@ -119,7 +120,7 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def log_det_cholesky_torch(self):
         """Precisison matrix pytoch"""
-        return torch.from_numpy(self.log_det_cholesky.astype(np.float32))
+        return torch.from_numpy(self.log_det_cholesky.astype(np.float32)).to(self.device)
 
     def estimate_log_prob(self, x):
         """Compute log likelihood for given feature vector"""
@@ -141,7 +142,7 @@ class GaussianMixtureModel(nn.Module):
         """Compute log likelihood for given feature vector, assumes means = 0"""
         n_samples, n_features = x.shape
 
-        log_prob = torch.empty((n_samples, self.n_components))
+        log_prob = torch.empty((n_samples, self.n_components)).to(self.device)
 
         iterate = zip(
             self.means_precisions_cholesky_torch, self.precisions_cholesky_torch
@@ -153,7 +154,7 @@ class GaussianMixtureModel(nn.Module):
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-        two_pi = torch.tensor(2 * np.pi)
+        two_pi = torch.tensor(2 * np.pi).to(self.device)
         return (
             -0.5 * (n_features * torch.log(two_pi) + log_prob)
             + self.log_det_cholesky_torch
