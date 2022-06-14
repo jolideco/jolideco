@@ -169,9 +169,11 @@ class MAPDeconvolver:
 
             trace_loss.add_row(row)
 
+        flux = npred_model.flux.detach().cpu()
+
         return MAPDeconvolverResult(
             config=self.to_dict(),
-            flux=npred_model.flux.detach().numpy()[0][0],
+            flux=flux.numpy()[0][0],
             trace_loss=trace_loss,
         )
 
