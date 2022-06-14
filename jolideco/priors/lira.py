@@ -1,9 +1,10 @@
 import torch
 from torch.distributions import Dirichlet
 from jolideco.utils.torch import view_as_overlapping_patches_torch
+from .core import Prior
 
 
-class LIRAPrior:
+class LIRAPrior(Prior):
     """LIRA multiscale prior
 
     Parameters

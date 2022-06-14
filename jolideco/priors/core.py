@@ -1,15 +1,20 @@
 import torch
+import torch.nn as nn
 from jolideco.utils.torch import convolve_fft_torch
 from astropy.convolution import Gaussian2DKernel
 
 __all__ = [
-    "UniformPrior",
+    "Prior" "UniformPrior",
     "ImagePrior",
     "SmoothnessPrior",
 ]
 
 
-class UniformPrior:
+class Prior(nn.Module):
+    pass
+
+
+class UniformPrior(Prior):
     """Uniform prior"""
 
     def __init__(self):
@@ -31,7 +36,7 @@ class UniformPrior:
         return torch.tensor(0)
 
 
-class ImagePrior:
+class ImagePrior(Prior):
     """Image prior
 
     Parameters
@@ -57,7 +62,7 @@ class ImagePrior:
         return (flux - self.flux_prior) ** 2
 
 
-class SmoothnessPrior:
+class SmoothnessPrior(Prior):
     """Gradient based smoothness prior"""
 
     def __init__(self, width=2):
