@@ -6,7 +6,8 @@ import scipy.io as sio
 from scipy import linalg
 from astropy.utils import lazyproperty
 from astropy.table import Table
-from jolideco.core import DEVICE_TORCH
+from jolideco.utils.torch import DEVICE_TORCH
+
 
 __all__ = ["GaussianMixtureModel"]
 

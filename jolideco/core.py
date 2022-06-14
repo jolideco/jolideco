@@ -6,11 +6,9 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
-from .utils.torch import dataset_to_torch
+from .utils.torch import dataset_to_torch, DEVICE_TORCH
 
 logging.basicConfig(level=logging.INFO)
-
-DEVICE_TORCH = "cpu"
 
 
 class MAPDeconvolver:

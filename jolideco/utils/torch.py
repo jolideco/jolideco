@@ -1,13 +1,15 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from jolideco.core import DEVICE_TORCH
 
 __all__ = [
     "convolve_fft_torch",
     "view_as_overlapping_patches_torch",
     "dataset_to_torch",
+    "DEVICE_TORCH",
 ]
+
+DEVICE_TORCH = "cpu"
 
 
 def view_as_overlapping_patches_torch(image, shape, stride=None):
