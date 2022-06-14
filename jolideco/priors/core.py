@@ -17,9 +17,8 @@ class Prior(nn.Module):
 
 class UniformPrior(Prior):
     """Uniform prior"""
-
     def __init__(self):
-        pass
+        super().__init__()
 
     def __call__(self, flux):
         """Evaluate the prior
@@ -49,6 +48,7 @@ class ImagePrior(Prior):
     """
 
     def __init__(self, flux_prior, flux_prior_error=None):
+        super().__init__()
         self.flux_prior = flux_prior
         self.flux_prior_error = flux_prior_error
 
@@ -67,6 +67,7 @@ class SmoothnessPrior(Prior):
     """Gradient based smoothness prior"""
 
     def __init__(self, width=2):
+        super().__init__()
         kernel = Gaussian2DKernel(width)
         self.kernel = torch.from_numpy(kernel.array[None, None])
 
