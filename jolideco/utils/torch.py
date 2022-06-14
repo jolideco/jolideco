@@ -1,6 +1,7 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
+from jolideco.core import DEVICE_TORCH
 
 __all__ = [
     "convolve_fft_torch",
@@ -73,7 +74,9 @@ def convolve_fft_torch(image, kernel):
     return _centered(result, image.shape)
 
 
-def dataset_to_torch(dataset, upsampling_factor=None, correct_exposure_edges=False, device="cpu"):
+def dataset_to_torch(
+    dataset, upsampling_factor=None, correct_exposure_edges=False, device=DEVICE_TORCH
+):
     """Convert dataset to dataset of pytorch tensors
 
     Parameters
@@ -84,6 +87,8 @@ def dataset_to_torch(dataset, upsampling_factor=None, correct_exposure_edges=Fal
         Upsampling factor for exposure, background and psf.
     correct_exposure_edges : bool
         Correct psf leakage at the exposure edges.
+    device : `~pytorch.Device`
+        Pytorch device
 
     Returns
     -------

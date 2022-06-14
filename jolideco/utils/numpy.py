@@ -1,4 +1,3 @@
-
 __all__ = ["view_as_overlapping_patches"]
 
 

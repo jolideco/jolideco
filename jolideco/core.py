@@ -10,6 +10,8 @@ from .utils.torch import dataset_to_torch
 
 logging.basicConfig(level=logging.INFO)
 
+DEVICE_TORCH = "cpu"
+
 
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
@@ -40,7 +42,7 @@ class MAPDeconvolver:
         learning_rate=0.1,
         upsampling_factor=None,
         use_log_flux=True,
-        device="cpu",
+        device=DEVICE_TORCH,
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -105,7 +107,10 @@ class MAPDeconvolver:
         flux_init = flux_init.to(self.device)
 
         datasets = [
-            dataset_to_torch(_, upsampling_factor=self.upsampling_factor, device=self.device) for _ in datasets
+            dataset_to_torch(
+                _, upsampling_factor=self.upsampling_factor, device=self.device
+            )
+            for _ in datasets
         ]
 
         names = ["total", "prior"]

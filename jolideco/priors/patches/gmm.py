@@ -6,6 +6,7 @@ import scipy.io as sio
 from scipy import linalg
 from astropy.utils import lazyproperty
 from astropy.table import Table
+from jolideco.core import DEVICE_TORCH
 
 __all__ = ["GaussianMixtureModel"]
 
@@ -21,10 +22,11 @@ class GaussianMixtureModel(nn.Module):
         Covariances
     weights : `~numpy.ndarray`
         Weights
-
+    device : `~pytorch.Device`
+        Pytorch device
     """
 
-    def __init__(self, means, covariances, weights, device="cpu"):
+    def __init__(self, means, covariances, weights, device=DEVICE_TORCH):
         super().__init__()
 
         # TODO: assert shapes
@@ -95,7 +97,9 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def precisions_cholesky_torch(self):
         """Precisison matrix pytoch"""
-        return torch.from_numpy(self.precisions_cholesky.astype(np.float32)).to(self.device)
+        return torch.from_numpy(self.precisions_cholesky.astype(np.float32)).to(
+            self.device
+        )
 
     @lazyproperty
     def means_precisions_cholesky_torch(self):
@@ -120,7 +124,9 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def log_det_cholesky_torch(self):
         """Precisison matrix pytoch"""
-        return torch.from_numpy(self.log_det_cholesky.astype(np.float32)).to(self.device)
+        return torch.from_numpy(self.log_det_cholesky.astype(np.float32)).to(
+            self.device
+        )
 
     def estimate_log_prob(self, x):
         """Compute log likelihood for given feature vector"""
@@ -170,8 +176,23 @@ class GaussianMixtureModel(nn.Module):
         )
 
     @classmethod
-    def read(cls, filename, format="epll-matlab"):
-        """Read from matlab file"""
+    def read(cls, filename, format="epll-matlab", device=DEVICE_TORCH):
+        """Read from matlab file
+
+        Parameters
+        ----------
+        filename : str or Path
+            Filename
+        format : {"epll-matlab", "table"}
+            Format
+        device : `~pytorch.Device`
+            Pytorch device
+
+        Returns
+        -------
+        gmm : `GaussianMixtureModel`
+            Gaussian mixture model.
+        """
         if format == "epll-matlab":
             gmm_dict = sio.loadmat(filename)
             gmm_data = gmm_dict["GS"]
@@ -187,4 +208,4 @@ class GaussianMixtureModel(nn.Module):
         else:
             raise ValueError(f"Not a supported format {format}")
 
-        return cls(means=means, covariances=covariances, weights=weights)
+        return cls(means=means, covariances=covariances, weights=weights, device=device)
