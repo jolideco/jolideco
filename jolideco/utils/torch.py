@@ -7,9 +7,36 @@ __all__ = [
     "view_as_overlapping_patches_torch",
     "dataset_to_torch",
     "TORCH_DEFAULT_DEVICE",
+    "interp1d_torch",
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
+
+
+def interp1d_torch(x, xp, fp, **kwargs):
+    """Linear interpolation
+
+    Parameters
+    ----------
+    x : `~torch.Tensor`
+        x values
+    xp : `~torch.Tensor`
+        x values
+    fp : `~torch.Tensor`
+        x values
+
+    Returns
+    -------
+    interp : `~torch.Tensor`
+        Interpolated x values
+    """
+    idx = torch.clip(torch.searchsorted(xp, x), 0, len(xp) - 2)
+    y0, y1 = fp[idx - 1], fp[idx]
+    x0, x1 = xp[idx - 1], xp[idx]
+
+    weights = (x - x0) / (x1 - x0)
+
+    return torch.lerp(y0, y1, weights, **kwargs)
 
 
 def view_as_overlapping_patches_torch(image, shape, stride=None):
