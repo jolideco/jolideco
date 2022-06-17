@@ -2,6 +2,7 @@ from math import sqrt
 from astropy.utils import lazyproperty
 import torch
 from jolideco.utils.torch import view_as_overlapping_patches_torch
+from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
 
@@ -23,7 +24,7 @@ class GMMPatchPrior(Prior):
         Random number generator
     """
 
-    def __init__(self, gmm, stride=None, cycle_spin=True, generator=None):
+    def __init__(self, gmm, stride=None, cycle_spin=True, generator=None, norm=None):
         super().__init__()
 
         self.gmm = gmm
@@ -34,6 +35,9 @@ class GMMPatchPrior(Prior):
             generator = torch.Generator()
 
         self.generator = generator
+
+        if norm is None:
+            self.norm = MaxImageNorm()
 
     @lazyproperty
     def patch_shape(self):
@@ -55,7 +59,7 @@ class GMMPatchPrior(Prior):
         log_prior : float
             Summed log prior over all overlapping patches.
         """
-        normed = flux / flux.max()
+        normed = self.norm(flux)
 
         if self.cycle_spin:
             x_max, y_max = self.patch_shape
@@ -67,6 +71,7 @@ class GMMPatchPrior(Prior):
         patches = view_as_overlapping_patches_torch(
             image=normed, shape=self.patch_shape, stride=self.stride
         )
+
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
         loglike = self.gmm.estimate_log_prob_torch(patches)

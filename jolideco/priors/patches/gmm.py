@@ -104,7 +104,7 @@ class GaussianMixtureModel(nn.Module):
 
     @lazyproperty
     def means_precisions_cholesky_torch(self):
-        """Precisison matrix pytoch"""
+        """Precision matrices pytorch"""
         means_precisions = []
 
         iterate = zip(self.means_torch, self.precisions_cholesky_torch)
@@ -124,7 +124,7 @@ class GaussianMixtureModel(nn.Module):
 
     @lazyproperty
     def log_det_cholesky_torch(self):
-        """Precisison matrix pytoch"""
+        """Precision matrices pytorch"""
         return torch.from_numpy(self.log_det_cholesky.astype(np.float32)).to(
             self.device
         )
@@ -146,7 +146,7 @@ class GaussianMixtureModel(nn.Module):
         )
 
     def estimate_log_prob_torch(self, x):
-        """Compute log likelihood for given feature vector, assumes means = 0"""
+        """Compute log likelihood for given feature vector"""
         n_samples, n_features = x.shape
 
         log_prob = torch.empty((n_samples, self.n_components)).to(self.device)

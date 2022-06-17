@@ -79,7 +79,7 @@ def convolve_fft_torch(image, kernel):
 def dataset_to_torch(
     dataset,
     upsampling_factor=None,
-    correct_exposure_edges=False,
+    correct_exposure_edges=True,
     device=TORCH_DEFAULT_DEVICE,
 ):
     """Convert dataset to dataset of pytorch tensors

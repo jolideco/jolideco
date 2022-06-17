@@ -85,21 +85,25 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
-    def run(self, flux_init, datasets):
+    def run(self, datasets, flux_init=None):
         """Run the MAP deconvolver
 
         Parameters
         ----------
-        flux_init : `~numpy.ndarray`
-            Initial flux estimate.
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
+        flux_init : `~numpy.ndarray`
+            Initial flux estimate.
 
         Returns
         -------
         flux : `~numpy.ndarray`
             Reconstructed flux.
         """
+        if flux_init is None:
+            dataset = datasets[0]
+            flux_init = dataset["counts"] / dataset["exposure"] - dataset["background"]
+
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
         flux_init = flux_init.to(self.device)
