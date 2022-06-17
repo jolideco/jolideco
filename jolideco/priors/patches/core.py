@@ -37,7 +37,9 @@ class GMMPatchPrior(Prior):
         self.generator = generator
 
         if norm is None:
-            self.norm = MaxImageNorm()
+            norm = MaxImageNorm()
+
+        self.norm = norm
 
     @lazyproperty
     def patch_shape(self):
