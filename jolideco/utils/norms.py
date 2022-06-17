@@ -1,15 +1,11 @@
 import torch
 
-__all__ = [
-    "ImageNorm",
-    "MaxImageNorm",
-    "SigmoidImageNorm",
-    "ATanImageNorm"
-]
+__all__ = ["ImageNorm", "MaxImageNorm", "SigmoidImageNorm", "ATanImageNorm"]
 
 
 class ImageNorm:
     """Image normalisation"""
+
     def __init__(self):
         pass
 
@@ -19,12 +15,14 @@ class ImageNorm:
 
 class MaxImageNorm(ImageNorm):
     """Max Image normalisation"""
+
     def __call__(self, image):
         return image / image.max()
 
 
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
+
     def __init__(self, alpha):
         self.alpha = alpha
 
@@ -34,9 +32,9 @@ class SigmoidImageNorm(ImageNorm):
 
 class ATanImageNorm(ImageNorm):
     """Max Image normalisation"""
+
     def __init__(self, alpha):
         self.alpha = alpha
 
     def __call__(self, image):
-        return 2 * torch.atan(flux / self.alpha) / torch.pi
-
+        return 2 * torch.atan(image / self.alpha) / torch.pi

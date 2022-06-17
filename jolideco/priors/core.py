@@ -17,6 +17,7 @@ class Prior(nn.Module):
 
 class UniformPrior(Prior):
     """Uniform prior"""
+
     def __init__(self):
         super().__init__()
 
