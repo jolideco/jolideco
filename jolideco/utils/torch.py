@@ -135,7 +135,7 @@ def dataset_to_torch(
         tensor = torch.from_numpy(value[dims]).to(device)
 
         if key in ["psf", "exposure", "background", "flux"] and upsampling_factor:
-            tensor = F.interpolate(tensor, scale_factor=upsampling_factor)
+            tensor = F.interpolate(tensor, scale_factor=upsampling_factor, mode="bilinear")
 
         if key in ["psf", "background", "flux"] and upsampling_factor:
             tensor = tensor / upsampling_factor**2

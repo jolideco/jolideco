@@ -42,7 +42,7 @@ class MAPDeconvolver:
         beta=1e-6,
         loss_function_prior=None,
         learning_rate=0.1,
-        upsampling_factor=None,
+        upsampling_factor=1,
         use_log_flux=True,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -74,6 +74,7 @@ class MAPDeconvolver:
             if isinstance(self.loss_function_prior, value):
                 data["loss_function_prior"] = key
 
+        data["device"] = str(self.device)
         data.pop("log")
         return data
 
@@ -110,6 +111,11 @@ class MAPDeconvolver:
 
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
+
+        flux_init = F.interpolate(
+            flux_init, scale_factor=self.upsampling_factor, mode="bilinear"
+        )
+
         flux_init = flux_init.to(self.device)
 
         datasets = [
@@ -185,17 +191,33 @@ class MAPDeconvolver:
         return MAPDeconvolverResult(
             config=self.to_dict(),
             flux=flux.numpy()[0][0],
+            flux_init=flux_init,
             trace_loss=trace_loss,
         )
 
 
 class MAPDeconvolverResult:
-    """MAP deconvolver result"""
+    """MAP deconvolver result
 
-    def __init__(self, config, flux, trace_loss):
+    Parameters
+    ----------
+    config : `dict`
+        Configuration from the `LIRADeconvolver`
+    flux : `~numpy.ndarray`
+        Flux array
+    flux_init : `~numpy.ndarray`
+        Flux init array
+    trace_loss : `~astropy.table.Table` or dict
+        Trace of the total loss.
+    wcs : `~astropy.wcs.WCS`
+        World coordinate transform object
+    """
+    def __init__(self, config, flux, flux_init, trace_loss, wcs=None):
         self.flux = flux
+        self.flux_init = flux_init
         self.trace_loss = trace_loss
         self._config = config
+        self._wcs = wcs
 
     @property
     def config(self):

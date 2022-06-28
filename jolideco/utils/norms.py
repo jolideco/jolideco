@@ -1,19 +1,22 @@
+import abc
 import torch
 from .torch import interp1d_torch
 
 __all__ = ["ImageNorm", "MaxImageNorm", "SigmoidImageNorm", "ATanImageNorm"]
 
 
-class ImageNorm:
+class ImageNorm(abc.ABC):
     """Image normalisation"""
 
-    def __init__(self):
-        pass
+    def __init__(self, vmin, vmax):
+        self.vmin = vmin
+        self.vmax = vmax
 
+    @abc.abstractmethod
     def __call__(self, image):
         pass
 
-    def plot(self,  ax=None, xrange=(0, 1), **kwargs):
+    def plot(self, ax=None, xrange=(0, 1), **kwargs):
         """Plot image norm transfer function
 
         Parameters
@@ -35,6 +38,8 @@ class ImageNorm:
 
         if isinstance(self, InverseCDFImageNorm):
             xrange = float(self.x[0]), float(self.x[-2])
+        else:
+            xrange = (0, 1)
 
         ax = plt.gca() if ax is None else ax
 
@@ -54,16 +59,12 @@ class ImageNorm:
 
 class MaxImageNorm(ImageNorm):
     """Max Image normalisation"""
-    tag = "max"
-
     def __call__(self, image):
         return image / image.max()
 
 
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
-    tag = "sigmoid"
-
     def __init__(self, alpha=1):
         self.alpha = torch.Tensor([alpha])
 
@@ -72,8 +73,7 @@ class SigmoidImageNorm(ImageNorm):
 
 
 class ATanImageNorm(ImageNorm):
-    """Max Image normalisation"""
-
+    """ATan image normalisation"""
     def __init__(self, alpha=1):
         self.alpha = torch.Tensor([alpha])
 
@@ -83,11 +83,11 @@ class ATanImageNorm(ImageNorm):
 
 class InverseCDFImageNorm(ImageNorm):
     """Inverse CDF image normalisation"""
-    tag = "inverse-cdf"
-
     def __init__(self, x, cdf):
         if not x.shape == cdf.shape:
-            raise ValueError(f"'x' and 'cdf' must have same shape, got {x.shape} and {cdf.shape}")
+            raise ValueError(
+                f"'x' and 'cdf' must have same shape, got {x.shape} and {cdf.shape}"
+            )
 
         self.x = x
         self.cdf = cdf
@@ -106,9 +106,17 @@ class InverseCDFImageNorm(ImageNorm):
     @classmethod
     def from_datasets(self):
         """"""
-        gaussian_filter(datasets_bg1[0]["counts"] / datasets_bg1[0]["exposure"], 1).astype(np.float32)
-
-
+        gaussian_filter(
+            datasets_bg1[0]["counts"] / datasets_bg1[0]["exposure"], 1
+        ).astype(np.float32)
 
     def __call__(self, image):
         return interp1d_torch(image, self.x, self.cdf)
+
+
+NORMS_REGISTRY = {
+    "max": MaxImageNorm,
+    "sigmoid": SigmoidImageNorm,
+    "atan": ATanImageNorm,
+    "inverse-cdf": InverseCDFImageNorm,
+}
