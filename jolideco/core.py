@@ -1,12 +1,16 @@
 import numpy as np
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import logging
+from pathlib import Path
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
+from .priors.core import Prior
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
+from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
 
 logging.basicConfig(level=logging.INFO)
 
@@ -206,3 +210,67 @@ class MAPDeconvolverResult:
 
         plot_trace_loss(ax=ax, trace_loss=self.trace_loss, **kwargs)
         return ax
+
+    @property
+    def config_table(self):
+        """Configuration data as table (`~astropy.table.Table`)"""
+        config = Table()
+
+        for key, value in self.config.items():
+            config[key] = [value]
+
+        return config
+
+    @property
+    def wcs(self):
+        """Optional wcs"""
+        return self._wcs
+
+    def write(self, filename, overwrite=False, format="fits"):
+        """Write result fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        overwrite : bool
+            Overwrite file.
+        format : {"fits"}
+            Format to use.
+        """
+        filename = Path(filename)
+
+        if format not in IO_FORMATS_WRITE:
+            raise ValueError(
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_WRITE)}"
+            )
+
+        writer = IO_FORMATS_WRITE[format]
+        writer(result=self, filename=filename, overwrite=overwrite)
+
+    @classmethod
+    def read(cls, filename, format="fits"):
+        """Write result fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {"fits"}
+            Format to use.
+
+        Returns
+        -------
+        result : `~MAPDeconvolverResult`
+            Result object
+        """
+        filename = Path(filename)
+
+        if format not in IO_FORMATS_READ:
+            raise ValueError(
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_READ)}"
+            )
+
+        reader = IO_FORMATS_READ[format]
+        kwargs = reader(filename=filename)
+        return cls(**kwargs)
