@@ -103,13 +103,6 @@ class InverseCDFImageNorm(ImageNorm):
         x_mean = (x[1:] + x[:-1]) / 2
         return cls(x=x_mean, cdf=cdf)
 
-    @classmethod
-    def from_datasets(self):
-        """"""
-        gaussian_filter(
-            datasets_bg1[0]["counts"] / datasets_bg1[0]["exposure"], 1
-        ).astype(np.float32)
-
     def __call__(self, image):
         return interp1d_torch(image, self.x, self.cdf)
 

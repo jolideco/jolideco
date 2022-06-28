@@ -2,7 +2,7 @@ from math import sqrt
 from astropy.utils import lazyproperty
 import torch
 from jolideco.utils.torch import view_as_overlapping_patches_torch
-from jolideco.utils.norms import MaxImageNorm, NORMS_REGISTRY
+from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
 

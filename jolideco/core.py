@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
-from .priors.core import Prior
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
 from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
 
