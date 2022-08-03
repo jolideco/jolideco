@@ -16,7 +16,7 @@ class ImageNorm(abc.ABC):
     def __call__(self, image):
         pass
 
-    def plot(self, ax=None, xrange=(0, 1), **kwargs):
+    def plot(self, ax=None, xrange=None, **kwargs):
         """Plot image norm transfer function
 
         Parameters
@@ -36,10 +36,11 @@ class ImageNorm(abc.ABC):
         """
         import matplotlib.pyplot as plt
 
-        if isinstance(self, InverseCDFImageNorm):
-            xrange = float(self.x[0]), float(self.x[-2])
-        else:
-            xrange = (0, 1)
+        if xrange is None:
+            if isinstance(self, InverseCDFImageNorm):
+                xrange = float(self.x[0]), float(self.x[-2])
+            else:
+                xrange = 0, 1
 
         ax = plt.gca() if ax is None else ax
 
