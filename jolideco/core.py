@@ -13,6 +13,8 @@ from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
 
 logging.basicConfig(level=logging.INFO)
 
+log = logging.getLogger(__name__)
+
 
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
@@ -55,7 +57,6 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.use_log_flux = use_log_flux
-        self.log = logging.getLogger(__name__)
         self.device = torch.device(device)
 
     def to_dict(self):
@@ -74,7 +75,6 @@ class MAPDeconvolver:
                 data["loss_function_prior"] = key
 
         data["device"] = str(self.device)
-        data.pop("log")
         return data
 
     def __str__(self):
@@ -173,7 +173,7 @@ class MAPDeconvolver:
             message = (
                 f"Epoch: {epoch}, {value_loss_total}, {value_loss}, {value_loss_prior}"
             )
-            self.log.info(message)
+            log.info(message)
 
             row = {
                 "total": value_loss_total,
