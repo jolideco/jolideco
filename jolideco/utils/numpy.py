@@ -1,7 +1,7 @@
 __all__ = ["view_as_overlapping_patches"]
 
 
-def view_as_overlapping_patches(image, shape):
+def view_as_overlapping_patches(image, shape, stride=None):
     """View as overlapping patches
 
     Parameters
@@ -20,7 +20,9 @@ def view_as_overlapping_patches(image, shape):
     """
     from skimage.util import view_as_windows
 
-    step = shape[0] // 2
-    patches = view_as_windows(image, shape, step=step)
+    if stride is None:
+        stride = shape[0] // 2
+
+    patches = view_as_windows(image, shape, step=stride)
     ncols = shape[0] * shape[1]
     return patches.reshape(-1, ncols)
