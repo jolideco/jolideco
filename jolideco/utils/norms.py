@@ -1,8 +1,9 @@
 import abc
 import torch
+import torch.nn as nn
 from .torch import interp1d_torch
 
-__all__ = ["ImageNorm", "MaxImageNorm", "SigmoidImageNorm", "ATanImageNorm"]
+__all__ = ["ImageNorm", "MaxImageNorm", "SigmoidImageNorm", "ATanImageNorm", "FixedMaxImageNorm"]
 
 
 class ImageNorm(abc.ABC):
@@ -59,9 +60,18 @@ class ImageNorm(abc.ABC):
 
 
 class MaxImageNorm(ImageNorm):
-    """Max Image normalisation"""
+    """Max image normalisation"""
     def __call__(self, image):
         return image / image.max()
+
+
+class FixedMaxImageNorm(ImageNorm):
+    """Fixed max image normalisation"""
+    def __init__(self, max_value):
+        self.max_value = max_value
+
+    def __call__(self, image):
+        return torch.clip(image / self.max_value, min=0, max=1)
 
 
 class SigmoidImageNorm(ImageNorm):
@@ -110,6 +120,7 @@ class InverseCDFImageNorm(ImageNorm):
 
 NORMS_REGISTRY = {
     "max": MaxImageNorm,
+    "fixed-max": FixedMaxImageNorm,
     "sigmoid": SigmoidImageNorm,
     "atan": ATanImageNorm,
     "inverse-cdf": InverseCDFImageNorm,
