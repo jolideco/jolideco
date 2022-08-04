@@ -40,7 +40,7 @@ class MAPDeconvolver:
     def __init__(
         self,
         n_epochs,
-        beta=1e-6,
+        beta=1,
         loss_function_prior=None,
         learning_rate=0.1,
         upsampling_factor=1,
@@ -142,6 +142,8 @@ class MAPDeconvolver:
 
         loss_function = nn.PoissonNLLLoss(log_input=False, reduction="sum", eps=1e-25)
 
+        prior_weight = len(datasets) * self.upsampling_factor ** 2
+
         for epoch in range(self.n_epochs):  # loop over the dataset multiple times
             value_loss_total = value_loss_prior = 0
 
@@ -160,7 +162,7 @@ class MAPDeconvolver:
 
                 loss = loss_function(npred, data["counts"])
                 loss_datasets.append(loss.item())
-                loss_prior = self.loss_function_prior(flux=npred_model.flux)
+                loss_prior = self.loss_function_prior(flux=npred_model.flux) / prior_weight
                 loss_total = loss - self.beta * loss_prior
 
                 value_loss_total += loss_total.item()
