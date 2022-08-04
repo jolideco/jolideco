@@ -25,9 +25,12 @@ class GaussianMixtureModel(nn.Module):
         Weights
     device : `~pytorch.Device`
         Pytorch device
+    stride : int
+        Stride of the patch. Will be used to compute a correction factor for overlapping patches.
+        Overlapping pixels are down-weighted, in the log-likelihood computation.
     """
 
-    def __init__(self, means, covariances, weights, device=TORCH_DEFAULT_DEVICE):
+    def __init__(self, means, covariances, weights, device=TORCH_DEFAULT_DEVICE, stride=None):
         super().__init__()
 
         # TODO: assert shapes
@@ -35,6 +38,14 @@ class GaussianMixtureModel(nn.Module):
         self.covariances = covariances
         self.weights = weights
         self.device = device
+        self.stride = stride
+
+    @lazyproperty
+    def patch_shape(self):
+        """Patch shape (tuple)"""
+        shape_mean = self.means.shape
+        npix = int((shape_mean[-1]) ** 0.5)
+        return npix, npix
 
     @lazyproperty
     def means_torch(self):
@@ -145,6 +156,21 @@ class GaussianMixtureModel(nn.Module):
             -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky
         )
 
+    @lazyproperty
+    def pixel_weights_torch(self):
+        """Pixel weights"""
+        weights = torch.ones(self.patch_shape)
+
+        if self.stride is None:
+            return weights.reshape((1,  -1))
+
+        width = (weights.shape[0] - self.stride) // 2
+        weights[:width] *= 0.5
+        weights[-width:] *= 0.5
+        weights[:, :width] *= 0.5
+        weights[:, -width:] *= 0.5
+        return weights.reshape((1,  -1))
+
     def estimate_log_prob_torch(self, x):
         """Compute log likelihood for given feature vector"""
         n_samples, n_features = x.shape
@@ -157,7 +183,7 @@ class GaussianMixtureModel(nn.Module):
 
         for k, (mu_prec, prec_chol) in enumerate(iterate):
             y = torch.matmul(x, prec_chol) - mu_prec
-            log_prob[:, k] = torch.sum(torch.square(y), axis=1)
+            log_prob[:, k] = torch.sum(torch.square(y) * self.pixel_weights_torch, axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
