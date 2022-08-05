@@ -142,10 +142,10 @@ class MAPDeconvolver:
         )
 
         loss_function = nn.PoissonNLLLoss(
-                log_input=False, reduction="sum", eps=1e-25, full=True
-            )
+            log_input=False, reduction="sum", eps=1e-25, full=True
+        )
 
-        prior_weight = len(datasets) * self.upsampling_factor ** 2
+        prior_weight = len(datasets) * self.upsampling_factor**2
 
         for epoch in range(self.n_epochs):  # loop over the dataset multiple times
             value_loss_total = value_loss_prior = 0
@@ -165,7 +165,9 @@ class MAPDeconvolver:
 
                 loss = loss_function(npred, data["counts"])
                 loss_datasets.append(loss.item())
-                loss_prior = self.loss_function_prior(flux=npred_model.flux) / prior_weight
+                loss_prior = (
+                    self.loss_function_prior(flux=npred_model.flux) / prior_weight
+                )
                 loss_total = loss - self.beta * loss_prior
 
                 value_loss_total += loss_total.item()
@@ -216,6 +218,7 @@ class MAPDeconvolverResult:
     wcs : `~astropy.wcs.WCS`
         World coordinate transform object
     """
+
     def __init__(self, config, flux_upsampled, flux_init, trace_loss, wcs=None):
         self._flux_upsampled = flux_upsampled
         self.flux_init = flux_init

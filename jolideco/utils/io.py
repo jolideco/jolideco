@@ -37,9 +37,7 @@ def write_to_fits(result, filename, overwrite):
 
     config_hdu = fits.BinTableHDU(result.config_table, name="CONFIG")
 
-    hdulist = fits.HDUList(
-        [primary_hdu, init_hdu, trace_hdu, config_hdu]
-    )
+    hdulist = fits.HDUList([primary_hdu, init_hdu, trace_hdu, config_hdu])
 
     hdulist.writeto(filename, overwrite=overwrite)
 

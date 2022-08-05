@@ -3,7 +3,13 @@ import torch
 import torch.nn as nn
 from .torch import interp1d_torch
 
-__all__ = ["ImageNorm", "MaxImageNorm", "SigmoidImageNorm", "ATanImageNorm", "FixedMaxImageNorm"]
+__all__ = [
+    "ImageNorm",
+    "MaxImageNorm",
+    "SigmoidImageNorm",
+    "ATanImageNorm",
+    "FixedMaxImageNorm",
+]
 
 
 class ImageNorm(abc.ABC):
@@ -61,12 +67,14 @@ class ImageNorm(abc.ABC):
 
 class MaxImageNorm(ImageNorm):
     """Max image normalisation"""
+
     def __call__(self, image):
         return image / image.max()
 
 
 class FixedMaxImageNorm(ImageNorm):
     """Fixed max image normalisation"""
+
     def __init__(self, max_value):
         self.max_value = max_value
 
@@ -76,6 +84,7 @@ class FixedMaxImageNorm(ImageNorm):
 
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
+
     def __init__(self, alpha=1):
         self.alpha = torch.Tensor([alpha])
 
@@ -85,6 +94,7 @@ class SigmoidImageNorm(ImageNorm):
 
 class ATanImageNorm(ImageNorm):
     """ATan image normalisation"""
+
     def __init__(self, alpha=1):
         self.alpha = torch.Tensor([alpha])
 
@@ -94,6 +104,7 @@ class ATanImageNorm(ImageNorm):
 
 class InverseCDFImageNorm(ImageNorm):
     """Inverse CDF image normalisation"""
+
     def __init__(self, x, cdf):
         if not x.shape == cdf.shape:
             raise ValueError(

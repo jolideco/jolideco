@@ -13,6 +13,7 @@ __all__ = [
 
 class Prior(nn.Module):
     """Prior base class"""
+
     pass
 
 
