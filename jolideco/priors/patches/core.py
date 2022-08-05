@@ -7,7 +7,7 @@ from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
 
-__all__ = ["GMMPatchPrior", "MultiScaleGMMPatchPrior"]
+__all__ = ["GMMPatchPrior", "MultiScalePrior"]
 
 
 def cycle_spin(image, patch_shape, generator):
@@ -104,25 +104,36 @@ class GMMPatchPrior(Prior):
         return torch.sum(max_loglike.values)
 
 
-class MultiScaleGMMPatchPrior(Prior):
-    """Multiscale patch prior
+class MultiScalePrior(Prior):
+    """Multiscale prior
+
+    Apply a given prior per resolution level and sum up the log likelihood contributions
+    across all resolution levels.
 
     Parameters
     ----------
-    patch_prior : `GMMPatchPrior`
-        Patch prior instance
+    prior : `Prior`
+        Prior instance
     n_levels : int, optional
         Number of multiscale levels
     """
 
-    def __init__(self, patch_prior, n_levels=2, weights=None, cycle_spin=True):
+    def __init__(self, prior, n_levels=2, weights=None, cycle_spin=False):
         super().__init__()
         self.n_levels = n_levels
 
-        if patch_prior.cycle_spin:
-            raise ValueError("Cycle spin on GMMPatchPrior must be false.")
+        if not isinstance(prior, GMMPatchPrior):
+            raise ValueError("Multi scale prior only supports `GMMPatchPrior`")
 
-        self.patch_prior = patch_prior
+        if prior.cycle_spin:
+            raise ValueError("`GMMPatchPrior.cycle_spin` must be false.")
+
+        self.cycle_spin = cycle_spin
+        self.prior = prior
+
+        if weights is None:
+            weights = [1 / n_levels] * n_levels
+
         self.weights = weights
 
     def __call__(self, flux):
@@ -143,13 +154,13 @@ class MultiScaleGMMPatchPrior(Prior):
         if self.cycle_spin:
             flux = cycle_spin(
                 image=flux,
-                patch_shape=self.patch_prior.patch_shape,
-                generator=self.patch_prior.generator,
+                patch_shape=self.prior.patch_shape,
+                generator=self.prior.generator,
             )
 
         for idx, weight in enumerate(self.weights):
             flux_downsampled = F.avg_pool2d(flux, kernel_size=2**idx)
-            log_like_level = self.patch_prior(flux=flux_downsampled)
-            log_like += weight * log_like_level
+            log_like_level = self.prior(flux=flux_downsampled)
+            log_like += (2**idx) ** 2 * weight * log_like_level
 
         return log_like
