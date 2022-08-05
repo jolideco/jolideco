@@ -1,6 +1,5 @@
 import abc
 import torch
-import torch.nn as nn
 from .torch import interp1d_torch
 
 __all__ = [
