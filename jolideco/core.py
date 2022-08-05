@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 import matplotlib.pyplot as plt
 from astropy.table import Table
+from astropy.nddata import block_reduce
 from .models import SimpleNPredModel
 from .priors import UniformPrior, PRIOR_REGISTRY
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
@@ -140,7 +141,9 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        loss_function = nn.PoissonNLLLoss(log_input=False, reduction="sum", eps=1e-25)
+        loss_function = nn.PoissonNLLLoss(
+                log_input=False, reduction="sum", eps=1e-25, full=True
+            )
 
         prior_weight = len(datasets) * self.upsampling_factor ** 2
 
@@ -191,7 +194,7 @@ class MAPDeconvolver:
 
         return MAPDeconvolverResult(
             config=self.to_dict(),
-            flux=flux.numpy()[0][0],
+            flux_upsampled=flux.numpy()[0][0],
             flux_init=flux_init,
             trace_loss=trace_loss,
         )
@@ -204,7 +207,7 @@ class MAPDeconvolverResult:
     ----------
     config : `dict`
         Configuration from the `LIRADeconvolver`
-    flux : `~numpy.ndarray`
+    flux_upsampled : `~numpy.ndarray`
         Flux array
     flux_init : `~numpy.ndarray`
         Flux init array
@@ -213,12 +216,23 @@ class MAPDeconvolverResult:
     wcs : `~astropy.wcs.WCS`
         World coordinate transform object
     """
-    def __init__(self, config, flux, flux_init, trace_loss, wcs=None):
-        self.flux = flux
+    def __init__(self, config, flux_upsampled, flux_init, trace_loss, wcs=None):
+        self._flux_upsampled = flux_upsampled
         self.flux_init = flux_init
         self.trace_loss = trace_loss
         self._config = config
         self._wcs = wcs
+
+    @property
+    def flux_upsampled(self):
+        """Usampled flux"""
+        return self._flux_upsampled
+
+    @property
+    def flux(self):
+        """Flux"""
+        block_size = self._config.get("upsampling_factor", 1)
+        return block_reduce(self._flux_upsampled, block_size=block_size)
 
     @property
     def config(self):

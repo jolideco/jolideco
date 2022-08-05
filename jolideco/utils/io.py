@@ -70,7 +70,7 @@ def read_from_fits(filename):
 
     return {
         "config": config,
-        "flux": flux,
+        "flux_upsampled": flux,
         "flux_init": flux_init,
         "trace_loss": trace_loss,
         "wcs": wcs,
