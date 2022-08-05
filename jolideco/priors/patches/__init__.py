@@ -1,7 +1,4 @@
-from .core import GMMPatchPrior
+from .core import GMMPatchPrior, MultiScaleGMMPatchPrior
 from .gmm import GaussianMixtureModel
 
-__all__ = [
-    "GaussianMixtureModel",
-    "GMMPatchPrior",
-]
+__all__ = ["GaussianMixtureModel", "GMMPatchPrior", "MultiScaleGMMPatchPrior"]
