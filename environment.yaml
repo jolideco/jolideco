@@ -1,0 +1,40 @@
+# Conda environment for Jolideco development
+#
+# Install:    conda env create -f environment-dev.yml
+# Update:     conda env update -f environment-dev.yml
+# Activate:   conda activate jolideco-dev
+# Deactivate: conda deactivate
+
+name: jolideco-dev
+
+channels:
+  - conda-forge
+
+variables:
+  PYTHONNOUSERSITE: "1"
+
+dependencies:
+  - python=3.9
+  - pip
+  - astropy
+  - pytorch
+  - scikit-learn
+  - scikit-image
+  - numpy
+  - matplotlib
+  - tox
+  - pytest
+  - pytest-astropy
+  - pytest-cov
+  - pytest-xdist
+  - ipython
+  - jupyter
+  - black
+  - codespell
+  - flake8
+  - isort
+  - sphinx
+  - sphinx-astropy
+  - sphinx-click
+  - pydata-sphinx-theme
+  - twine
