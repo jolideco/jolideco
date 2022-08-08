@@ -29,7 +29,6 @@ def get_pixel_weights(patch_shape, stride):
     return weights
 
 
-
 def view_as_overlapping_patches(image, shape, stride=None):
     """View as overlapping patches
 
@@ -57,7 +56,6 @@ def view_as_overlapping_patches(image, shape, stride=None):
     return patches.reshape(-1, ncols)
 
 
-
 def reconstruct_from_overlapping_patches(patches, image_shape, stride=None):
     """Reconstruct an image from overlapping patches.
 
@@ -75,7 +73,7 @@ def reconstruct_from_overlapping_patches(patches, image_shape, stride=None):
     -------
     image : `~numpy.ndarray`
         Image array
- 
+
     """
     if stride is None:
         stride = patches.shape[-1] // 2
@@ -83,14 +81,16 @@ def reconstruct_from_overlapping_patches(patches, image_shape, stride=None):
     image_height, image_width = image_shape
     patch_height, patch_width = patches.shape[1:]
     image = np.zeros(image_shape)
-    
+
     # compute the dimensions of the patches array
     n_h = image_height - patch_height + 1
     n_w = image_width - patch_width + 1
 
     weights = get_pixel_weights(patch_shape=patches.shape[1:], stride=stride)
-    
-    for patch, (i, j) in zip(patches, product(range(0, n_h, stride), range(0, n_w, stride))):
+
+    for patch, (i, j) in zip(
+        patches, product(range(0, n_h, stride), range(0, n_w, stride))
+    ):
         image[i : i + patch_height, j : j + patch_width] += weights * patch
 
     return image
