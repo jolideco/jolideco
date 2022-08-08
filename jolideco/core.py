@@ -232,6 +232,11 @@ class MAPDeconvolverResult:
         return self._flux_upsampled
 
     @property
+    def flux_upsampled_torch(self):
+        """Usampled flux as `torch.Tensor`"""
+        return torch.from_numpy(self._flux_upsampled[None, None])
+
+    @property
     def flux(self):
         """Flux"""
         block_size = self._config.get("upsampling_factor", 1)
