@@ -92,7 +92,8 @@ class GMMPatchPrior(Prior):
         reco = reconstruct_from_overlapping_patches(
             patches=patches, image_shape=flux.shape[2:], stride=self.stride
         )
-        return np.roll(reco, shift=-1 * np.array(shift), axis=(0, 1))
+        image = np.roll(reco, shift=-1 * np.array(shift), axis=(0, 1))
+        return self.norm.inverse(image=image)
 
     def prior_image_average(self, flux, n_average=100):
         """Compute an average patch image by averaging using cycle spinning.

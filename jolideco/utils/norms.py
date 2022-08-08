@@ -22,6 +22,9 @@ class ImageNorm(abc.ABC):
     def __call__(self, image):
         pass
 
+    def inverse(self, image):
+        raise NotImplementedError
+
     def plot(self, ax=None, xrange=None, **kwargs):
         """Plot image norm transfer function
 
@@ -70,6 +73,9 @@ class MaxImageNorm(ImageNorm):
     def __call__(self, image):
         return image / image.max()
 
+    def inverse(self, image):
+        return super().inverse(image)
+
 
 class FixedMaxImageNorm(ImageNorm):
     """Fixed max image normalisation"""
@@ -79,6 +85,10 @@ class FixedMaxImageNorm(ImageNorm):
 
     def __call__(self, image):
         return torch.clip(image / self.max_value, min=0, max=1)
+
+    def inverse(self, image):
+        """Inverse image norm"""
+        return image * self.max_value
 
 
 class SigmoidImageNorm(ImageNorm):
@@ -99,6 +109,10 @@ class ATanImageNorm(ImageNorm):
 
     def __call__(self, image):
         return 2 * torch.atan(image / self.alpha) / torch.pi
+
+    def inverse(self, image):
+        """Inverse image norm"""
+        return 0.5 * torch.pi * torch.tan(image)
 
 
 class InverseCDFImageNorm(ImageNorm):
