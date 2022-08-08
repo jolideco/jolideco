@@ -7,6 +7,7 @@ from scipy import linalg
 from astropy.utils import lazyproperty
 from astropy.table import Table
 from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
+from jolideco.utils.numpy import get_pixel_weights
 
 
 __all__ = ["GaussianMixtureModel"]
@@ -161,16 +162,17 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def pixel_weights_torch(self):
         """Pixel weights"""
-        weights = torch.ones(self.patch_shape)
+        return torch.from_numpy(self.pixel_weights)
+
+    @lazyproperty
+    def pixel_weights(self):
+        """Pixel weights"""
+        weights = np.ones(self.patch_shape)
 
         if self.stride is None:
             return weights.reshape((1, -1))
 
-        width = (weights.shape[0] - self.stride) // 2
-        weights[:width] *= 0.5
-        weights[-width:] *= 0.5
-        weights[:, :width] *= 0.5
-        weights[:, -width:] *= 0.5
+        weights = get_pixel_weights(patch_shape=self.patch_shape, stride=self.stride)
         return weights.reshape((1, -1))
 
     def estimate_log_prob_torch(self, x):
