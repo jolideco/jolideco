@@ -1,8 +1,10 @@
 from math import sqrt
+import numpy as np
 from astropy.utils import lazyproperty
+from astropy.convolution import Gaussian2DKernel
 import torch
 import torch.nn.functional as F
-from jolideco.utils.torch import view_as_overlapping_patches_torch
+from jolideco.utils.torch import view_as_overlapping_patches_torch, convolve_fft_torch
 from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
@@ -159,6 +161,10 @@ class MultiScalePrior(Prior):
             )
 
         for idx, weight in enumerate(self.weights):
+            if weight == 0:
+                continue
+            kernel = Gaussian2DKernel(2**idx).array[None, None]
+            flux = convolve_fft_torch(flux, torch.from_numpy(kernel.astype(np.float32)))
             flux_downsampled = F.avg_pool2d(flux, kernel_size=2**idx)
             log_like_level = self.prior(flux=flux_downsampled)
             log_like += (2**idx) ** 2 * weight * log_like_level
