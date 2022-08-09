@@ -195,6 +195,21 @@ class MultiScalePrior(Prior):
 
         self.weights = weights
 
+    @lazyproperty
+    def dowmsampling_kernels(self):
+        """Create downsampling kernels"""
+        kernels = []
+
+        for idx in range(self.n_levels):
+            # The factor is copied from skimage.transform.pyramid_gaussian
+            factor = 2 ** idx
+            sigma = 2 * factor / 6.0
+            kernel = Gaussian2DKernel(sigma).array[None, None]
+            kernel = torch.from_numpy(kernel.astype(np.float32))
+            kernels.append(kernel)
+
+        return kernels
+
     def __call__(self, flux):
         """Evaluate the prior
 
@@ -220,8 +235,9 @@ class MultiScalePrior(Prior):
         for idx, weight in enumerate(self.weights):
             if weight == 0:
                 continue
-            kernel = Gaussian2DKernel(2**idx).array[None, None]
-            flux = convolve_fft_torch(flux, torch.from_numpy(kernel.astype(np.float32)))
+
+            kernel = self.downsampling_kernels[idx]
+            flux = convolve_fft_torch(flux, kernel)
             flux_downsampled = F.avg_pool2d(flux, kernel_size=2**idx)
             log_like_level = self.prior(flux=flux_downsampled)
             log_like += (2**idx) ** 2 * weight * log_like_level
