@@ -93,7 +93,9 @@ class GMMPatchPrior(Prior):
             patches=patches, image_shape=flux.shape[2:], stride=self.stride
         )
         image = np.roll(reco, shift=-1 * np.array(shift), axis=(0, 1))
-        return self.norm.inverse(image=image)
+        image = torch.from_numpy(image)
+        scaled = self.norm.inverse(image=image)
+        return scaled.detach().numpy()
 
     def prior_image_average(self, flux, n_average=100):
         """Compute an average patch image by averaging using cycle spinning.
@@ -195,21 +197,6 @@ class MultiScalePrior(Prior):
 
         self.weights = weights
 
-    @lazyproperty
-    def dowmsampling_kernels(self):
-        """Create downsampling kernels"""
-        kernels = []
-
-        for idx in range(self.n_levels):
-            # The factor is copied from skimage.transform.pyramid_gaussian
-            factor = 2 ** idx
-            sigma = 2 * factor / 6.0
-            kernel = Gaussian2DKernel(sigma).array[None, None]
-            kernel = torch.from_numpy(kernel.astype(np.float32))
-            kernels.append(kernel)
-
-        return kernels
-
     def __call__(self, flux):
         """Evaluate the prior
 
@@ -226,7 +213,7 @@ class MultiScalePrior(Prior):
         log_like = 0
 
         if self.cycle_spin:
-            flux = cycle_spin(
+            flux, shifts = cycle_spin(
                 image=flux,
                 patch_shape=self.prior.patch_shape,
                 generator=self.prior.generator,
@@ -236,10 +223,14 @@ class MultiScalePrior(Prior):
             if weight == 0:
                 continue
 
-            kernel = self.downsampling_kernels[idx]
-            flux = convolve_fft_torch(flux, kernel)
-            flux_downsampled = F.avg_pool2d(flux, kernel_size=2**idx)
+            factor = 2 ** idx
+            sigma = 2 * factor / 6.0
+            kernel = Gaussian2DKernel(sigma).array[None, None]
+            kernel = torch.from_numpy(kernel.astype(np.float32))
+
+            flux = convolve_fft_torch(flux, kernel=kernel)
+            flux_downsampled = F.avg_pool2d(flux, kernel_size=factor)
             log_like_level = self.prior(flux=flux_downsampled)
-            log_like += (2**idx) ** 2 * weight * log_like_level
+            log_like += factor ** 2 * weight * log_like_level
 
         return log_like

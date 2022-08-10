@@ -1,5 +1,5 @@
 from .patches import GMMPatchPrior, GaussianMixtureModel, MultiScalePrior
-from .core import UniformPrior, ImagePrior, SmoothnessPrior
+from .core import UniformPrior, ImagePrior, SmoothnessPrior, PointSourcePrior
 from .lira import LIRAPrior
 
 PRIOR_REGISTRY = {
@@ -9,6 +9,7 @@ PRIOR_REGISTRY = {
     "multiscale-prior": MultiScalePrior,
     "smooth": SmoothnessPrior,
     "lira": LIRAPrior,
+    "point": PointSourcePrior,
 }
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "SmoothnessPrior",
     "ImagePrior",
     "LIRAPrior",
+    "PointSourcePrior",
 ]
