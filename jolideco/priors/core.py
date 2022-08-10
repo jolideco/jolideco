@@ -43,9 +43,9 @@ class UniformPrior(Prior):
 
 class PointSourcePrior(Prior):
     """Sparse prior for point sources
-    
+
     Defined by a product of inverse Gamma distributions. See e.g. [ref]_
-    
+
     .. [ref] https://doi.org/10.1051/0004-6361/201323006
 
 
@@ -57,7 +57,8 @@ class PointSourcePrior(Prior):
         Beta parameter
 
     """
-    def __init__(self, alpha, beta=3/2, n_sources=None):
+
+    def __init__(self, alpha, beta=3 / 2, n_sources=None):
         super().__init__()
         self.alpha = torch.tensor(alpha)
         self.beta = torch.tensor(beta)
@@ -76,7 +77,7 @@ class PointSourcePrior(Prior):
         value = self.alpha * torch.log(self.beta)
         value -= torch.lgamma(self.alpha)
         return value
-    
+
     def __call__(self, flux):
         """Evaluate the prior
 
@@ -90,15 +91,13 @@ class PointSourcePrior(Prior):
         log_prior ; `~torch.tensor`
             Log prior value.
         """
-        value = - self.beta / flux
-        value += (-self.alpha - 1) * torch.log(flux) 
+        value = -self.beta / flux
+        value += (-self.alpha - 1) * torch.log(flux)
         value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
 
         if self.n_sources:
             n_sources_actual = torch.sum(flux > 1)
-            value_sum -= self.n_sources_loss(
-                    self.n_sources, n_sources_actual 
-                )
+            value_sum -= self.n_sources_loss(self.n_sources, n_sources_actual)
 
         return value_sum
 

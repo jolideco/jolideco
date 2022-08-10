@@ -132,7 +132,7 @@ class MAPDeconvolver:
 
         flux_model = FluxComponent(
             flux_init=flux_init,
-            use_log_flux=self.use_log_flux,    
+            use_log_flux=self.use_log_flux,
         )
 
         npred_model = NPredModel(
@@ -171,7 +171,8 @@ class MAPDeconvolver:
                 loss_datasets.append(loss.item())
 
                 loss_prior = (
-                    self.loss_function_prior(flux=npred_model.components[0].flux) / prior_weight
+                    self.loss_function_prior(flux=npred_model.components[0].flux)
+                    / prior_weight
                 )
                 loss_total = loss - self.beta * loss_prior
 

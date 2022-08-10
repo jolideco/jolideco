@@ -223,7 +223,7 @@ class MultiScalePrior(Prior):
             if weight == 0:
                 continue
 
-            factor = 2 ** idx
+            factor = 2**idx
             sigma = 2 * factor / 6.0
             kernel = Gaussian2DKernel(sigma).array[None, None]
             kernel = torch.from_numpy(kernel.astype(np.float32))
@@ -231,6 +231,6 @@ class MultiScalePrior(Prior):
             flux = convolve_fft_torch(flux, kernel=kernel)
             flux_downsampled = F.avg_pool2d(flux, kernel_size=factor)
             log_like_level = self.prior(flux=flux_downsampled)
-            log_like += factor ** 2 * weight * log_like_level
+            log_like += factor**2 * weight * log_like_level
 
         return log_like

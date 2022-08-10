@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from .utils.torch import convolve_fft_torch
 
 
-
 class FluxComponent(nn.Module):
     """Flux component
 
@@ -37,7 +36,6 @@ class FluxComponent(nn.Module):
             return torch.exp(self._flux)
         else:
             return self._flux
-
 
 
 class NPredModel(nn.Module):
