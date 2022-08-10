@@ -90,6 +90,50 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
+    def flux_init_from_datasets(self, datasets):
+        """Compute flux init from datasets by averaging over the raw uncolvved flux estimate.
+        
+        Parameters
+        ----------
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+        
+        Returns
+        -------
+        flux_init : `~numpy.ndarray`
+            Initial flux estimate.
+        """
+        fluxes = []
+
+        for dataset in datasets:
+            flux = dataset["counts"] / dataset["exposure"] - dataset["background"]
+            fluxes.append(flux)
+
+        return np.nanmean(fluxes, axis=0)
+
+    def prepare_flux_init(self, flux_init):
+        """Prepare flux init
+        
+        Parameters
+        ----------
+        flux_init : `~numpy.ndarray`
+            Initial flux estimate.
+
+        Returns        
+        -------
+        flux_init : `~torch.Tensor`
+            Initial flux estimate.
+        """
+        # convert to pytorch tensors
+        flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
+
+        flux_init = F.interpolate(
+            flux_init, scale_factor=self.upsampling_factor, mode="bilinear"
+        )
+
+        flux_init = flux_init.to(self.device)
+        return flux_init
+
     def prepare_datasets(self, datasets):
         """Prepare datasets by upsampling
 
@@ -100,7 +144,7 @@ class MAPDeconvolver:
 
         Returns
         -------
-        datasets : list of dict
+        datasets_torch : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
 
         """
@@ -132,18 +176,9 @@ class MAPDeconvolver:
             Reconstructed flux.
         """
         if flux_init is None:
-            dataset = datasets[0]
-            flux_init = dataset["counts"] / dataset["exposure"] - dataset["background"]
+            flux_init = self.flux_init_from_datasets(datasets=datasets)
 
-        # convert to pytorch tensors
-        flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
-
-        flux_init = F.interpolate(
-            flux_init, scale_factor=self.upsampling_factor, mode="bilinear"
-        )
-
-        flux_init = flux_init.to(self.device)
-
+        flux_init = self.prepare_flux_init(flux_init=flux_init)
         datasets = self.prepare_datasets(datasets=datasets)
 
         names = ["total", "prior"]
