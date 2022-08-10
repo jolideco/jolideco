@@ -4,8 +4,9 @@ import torch.nn.functional as F
 from .utils.torch import convolve_fft_torch
 
 
-class SimpleNPredModel(nn.Module):
-    """Simple npred model
+
+class FluxComponent(nn.Module):
+    """Flux component
 
     Parameters
     ----------
@@ -13,12 +14,9 @@ class SimpleNPredModel(nn.Module):
         Initial flux tensor
     use_log_flux : bool
         Use log scaling for flux
-    upsampling_factor : None
-        Spatial upsampling factor for the flux
-
     """
 
-    def __init__(self, flux_init, use_log_flux=True, upsampling_factor=None):
+    def __init__(self, flux_init, use_log_flux=True):
         super().__init__()
 
         if use_log_flux:
@@ -26,7 +24,6 @@ class SimpleNPredModel(nn.Module):
 
         self._flux = nn.Parameter(flux_init)
         self._use_log_flux = use_log_flux
-        self.upsampling_factor = upsampling_factor
 
     @property
     def use_log_flux(self):
@@ -40,6 +37,25 @@ class SimpleNPredModel(nn.Module):
             return torch.exp(self._flux)
         else:
             return self._flux
+
+
+
+class NPredModel(nn.Module):
+    """Predicted counts model with mutiple components
+
+    Attributes
+    ----------
+    components : list of `FluxModel`
+        List of flux model components
+    upsampling_factor : None
+        Spatial upsampling factor for the flux
+
+    """
+
+    def __init__(self, components, upsampling_factor=None):
+        super().__init__()
+        self.components = nn.ModuleList(components)
+        self.upsampling_factor = upsampling_factor
 
     def forward(self, background, exposure, psf=None, rmf=None):
         """Forward folding model evaluation.
@@ -60,7 +76,12 @@ class SimpleNPredModel(nn.Module):
         npred : `~torch.Tensor`
             Predicted number of counts
         """
-        npred = (self.flux + background) * exposure
+        flux = torch.zeros(exposure.shape)
+
+        for component in self.components:
+            flux += component.flux
+
+        npred = (flux + background) * exposure
 
         if psf is not None:
             npred = convolve_fft_torch(npred, psf)

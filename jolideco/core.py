@@ -7,7 +7,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from astropy.nddata import block_reduce
-from .models import SimpleNPredModel
+from .models import NPredModel, FluxComponent
 from .priors import UniformPrior, PRIOR_REGISTRY
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
 from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
@@ -130,10 +130,14 @@ class MAPDeconvolver:
 
         trace_loss = Table(names=names)
 
-        npred_model = SimpleNPredModel(
+        flux_model = FluxComponent(
             flux_init=flux_init,
+            use_log_flux=self.use_log_flux,    
+        )
+
+        npred_model = NPredModel(
+            components=[flux_model],
             upsampling_factor=self.upsampling_factor,
-            use_log_flux=self.use_log_flux,
         ).to(self.device)
 
         optimizer = torch.optim.Adam(
@@ -165,8 +169,9 @@ class MAPDeconvolver:
 
                 loss = loss_function(npred, data["counts"])
                 loss_datasets.append(loss.item())
+
                 loss_prior = (
-                    self.loss_function_prior(flux=npred_model.flux) / prior_weight
+                    self.loss_function_prior(flux=npred_model.components[0].flux) / prior_weight
                 )
                 loss_total = loss - self.beta * loss_prior
 
@@ -192,7 +197,7 @@ class MAPDeconvolver:
 
             trace_loss.add_row(row)
 
-        flux = npred_model.flux.detach().cpu()
+        flux = npred_model.components[0].flux.detach().cpu()
 
         return MAPDeconvolverResult(
             config=self.to_dict(),
