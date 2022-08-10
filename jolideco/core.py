@@ -26,8 +26,8 @@ class MAPDeconvolver:
         Number of epochs to train
     beta : float
         Scale factor for the prior.
-    loss_function_prior : `~jolideco.priors.Prior`
-        Loss function for the prior (optional).
+    loss_functions_prior : dict of `~jolideco.priors.Prior`
+        Loss functions for the priors (optional).
     learning_rate : float
         Learning rate
     upsampling_factor : int
@@ -90,6 +90,32 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
+    def prepare_datasets(self, datasets):
+        """Prepare datasets by upsampling
+
+        Parameters
+        ----------
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+
+        Returns
+        -------
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+
+        """
+        datasets_torch = []
+
+        for dataset in datasets:
+            dataset_torch = dataset_to_torch(
+                dataset=dataset,
+                upsampling_factor=self.upsampling_factor,
+                device=self.device,
+            )
+            datasets_torch.append(dataset_torch)
+
+        return datasets_torch
+
     def run(self, datasets, flux_init=None):
         """Run the MAP deconvolver
 
@@ -118,12 +144,7 @@ class MAPDeconvolver:
 
         flux_init = flux_init.to(self.device)
 
-        datasets = [
-            dataset_to_torch(
-                _, upsampling_factor=self.upsampling_factor, device=self.device
-            )
-            for _ in datasets
-        ]
+        datasets = self.prepare_datasets(datasets=datasets)
 
         names = ["total", "prior"]
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
