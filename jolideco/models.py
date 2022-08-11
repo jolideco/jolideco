@@ -43,8 +43,8 @@ class NPredModel(nn.Module):
 
     Attributes
     ----------
-    components : list of `FluxModel`
-        List of flux model components
+    components : dict of `FluxModel`
+        Dict of flux model components
     upsampling_factor : None
         Spatial upsampling factor for the flux
 
@@ -52,8 +52,29 @@ class NPredModel(nn.Module):
 
     def __init__(self, components, upsampling_factor=None):
         super().__init__()
-        self.components = nn.ModuleList(components)
+        self.components = nn.ModuleDict(components)
         self.upsampling_factor = upsampling_factor
+
+    @property
+    def fluxes(self):
+        """Fluxes of the components"""
+        fluxes = {}
+
+        for name, component in self.components.items():
+            fluxes[name] = component.flux
+
+        return fluxes
+
+    @property
+    def fluxes_numpy(self):
+        """Fluxes of the components"""
+        fluxes = {}
+
+        for name, flux in self.fluxes.items():
+            flux_cpu = flux.detach().cpu()
+            fluxes[name] = flux_cpu.numpy()[0][0]
+
+        return fluxes
 
     def forward(self, background, exposure, psf=None, rmf=None):
         """Forward folding model evaluation.
@@ -76,7 +97,7 @@ class NPredModel(nn.Module):
         """
         flux = torch.zeros(exposure.shape)
 
-        for component in self.components:
+        for component in self.components.values():
             flux += component.flux
 
         npred = (flux + background) * exposure
