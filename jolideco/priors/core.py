@@ -6,6 +6,7 @@ from astropy.utils import lazyproperty
 
 __all__ = [
     "Prior",
+    "Priors",
     "UniformPrior",
     "ImagePrior",
     "SmoothnessPrior",
@@ -17,6 +18,30 @@ class Prior(nn.Module):
     """Prior base class"""
 
     pass
+
+
+class Priors(nn.ModuleDict):
+    """Dict of mutiple priors"""
+
+    def __call__(self, fluxes):
+        """Evaluate all priors
+
+        Parameters
+        ----------
+        fluxes : dict of `~torch.Tensor`
+            Dict of flux tensors
+
+        Returns
+        -------
+        log_prior : dict of `~torch.tensor`
+            Dict of log priors
+        """
+        values = {}
+
+        for name, flux in fluxes.items():
+            values[name] = self[name](flux=flux)
+
+        return values
 
 
 class UniformPrior(Prior):
@@ -97,7 +122,9 @@ class PointSourcePrior(Prior):
 
         if self.n_sources:
             n_sources_actual = torch.sum(flux > 1)
-            value_sum -= self.n_sources_loss(self.n_sources, n_sources_actual)
+            value_sum += flux.numel() * self.n_sources_loss(
+                self.n_sources, n_sources_actual
+            )
 
         return value_sum
 
