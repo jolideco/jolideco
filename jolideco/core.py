@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from astropy.table import Table
 from astropy.nddata import block_reduce
 from .models import NPredModel, FluxComponent
-from .priors import UniformPrior, PRIOR_REGISTRY
+from .priors import UniformPrior, Priors, PRIOR_REGISTRY
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
 from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
 
@@ -26,7 +26,7 @@ class MAPDeconvolver:
         Number of epochs to train
     beta : float
         Scale factor for the prior.
-    loss_functions_prior : dict of `~jolideco.priors.Prior`
+    loss_function_prior : `~jolideco.priors.Priors`
         Loss functions for the priors (optional).
     learning_rate : float
         Learning rate
@@ -37,6 +37,8 @@ class MAPDeconvolver:
     device : `~pytorch.Device`
         Pytorch device
     """
+
+    _default_flux_component = "flux"
 
     def __init__(
         self,
@@ -52,9 +54,13 @@ class MAPDeconvolver:
         self.beta = beta
 
         if loss_function_prior is None:
-            loss_function_prior = UniformPrior()
+            loss_function_prior = Priors()
+            loss_function_prior[self._default_flux_component] = UniformPrior()
 
-        self.loss_function_prior = loss_function_prior.to(device)
+        for prior in loss_function_prior.values():
+            prior.to(device=device)
+
+        self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.use_log_flux = use_log_flux
@@ -90,14 +96,14 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
-    def flux_init_from_datasets(self, datasets):
+    def fluxes_init_from_datasets(self, datasets):
         """Compute flux init from datasets by averaging over the raw uncolvved flux estimate.
-        
+
         Parameters
         ----------
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        
+
         Returns
         -------
         flux_init : `~numpy.ndarray`
@@ -113,13 +119,13 @@ class MAPDeconvolver:
 
     def prepare_flux_init(self, flux_init):
         """Prepare flux init
-        
+
         Parameters
         ----------
         flux_init : `~numpy.ndarray`
             Initial flux estimate.
 
-        Returns        
+        Returns
         -------
         flux_init : `~torch.Tensor`
             Initial flux estimate.
@@ -160,39 +166,44 @@ class MAPDeconvolver:
 
         return datasets_torch
 
-    def run(self, datasets, flux_init=None):
+    def run(self, datasets, fluxes_init=None):
         """Run the MAP deconvolver
 
         Parameters
         ----------
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        flux_init : `~numpy.ndarray`
-            Initial flux estimate.
+        fluxes_init : dict of `~numpy.ndarray`
+            Initial flux estimates.
 
         Returns
         -------
         flux : `~numpy.ndarray`
             Reconstructed flux.
         """
-        if flux_init is None:
-            flux_init = self.flux_init_from_datasets(datasets=datasets)
+        if fluxes_init is None:
+            fluxes_init = self.fluxes_init_from_datasets(datasets=datasets)
 
-        flux_init = self.prepare_flux_init(flux_init=flux_init)
+        components = {}
+
+        for name, flux_init in fluxes_init.items():
+            flux_init = self.prepare_flux_init(flux_init=flux_init)
+            flux_model = FluxComponent(
+                flux_init=flux_init,
+                use_log_flux=self.use_log_flux,
+            )
+            components[name] = flux_model
+
         datasets = self.prepare_datasets(datasets=datasets)
 
-        names = ["total", "prior"]
+        names = ["total"]
+        names += [f"prior-{name}" for name in self.loss_function_prior]
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
 
         trace_loss = Table(names=names)
 
-        flux_model = FluxComponent(
-            flux_init=flux_init,
-            use_log_flux=self.use_log_flux,
-        )
-
         npred_model = NPredModel(
-            components=[flux_model],
+            components=components,
             upsampling_factor=self.upsampling_factor,
         ).to(self.device)
 
@@ -207,38 +218,47 @@ class MAPDeconvolver:
 
         prior_weight = len(datasets) * self.upsampling_factor**2
 
-        for epoch in range(self.n_epochs):  # loop over the dataset multiple times
-            value_loss_total = value_loss_prior = 0
-
+        for epoch in range(self.n_epochs):
+            value_loss_total = 0
+            value_loss_prior = 0
             npred_model.train(True)
 
-            loss_datasets = []
+            loss_datasets, loss_priors = [], []
 
             for data in datasets:
                 optimizer.zero_grad()
 
+                # evaluate npred model
                 npred = npred_model(
                     exposure=data["exposure"],
                     background=data["background"],
                     psf=data.get("psf", None),
                 )
 
+                # compute Poisson loss
                 loss = loss_function(npred, data["counts"])
                 loss_datasets.append(loss.item())
 
-                loss_prior = (
-                    self.loss_function_prior(flux=npred_model.components[0].flux)
-                    / prior_weight
-                )
-                loss_total = loss - self.beta * loss_prior
+                # compute prior losses
+                loss_prior = self.loss_function_prior(fluxes=npred_model.fluxes)
+
+                loss_prior_total = 0
+
+                for name, value in loss_prior.items():
+                    value = value / prior_weight
+                    loss_prior_total += value
+                    loss_priors.append(value.item())
+
+                loss_total = loss - self.beta * loss_prior_total
 
                 value_loss_total += loss_total.item()
-                value_loss_prior += self.beta * loss_prior.item()
+                value_loss_prior += self.beta * loss_prior_total.item()
 
                 loss_total.backward()
                 optimizer.step()
 
             value_loss = value_loss_total + value_loss_prior
+
             message = (
                 f"Epoch: {epoch}, {value_loss_total}, {value_loss}, {value_loss_prior}"
             )
@@ -246,20 +266,20 @@ class MAPDeconvolver:
 
             row = {
                 "total": value_loss_total,
-                "prior": value_loss_prior,
             }
+
+            for name, value in zip(self.loss_function_prior, loss_priors):
+                row[f"prior-{name}"] = value
 
             for idx, value in enumerate(loss_datasets):
                 row[f"dataset-{idx}"] = value
 
             trace_loss.add_row(row)
 
-        flux = npred_model.components[0].flux.detach().cpu()
-
         return MAPDeconvolverResult(
             config=self.to_dict(),
-            flux_upsampled=flux.numpy()[0][0],
-            flux_init=flux_init,
+            fluxes_upsampled=npred_model.fluxes_numpy,
+            fluxes_init=fluxes_init,
             trace_loss=trace_loss,
         )
 
@@ -271,9 +291,9 @@ class MAPDeconvolverResult:
     ----------
     config : `dict`
         Configuration from the `LIRADeconvolver`
-    flux_upsampled : `~numpy.ndarray`
+    fluxes_upsampled : `~numpy.ndarray`
         Flux array
-    flux_init : `~numpy.ndarray`
+    fluxes_init : `~numpy.ndarray`
         Flux init array
     trace_loss : `~astropy.table.Table` or dict
         Trace of the total loss.
@@ -281,9 +301,9 @@ class MAPDeconvolverResult:
         World coordinate transform object
     """
 
-    def __init__(self, config, flux_upsampled, flux_init, trace_loss, wcs=None):
-        self._flux_upsampled = flux_upsampled
-        self.flux_init = flux_init
+    def __init__(self, config, fluxes_upsampled, fluxes_init, trace_loss, wcs=None):
+        self._fluxes_upsampled = fluxes_upsampled
+        self.fluxes_init = fluxes_init
         self.trace_loss = trace_loss
         self._config = config
         self._wcs = wcs
@@ -292,6 +312,11 @@ class MAPDeconvolverResult:
     def flux_upsampled(self):
         """Usampled flux"""
         return self._flux_upsampled
+
+    @property
+    def fluxes_upsampled(self):
+        """Usampled flux"""
+        return self._fluxes_upsampled
 
     @property
     def flux_upsampled_torch(self):
