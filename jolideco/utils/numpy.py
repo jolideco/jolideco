@@ -91,6 +91,8 @@ def reconstruct_from_overlapping_patches(patches, image_shape, stride=None):
     for patch, (i, j) in zip(
         patches, product(range(0, n_h, stride), range(0, n_w, stride))
     ):
-        image[i : i + patch_height, j : j + patch_width] += weights * patch  # noqa E203 and W503
+        image[i : i + patch_height, j : j + patch_width] += (  # noqa E203 and W503
+            weights * patch
+        )
 
     return image

@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from jolideco.utils.torch import convolve_fft_torch
+from jolideco.utils.torch import convolve_fft_torch, cycle_spin_subpixel
 from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
 
@@ -83,7 +83,9 @@ class PointSourcePrior(Prior):
 
     """
 
-    def __init__(self, alpha, beta=3 / 2, n_sources=None):
+    def __init__(
+        self, alpha, beta=3 / 2, n_sources=None, cycle_spin_subpix=False, generator=None
+    ):
         super().__init__()
         self.alpha = torch.tensor(alpha)
         self.beta = torch.tensor(beta)
@@ -95,6 +97,13 @@ class PointSourcePrior(Prior):
         self.n_sources_loss = nn.PoissonNLLLoss(
             log_input=False, reduction="sum", eps=1e-25, full=True
         )
+
+        self.cycle_spin_subpix = cycle_spin_subpix
+
+        if generator is None:
+            generator = torch.Generator()
+
+        self.generator = generator
 
     @lazyproperty
     def log_constant_term(self):
@@ -116,6 +125,9 @@ class PointSourcePrior(Prior):
         log_prior ; `~torch.tensor`
             Log prior value.
         """
+        if self.cycle_spin_subpix:
+            flux = cycle_spin_subpixel(image=flux, generator=self.generator)
+
         value = -self.beta / flux
         value += (-self.alpha - 1) * torch.log(flux)
         value_sum = torch.sum(value) + flux.numel() * self.log_constant_term

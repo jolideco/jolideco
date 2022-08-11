@@ -4,38 +4,17 @@ from astropy.utils import lazyproperty
 from astropy.convolution import Gaussian2DKernel
 import torch
 import torch.nn.functional as F
-from jolideco.utils.torch import view_as_overlapping_patches_torch, convolve_fft_torch
+from jolideco.utils.torch import (
+    view_as_overlapping_patches_torch,
+    convolve_fft_torch,
+    cycle_spin,
+)
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
 
 __all__ = ["GMMPatchPrior", "MultiScalePrior"]
-
-
-def cycle_spin(image, patch_shape, generator):
-    """Cycle spin
-
-    Parameters
-    ----------
-    image : `~pytorch.Tensor`
-        Image tensor
-    patch_shape : tuple of int
-        Patch shape
-    generator : `~torch.Generator`
-        Random number generator
-
-    Returns
-    -------
-    image, shifts: `~pytorch.Tensor`, tuple of `~pytorch.Tensor`
-        Shifted tensor
-    """
-    x_max, y_max = patch_shape
-    x_width, y_width = x_max // 4, y_max // 4
-    shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator)
-    shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator)
-    shifts = (int(shift_x), int(shift_y))
-    return torch.roll(image, shifts=shifts, dims=(2, 3)), shifts
 
 
 class GMMPatchPrior(Prior):
@@ -213,7 +192,7 @@ class MultiScalePrior(Prior):
         log_like = 0
 
         if self.cycle_spin:
-            flux, shifts = cycle_spin(
+            flux, _ = cycle_spin(
                 image=flux,
                 patch_shape=self.prior.patch_shape,
                 generator=self.prior.generator,

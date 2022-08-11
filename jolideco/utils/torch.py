@@ -8,9 +8,68 @@ __all__ = [
     "dataset_to_torch",
     "TORCH_DEFAULT_DEVICE",
     "interp1d_torch",
+    "grid_weights",
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
+
+
+def grid_weights(x, y, x0, y0):
+    """Compute 4-pixel weights such that centroid is preserved."""
+    dx = torch.abs(x - x0)
+    dx = torch.where(dx < 1, 1 - dx, 0)
+
+    dy = torch.abs(y - y0)
+    dy = torch.where(dy < 1, 1 - dy, 0)
+    return dx * dy
+
+
+def cycle_spin(image, patch_shape, generator):
+    """Cycle spin
+
+    Parameters
+    ----------
+    image : `~pytorch.Tensor`
+        Image tensor
+    patch_shape : tuple of int
+        Patch shape
+    generator : `~torch.Generator`
+        Random number generator
+
+    Returns
+    -------
+    image, shifts: `~pytorch.Tensor`, tuple of `~pytorch.Tensor`
+        Shifted tensor
+    """
+    x_max, y_max = patch_shape
+    x_width, y_width = x_max // 4, y_max // 4
+    shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator)
+    shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator)
+    shifts = (int(shift_x), int(shift_y))
+    return torch.roll(image, shifts=shifts, dims=(2, 3)), shifts
+
+
+def cycle_spin_subpixel(image, generator):
+    """Cycle spin
+
+    Parameters
+    ----------
+    image : `~pytorch.Tensor`
+        Image tensor
+    generator : `~torch.Generator`
+        Random number generator
+
+    Returns
+    -------
+    image: `~pytorch.Tensor`
+        Shifted tensor
+    """
+    y, x = torch.meshgrid(torch.arange(-1, 2), torch.arange(-1, 2))
+    x_0 = torch.rand(1, generator=generator) - 0.5
+    y_0 = torch.rand(1, generator=generator) - 0.5
+    kernel = grid_weights(x, y, x_0, y_0)
+    kernel = kernel.reshape((1, 1, 3, 3))
+    return F.conv2d(image, kernel)
 
 
 def interp1d_torch(x, xp, fp, **kwargs):
