@@ -20,24 +20,32 @@ def write_to_fits(result, filename, overwrite):
     else:
         header = None
 
-    primary_hdu = fits.PrimaryHDU(
-        header=header,
-        data=result.flux,
-    )
+    hdus = [fits.PrimaryHDU()]
 
-    init_hdu = fits.ImageHDU(
-        header=header,
-        data=result.flux_init,
-        name="FLUX_INIT",
-    )
+    for name, flux in result.fluxes_upsampled.items():
+        hdu = fits.ImageHDU(
+            header=header,
+            data=flux,
+            name=f"{name.upper()}",
+        )
+        hdus.append(hdu)
+
+    for name, flux in result.fluxes_init.items():
+        hdu = fits.ImageHDU(
+            header=header,
+            data=flux,
+            name=f"{name.upper()}_INIT",
+        )
 
     table = result.trace_loss.copy()
     table.meta = None
     trace_hdu = fits.BinTableHDU(table, name="TRACE_LOSS")
+    hdus.append(trace_hdu)
 
     config_hdu = fits.BinTableHDU(result.config_table, name="CONFIG")
+    hdus.append(config_hdu)
 
-    hdulist = fits.HDUList([primary_hdu, init_hdu, trace_hdu, config_hdu])
+    hdulist = fits.HDUList(hdus=hdus)
 
     hdulist.writeto(filename, overwrite=overwrite)
 
@@ -63,13 +71,21 @@ def read_from_fits(filename):
     config = dict(config_table[0])
 
     trace_loss = Table.read(hdulist["TRACE_LOSS"])
-    flux = hdulist["PRIMARY"].data
-    flux_init = hdulist["FLUX_INIT"].data
+
+    fluxes, fluxes_init = {}, {}
+
+    for hdu in hdulist:
+        if isinstance(hdu, fits.ImageHDU):
+            name = hdu.name.replace("_INIT", "").lower()
+            if "INIT" in hdu.name:
+                fluxes_init[name] = hdu.data
+            else:
+                fluxes[name] = hdu.data
 
     return {
         "config": config,
-        "flux_upsampled": flux,
-        "flux_init": flux_init,
+        "fluxes_upsampled": fluxes,
+        "fluxes_init": fluxes_init,
         "trace_loss": trace_loss,
         "wcs": wcs,
     }

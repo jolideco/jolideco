@@ -309,39 +309,62 @@ class MAPDeconvolverResult:
         self._wcs = wcs
 
     @property
-    def flux_upsampled(self):
-        """Usampled flux"""
-        return self._flux_upsampled
-
-    @property
     def fluxes_upsampled(self):
-        """Usampled flux"""
+        """Upsampled fluxes (`dict` of `~numpy.ndarray`)"""
         return self._fluxes_upsampled
 
     @property
-    def flux_upsampled_torch(self):
-        """Usampled flux as `torch.Tensor`"""
-        return torch.from_numpy(self._flux_upsampled[None, None])
+    def flux_upsampled_total(self):
+        """Usampled total flux"""
+        return np.sum([flux for flux in self.fluxes_upsampled.values()], axis=0)
 
     @property
-    def flux(self):
-        """Flux"""
+    def fluxes(self):
+        """Fluxes (`dict` of `~numpy.ndarray`)"""
+        fluxes = {}
         block_size = self._config.get("upsampling_factor", 1)
-        return block_reduce(self._flux_upsampled, block_size=block_size)
+
+        for name, flux in self.fluxes_upsampled.items():
+            fluxes[name] = block_reduce(flux, block_size=block_size)
+
+        return fluxes
+
+    @property
+    def flux_total(self):
+        """Usampled total flux"""
+        return np.sum([flux for flux in self.fluxes.values()], axis=0)
 
     @property
     def config(self):
         """Configuration data (`dict`)"""
         return self._config
 
-    def plot_trace_loss(self, ax=None, **kwargs):
-        """Plot traces"""
+    def plot_trace_loss(self, ax=None, which=None, **kwargs):
+        """Plot trace loss
+
+        Parameters
+        ----------
+        ax : `~matplotlib.pyplot.Axes`
+            Plot axes
+        which : list of str
+            Which traces to plot.
+
+        Returns
+        -------
+        ax : `~matplotlib.pyplot.Axes`
+            Plot axes
+        """
         from .utils.plot import plot_trace_loss
 
         ax = plt.gca() if ax is None else ax
 
-        plot_trace_loss(ax=ax, trace_loss=self.trace_loss, **kwargs)
+        plot_trace_loss(ax=ax, trace_loss=self.trace_loss, which=which, **kwargs)
         return ax
+
+    def plot_fluxes(self):
+        """Plot images of the flux components"""
+        axes = plt.subplots()
+        pass
 
     @property
     def config_table(self):
