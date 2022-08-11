@@ -7,10 +7,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from astropy.table import Table
 from astropy.nddata import block_reduce
+from astropy.utils import lazyproperty
+from astropy.visualization import simple_norm
 from .models import NPredModel, FluxComponent
 from .priors import UniformPrior, Priors, PRIOR_REGISTRY
 from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
 from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
+from .utils.plot import add_cbar
 
 logging.basicConfig(level=logging.INFO)
 
@@ -308,17 +311,17 @@ class MAPDeconvolverResult:
         self._config = config
         self._wcs = wcs
 
-    @property
+    @lazyproperty
     def fluxes_upsampled(self):
         """Upsampled fluxes (`dict` of `~numpy.ndarray`)"""
         return self._fluxes_upsampled
 
-    @property
+    @lazyproperty
     def flux_upsampled_total(self):
         """Usampled total flux"""
         return np.sum([flux for flux in self.fluxes_upsampled.values()], axis=0)
 
-    @property
+    @lazyproperty
     def fluxes(self):
         """Fluxes (`dict` of `~numpy.ndarray`)"""
         fluxes = {}
@@ -329,12 +332,12 @@ class MAPDeconvolverResult:
 
         return fluxes
 
-    @property
+    @lazyproperty
     def flux_total(self):
         """Usampled total flux"""
         return np.sum([flux for flux in self.fluxes.values()], axis=0)
 
-    @property
+    @lazyproperty
     def config(self):
         """Configuration data (`dict`)"""
         return self._config
@@ -361,10 +364,47 @@ class MAPDeconvolverResult:
         plot_trace_loss(ax=ax, trace_loss=self.trace_loss, which=which, **kwargs)
         return ax
 
-    def plot_fluxes(self):
-        """Plot images of the flux components"""
-        axes = plt.subplots()
-        pass
+    def plot_fluxes(self, figsize=None, **kwargs):
+        """Plot images of the flux components
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keywords forwared to `~matplotlib.pyplot.imshow`
+
+        Returns
+        -------
+        axes : list of `~matplotlib.pyplot.Axes`
+            Plot axes
+        """
+        ncols = len(self.fluxes) + 1
+
+        if figsize is None:
+            figsize = (ncols * 5, 5)
+
+        norm = simple_norm(
+            self.flux_upsampled_total, min_cut=0, stretch="asinh", asinh_a=0.01
+        )
+
+        kwargs.setdefault("norm", norm)
+
+        fig, axes = plt.subplots(
+            nrows=1,
+            ncols=ncols,
+            subplot_kw={"projection": self.wcs},
+            figsize=figsize,
+        )
+
+        im = axes[0].imshow(self.flux_upsampled_total, origin="lower", **kwargs)
+        axes[0].set_title("Total")
+
+        for ax, name in zip(axes[1:], self.fluxes_upsampled):
+            flux = self.fluxes_upsampled[name]
+            im = ax.imshow(flux, origin="lower", **kwargs)
+            ax.set_title(name.title())
+
+        add_cbar(im=im, ax=ax, fig=fig)
+        return axes
 
     @property
     def config_table(self):
