@@ -106,6 +106,16 @@ class PointSourcePrior(Prior):
         self.generator = generator
 
     @lazyproperty
+    def mean(self):
+        """Mean of the distribution"""
+        return self.beta / (self.alpha - 1)
+
+    @lazyproperty
+    def mode(self):
+        """Mean of the distribution"""
+        return self.beta / (self.alpha + 1)
+
+    @lazyproperty
     def log_constant_term(self):
         """Log constant term"""
         value = self.alpha * torch.log(self.beta)
