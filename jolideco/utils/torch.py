@@ -69,7 +69,7 @@ def cycle_spin_subpixel(image, generator):
     y_0 = torch.rand(1, generator=generator) - 0.5
     kernel = grid_weights(x, y, x_0, y_0)
     kernel = kernel.reshape((1, 1, 3, 3))
-    return F.conv2d(image, kernel)
+    return F.conv2d(image, kernel, padding="same")
 
 
 def interp1d_torch(x, xp, fp, **kwargs):
