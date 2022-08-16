@@ -169,7 +169,7 @@ class MAPDeconvolver:
 
         return datasets_torch
 
-    def run(self, datasets, fluxes_init=None):
+    def run(self, datasets, fluxes_init=None, freeze={}):
         """Run the MAP deconvolver
 
         Parameters
@@ -178,6 +178,8 @@ class MAPDeconvolver:
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
         fluxes_init : dict of `~numpy.ndarray`
             Initial flux estimates.
+        freeze : set
+            Components to freeze.
 
         Returns
         -------
@@ -210,8 +212,14 @@ class MAPDeconvolver:
             upsampling_factor=self.upsampling_factor,
         ).to(self.device)
 
+        parameters = list(self.loss_function_prior.parameters())
+
+        for name, component in npred_model.components.items():
+            if name not in freeze:
+                parameters += list(component.parameters())
+
         optimizer = torch.optim.Adam(
-            params=npred_model.parameters(),
+            params=parameters,
             lr=self.learning_rate,
         )
 
@@ -224,7 +232,6 @@ class MAPDeconvolver:
         for epoch in range(self.n_epochs):
             value_loss_total = 0
             value_loss_prior = 0
-            npred_model.train(True)
 
             loss_datasets, loss_priors = [], []
 
@@ -243,7 +250,9 @@ class MAPDeconvolver:
                 loss_datasets.append(loss.item())
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(fluxes=npred_model.fluxes)
+                loss_prior = self.loss_function_prior(
+                    fluxes=npred_model.fluxes,
+                )
 
                 loss_prior_total = 0
 
