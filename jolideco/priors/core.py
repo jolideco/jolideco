@@ -83,20 +83,10 @@ class PointSourcePrior(Prior):
 
     """
 
-    def __init__(
-        self, alpha, beta=3 / 2, n_sources=None, cycle_spin_subpix=False, generator=None
-    ):
+    def __init__(self, alpha, beta=3 / 2, cycle_spin_subpix=False, generator=None):
         super().__init__()
-        self.alpha = torch.tensor(alpha)
-        self.beta = torch.tensor(beta)
-
-        if n_sources:
-            n_sources = torch.tensor(n_sources)
-
-        self.n_sources = n_sources
-        self.n_sources_loss = nn.PoissonNLLLoss(
-            log_input=False, reduction="sum", eps=1e-25, full=True
-        )
+        self.alpha = nn.Parameter(torch.tensor([alpha]))
+        self.beta = torch.tensor([beta])
 
         self.cycle_spin_subpix = cycle_spin_subpix
 
@@ -120,7 +110,7 @@ class PointSourcePrior(Prior):
         """Log constant term"""
         value = self.alpha * torch.log(self.beta)
         value -= torch.lgamma(self.alpha)
-        return value
+        return float(value)
 
     def __call__(self, flux):
         """Evaluate the prior
@@ -141,13 +131,6 @@ class PointSourcePrior(Prior):
         value = -self.beta / flux
         value += (-self.alpha - 1) * torch.log(flux)
         value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
-
-        if self.n_sources:
-            n_sources_actual = torch.sum(flux > 1)
-            value_sum += flux.numel() * self.n_sources_loss(
-                self.n_sources, n_sources_actual
-            )
-
         return value_sum
 
 
