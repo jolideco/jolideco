@@ -197,7 +197,7 @@ class GaussianMixtureModel(nn.Module):
         return (
             -0.5 * (n_features * torch.log(two_pi) + log_prob)
             + self.log_det_cholesky_torch
-        )
+        ) * self.stride**2
 
     @classmethod
     def from_sklearn_gmm(cls, gmm):
@@ -216,7 +216,7 @@ class GaussianMixtureModel(nn.Module):
         ----------
         filename : str or Path
             Filename
-        format : {"epll-matlab", "table"}
+        format : {"epll-matlab", "epll-matlab-16x16", "table"}
             Format
         device : `~pytorch.Device`
             Pytorch device
@@ -231,6 +231,13 @@ class GaussianMixtureModel(nn.Module):
             gmm_data = gmm_dict["GS"]
 
             means = gmm_data["means"][0][0].T
+            covariances = gmm_data["covs"][0][0].T
+            weights = gmm_data["mixweights"][0][0][:, 0]
+        elif format == "epll-matlab-16x16":
+            gmm_dict = sio.loadmat(filename)
+            gmm_data = gmm_dict["GMM"]
+
+            means = np.zeros((200, 256))
             covariances = gmm_data["covs"][0][0].T
             weights = gmm_data["mixweights"][0][0][:, 0]
         elif format == "table":
