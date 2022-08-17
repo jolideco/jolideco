@@ -9,7 +9,7 @@ from jolideco.utils.torch import (
     convolve_fft_torch,
     cycle_spin,
 )
-from jolideco.utils.numpy import reconstruct_from_overlapping_patches, get_pixel_weights
+from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 

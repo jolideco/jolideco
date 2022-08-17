@@ -1,7 +1,5 @@
 import numpy as np
 from itertools import product
-from scipy.ndimage import convolve
-from astropy.modeling.models import Trapezoid1D
 
 
 __all__ = ["view_as_overlapping_patches"]
