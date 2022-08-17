@@ -34,15 +34,15 @@ class Priors(nn.ModuleDict):
 
         Returns
         -------
-        log_prior : dict of `~torch.tensor`
-            Dict of log priors
+        log_prior : `~torch.tensor`
+            Log prior value
         """
-        values = {}
+        value = 0
 
         for name, flux in fluxes.items():
-            values[name] = self[name](flux=flux)
+            value += self[name](flux=flux)
 
-        return values
+        return value
 
 
 class UniformPrior(Prior):

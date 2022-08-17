@@ -77,6 +77,10 @@ class MAPDeconvolver:
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
 
+        self.loss_function = nn.PoissonNLLLoss(
+            log_input=False, reduction="sum", eps=1e-25, full=True
+        )
+
     @property
     def freeze(self):
         """Model components to freeze"""
@@ -197,6 +201,67 @@ class MAPDeconvolver:
 
         return datasets_torch
 
+    def prepare_trace_loss_init(self, datasets):
+        """Prepare trace loss init
+
+        Parameters
+        ----------
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+
+
+        Returns
+        -------
+        tarce_loss : `~astropy.table.Table`
+            Trace loss table.
+        """
+        names = ["total", "datasets-total", "priors-total"]
+        names += [f"prior-{name}" for name in self.loss_function_prior]
+        names += [f"dataset-{idx}" for idx in range(len(datasets))]
+        return Table(names=names)
+
+    def get_trace_loss_row(self, datasets, npred_model):
+        """Append traceloss table"""
+
+        loss_datasets = []
+
+        for data in datasets:
+            npred = npred_model(
+                exposure=data["exposure"],
+                background=data["background"],
+                psf=data.get("psf", None),
+            )
+            loss = self.loss_function(npred, data["counts"])
+            loss_datasets.append(loss.item())
+
+        prior_weight = len(datasets) * self.upsampling_factor**2
+
+        loss_priors = []
+
+        for name, prior in self.loss_function_prior.items():
+            flux = npred_model.components[name].flux
+            value = prior(flux) / prior_weight
+            loss_priors.append(value.item())
+
+        loss_datasets_total = sum(loss_datasets)
+        loss_priors_total = sum(loss_priors)
+
+        loss_total = loss_datasets_total - self.beta * loss_priors_total
+
+        row = {
+            "total": loss_total,
+            "datasets-total": loss_datasets_total,
+            "priors-total": loss_priors_total,
+        }
+
+        for name, value in zip(self.loss_function_prior, loss_priors):
+            row[f"prior-{name}"] = value
+
+        for idx, value in enumerate(loss_datasets):
+            row[f"dataset-{idx}"] = value
+
+        return row
+
     def run(self, datasets, fluxes_init=None):
         """Run the MAP deconvolver
 
@@ -226,12 +291,7 @@ class MAPDeconvolver:
             components[name] = flux_model
 
         datasets = self.prepare_datasets(datasets=datasets)
-
-        names = ["total"]
-        names += [f"prior-{name}" for name in self.loss_function_prior]
-        names += [f"dataset-{idx}" for idx in range(len(datasets))]
-
-        trace_loss = Table(names=names)
+        trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 
         npred_model = NPredModel(
             components=components,
@@ -252,18 +312,9 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        loss_function = nn.PoissonNLLLoss(
-            log_input=False, reduction="sum", eps=1e-25, full=True
-        )
-
         prior_weight = len(datasets) * self.upsampling_factor**2
 
         for epoch in range(self.n_epochs):
-            value_loss_total = 0
-            value_loss_prior = 0
-
-            loss_datasets, loss_priors = [], []
-
             for data in datasets:
                 optimizer.zero_grad()
 
@@ -275,45 +326,20 @@ class MAPDeconvolver:
                 )
 
                 # compute Poisson loss
-                loss = loss_function(npred, data["counts"])
-                loss_datasets.append(loss.item())
+                loss = self.loss_function(npred, data["counts"])
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(
-                    fluxes=npred_model.fluxes,
-                )
+                loss_prior = self.loss_function_prior(fluxes=npred_model.fluxes)
 
-                loss_prior_total = 0
-
-                for name, value in loss_prior.items():
-                    value = value / prior_weight
-                    loss_prior_total += value
-                    loss_priors.append(value.item())
-
-                loss_total = loss - self.beta * loss_prior_total
-
-                value_loss_total += loss_total.item()
-                value_loss_prior += self.beta * loss_prior_total.item()
+                loss_total = loss - self.beta * loss_prior / prior_weight
 
                 loss_total.backward()
                 optimizer.step()
 
-            value_loss = value_loss_total + value_loss_prior
+            row = self.get_trace_loss_row(datasets=datasets, npred_model=npred_model)
 
-            message = (
-                f"Epoch: {epoch}, {value_loss_total}, {value_loss}, {value_loss_prior}"
-            )
+            message = f'Epoch: {epoch}, {row["total"]}, {row["datasets-total"]}, {row["priors-total"]}'
             log.info(message)
-
-            row = {
-                "total": value_loss_total,
-            }
-
-            for name, value in zip(self.loss_function_prior, loss_priors):
-                row[f"prior-{name}"] = value
-
-            for idx, value in enumerate(loss_datasets):
-                row[f"dataset-{idx}"] = value
 
             trace_loss.add_row(row)
 
