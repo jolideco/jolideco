@@ -54,6 +54,7 @@ class NPredModel(nn.Module):
         super().__init__()
         self.components = nn.ModuleDict(components)
         self.upsampling_factor = upsampling_factor
+        self.background_norm = nn.Parameter(torch.tensor([1.0]))
 
     @property
     def fluxes(self):
@@ -100,7 +101,7 @@ class NPredModel(nn.Module):
         for component in self.components.values():
             flux += component.flux
 
-        npred = (flux + background) * exposure
+        npred = (flux + self.background_norm * background) * exposure
 
         if psf is not None:
             npred = convolve_fft_torch(npred, psf)

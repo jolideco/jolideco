@@ -85,7 +85,7 @@ class PointSourcePrior(Prior):
 
     def __init__(self, alpha, beta=3 / 2, cycle_spin_subpix=False, generator=None):
         super().__init__()
-        self.alpha = nn.Parameter(torch.tensor([alpha]))
+        self.alpha = torch.tensor([alpha])
         self.beta = torch.tensor([beta])
 
         self.cycle_spin_subpix = cycle_spin_subpix

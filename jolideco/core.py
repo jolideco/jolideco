@@ -37,6 +37,10 @@ class MAPDeconvolver:
         Internal spatial upsampling factor for the reconstructed flux.
     use_log_flux : bool
         Use log scaling for flux
+    freeze : set
+        Components to freeze.
+    fit_background_norm : bool
+        Whether to fit background norm.
     device : `~pytorch.Device`
         Pytorch device
     """
@@ -51,6 +55,8 @@ class MAPDeconvolver:
         learning_rate=0.1,
         upsampling_factor=1,
         use_log_flux=True,
+        freeze={},
+        fit_background_norm=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
         self.n_epochs = n_epochs
@@ -67,7 +73,29 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.use_log_flux = use_log_flux
+        self.freeze = freeze
+        self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
+
+    @property
+    def freeze(self):
+        """Model components to freeze"""
+        return self._freeze
+
+    @freeze.setter
+    def freeze(self, value):
+        """Set model components to freeze"""
+        valid_names = set(self.loss_function_prior)
+
+        diff_names = set(value).difference(valid_names)
+
+        if diff_names:
+            raise ValueError(
+                f"Not a valid model component to freeze {diff_names}."
+                f"Choose from {valid_names}."
+            )
+
+        self._freeze = value
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -169,7 +197,7 @@ class MAPDeconvolver:
 
         return datasets_torch
 
-    def run(self, datasets, fluxes_init=None, freeze={}):
+    def run(self, datasets, fluxes_init=None):
         """Run the MAP deconvolver
 
         Parameters
@@ -178,8 +206,6 @@ class MAPDeconvolver:
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
         fluxes_init : dict of `~numpy.ndarray`
             Initial flux estimates.
-        freeze : set
-            Components to freeze.
 
         Returns
         -------
@@ -215,8 +241,11 @@ class MAPDeconvolver:
         parameters = list(self.loss_function_prior.parameters())
 
         for name, component in npred_model.components.items():
-            if name not in freeze:
+            if name not in self.freeze:
                 parameters += list(component.parameters())
+
+        if self.fit_background_norm:
+            parameters += [npred_model.background_norm]
 
         optimizer = torch.optim.Adam(
             params=parameters,
