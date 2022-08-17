@@ -10,10 +10,10 @@ __all__ = ["view_as_overlapping_patches"]
 def evaluate_trapez(x, width, slope):
     """One dimensional Trapezoid model function"""
     # Compute the four points where the trapezoid changes slope
-    x2 = min(- width / 2., 0)
-    x3 = max(width / 2., 0)
-    x1 = x2 - 1. / slope
-    x4 = x3 + 1. / slope
+    x2 = min(-width / 2.0, 0)
+    x3 = max(width / 2.0, 0)
+    x1 = x2 - 1.0 / slope
+    x4 = x3 + 1.0 / slope
 
     # Compute model values in pieces between the change points
     range_a = np.logical_and(x >= x1, x < x2)
@@ -40,19 +40,16 @@ def get_pixel_weights(patch_shape, stride):
         Weights array
     """
     width = np.max(patch_shape)
-    slope = 1. / (width - stride)
-    
-    value = (width - 1.) / 2
-    
-    x = np.linspace(-value, value, width)
-    
-    values = evaluate_trapez(
-        x=x, width=width, slope=slope
-    )
-    weights = values * values[:, np.newaxis]
-    weights = weights / weights.sum() * stride ** 2
-    return weights
+    overlap = width - stride
 
+    value = (width - 1.0) / 2
+
+    x = np.linspace(-value, value, width)
+
+    values = evaluate_trapez(x=x, width=(stride - overlap), slope=1.0 / overlap)
+    weights = values * values[:, np.newaxis]
+    weights = weights / weights.sum() * stride**2
+    return weights
 
 
 def view_as_overlapping_patches(image, shape, stride=None):

@@ -151,7 +151,7 @@ class GaussianMixtureModel(nn.Module):
 
         for k, (mu, prec_chol) in enumerate(zip(self.means, self.precisions_cholesky)):
             y = np.dot(x, prec_chol) - np.dot(mu, prec_chol)
-            log_prob[:, k] = np.sum(np.square(y), axis=1)
+            log_prob[:, k] = np.sum(np.square(y) * self.pixel_weights, axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`

@@ -9,7 +9,7 @@ from jolideco.utils.torch import (
     convolve_fft_torch,
     cycle_spin,
 )
-from jolideco.utils.numpy import reconstruct_from_overlapping_patches
+from jolideco.utils.numpy import reconstruct_from_overlapping_patches, get_pixel_weights
 from jolideco.utils.norms import MaxImageNorm
 from ..core import Prior
 
@@ -126,6 +126,11 @@ class GMMPatchPrior(Prior):
         loglike = self.gmm.estimate_log_prob_torch(patches)
         return loglike, mean, shifts
 
+    @lazyproperty
+    def log_like_weight(self):
+        """Log likelihood weight"""
+        return self.stride**2 / np.multiply(*self.patch_shape)
+
     def __call__(self, flux):
         """Evaluate the prior
 
@@ -141,7 +146,7 @@ class GMMPatchPrior(Prior):
         """
         loglike, _, _ = self._evaluate_log_like(flux=flux)
         max_loglike = torch.max(loglike, dim=1)
-        return torch.sum(max_loglike.values)
+        return torch.sum(max_loglike.values) * self.log_like_weight
 
 
 class MultiScalePrior(Prior):
