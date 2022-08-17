@@ -197,7 +197,7 @@ class GaussianMixtureModel(nn.Module):
         return (
             -0.5 * (n_features * torch.log(two_pi) + log_prob)
             + self.log_det_cholesky_torch
-        ) * self.stride**2
+        )
 
     @classmethod
     def from_sklearn_gmm(cls, gmm):
