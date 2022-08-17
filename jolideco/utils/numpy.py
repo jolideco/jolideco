@@ -1,8 +1,27 @@
 import numpy as np
 from itertools import product
+from scipy.ndimage import convolve
+from astropy.modeling.models import Trapezoid1D
 
 
 __all__ = ["view_as_overlapping_patches"]
+
+
+def evaluate_trapez(x, width, slope):
+    """One dimensional Trapezoid model function"""
+    # Compute the four points where the trapezoid changes slope
+    x2 = min(- width / 2., 0)
+    x3 = max(width / 2., 0)
+    x1 = x2 - 1. / slope
+    x4 = x3 + 1. / slope
+
+    # Compute model values in pieces between the change points
+    range_a = np.logical_and(x >= x1, x < x2)
+    range_b = np.logical_and(x >= x2, x < x3)
+    range_c = np.logical_and(x >= x3, x < x4)
+    val_a = slope * (x - x1)
+    val_c = slope * (x4 - x)
+    return np.select([range_a, range_b, range_c], [val_a, 1, val_c])
 
 
 def get_pixel_weights(patch_shape, stride):
@@ -13,20 +32,27 @@ def get_pixel_weights(patch_shape, stride):
     patch_shape : tuple of int
         Patch shape
     stride : int
-        Stride of the patches. By default it is half of the patch size.
+        Stride of the patches.
 
     Returns
     -------
     weights : `~numpy.ndarray`
         Weights array
     """
-    weights = np.ones(patch_shape)
-    width = (weights.shape[0] - stride) // 2
-    weights[:width] *= 0.5
-    weights[-width:] *= 0.5
-    weights[:, :width] *= 0.5
-    weights[:, -width:] *= 0.5
+    width = np.max(patch_shape)
+    slope = 1. / (width - stride)
+    
+    value = (width - 1.) / 2
+    
+    x = np.linspace(-value, value, width)
+    
+    values = evaluate_trapez(
+        x=x, width=width, slope=slope
+    )
+    weights = values * values[:, np.newaxis]
+    weights = weights / weights.sum() * stride ** 2
     return weights
+
 
 
 def view_as_overlapping_patches(image, shape, stride=None):
