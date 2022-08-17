@@ -3,7 +3,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.convolution import Gaussian2DKernel
 import torch
-from jolideco.models import SimpleNPredModel
+from jolideco.models import NPredModel, FluxComponent
 
 
 @pytest.fixture
@@ -52,7 +52,9 @@ def dataset_3d_rmf():
 def test_simple_npred_model(dataset):
     flux_init = torch.zeros(dataset["exposure"].shape)
     flux_init[0, 0, 10, 10] = 1
-    npred_model = SimpleNPredModel(flux_init=flux_init)
+
+    flux = FluxComponent(flux_init=flux_init)
+    npred_model = NPredModel(components={"flux": flux})
 
     npred = npred_model(**dataset)
 
@@ -64,7 +66,9 @@ def test_simple_npred_model(dataset):
 def test_simple_npred_model_3d(dataset_3d):
     flux_init = torch.zeros(dataset_3d["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
-    npred_model = SimpleNPredModel(flux_init=flux_init)
+
+    flux = FluxComponent(flux_init=flux_init)
+    npred_model = NPredModel(components={"flux": flux})
 
     npred = npred_model(**dataset_3d)
 
@@ -77,7 +81,9 @@ def test_simple_npred_model_3d(dataset_3d):
 def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     flux_init = torch.zeros(dataset_3d_rmf["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
-    npred_model = SimpleNPredModel(flux_init=flux_init)
+
+    flux = FluxComponent(flux_init=flux_init)
+    npred_model = NPredModel(components={"flux": flux})
 
     npred = npred_model(**dataset_3d_rmf)
 

@@ -28,7 +28,7 @@ class GaussianMixtureModel(nn.Module):
         Pytorch device
     stride : int
         Stride of the patch. Will be used to compute a correction factor for overlapping patches.
-        Overlapping pixels are down-weighted, in the log-likelihood computation.
+        Overlapping pixels are down-weighted in the log-likelihood computation.
     """
 
     def __init__(
@@ -83,7 +83,7 @@ class GaussianMixtureModel(nn.Module):
         """Plot images"""
         nrows = self.n_components // ncols
 
-        fig, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=figsize)
+        _, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=figsize)
 
         for idx, ax in enumerate(axes.flat):
             data = self.eigen_images[idx]

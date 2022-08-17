@@ -4,6 +4,9 @@ import torch.nn.functional as F
 from .utils.torch import convolve_fft_torch
 
 
+__all__ = ["FluxComponent", "NPredModel"]
+
+
 class FluxComponent(nn.Module):
     """Flux component
 
