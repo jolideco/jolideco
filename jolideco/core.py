@@ -111,12 +111,14 @@ class MAPDeconvolver:
         """
         data = {}
         data.update(self.__dict__)
+        data.pop("loss_function")
 
         for key, value in PRIOR_REGISTRY.items():
             if isinstance(self.loss_function_prior, value):
                 data["loss_function_prior"] = key
 
         data["device"] = str(self.device)
+        data["freeze"] = ",".join(data.pop("_freeze"))
         return data
 
     def __str__(self):
@@ -338,7 +340,10 @@ class MAPDeconvolver:
 
             row = self.get_trace_loss_row(datasets=datasets, npred_model=npred_model)
 
-            message = f'Epoch: {epoch}, {row["total"]}, {row["datasets-total"]}, {row["priors-total"]}'
+            message = (
+                f'Epoch: {epoch}, {row["total"]}, '
+                f'{row["datasets-total"]}, {row["priors-total"]}'
+            )
             log.info(message)
 
             trace_loss.add_row(row)
