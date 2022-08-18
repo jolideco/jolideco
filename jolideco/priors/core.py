@@ -10,7 +10,8 @@ __all__ = [
     "UniformPrior",
     "ImagePrior",
     "SmoothnessPrior",
-    "PointSourcePrior",
+    "InverseGammaPrior",
+    "ExponentialPrior",
 ]
 
 
@@ -66,7 +67,7 @@ class UniformPrior(Prior):
         return torch.tensor(0)
 
 
-class PointSourcePrior(Prior):
+class InverseGammaPrior(Prior):
     """Sparse prior for point sources
 
     Defined by a product of inverse Gamma distributions. See e.g. [ref]_
@@ -102,7 +103,7 @@ class PointSourcePrior(Prior):
 
     @lazyproperty
     def mode(self):
-        """Mean of the distribution"""
+        """Mode of the distribution"""
         return self.beta / (self.alpha + 1)
 
     @lazyproperty
@@ -132,6 +133,65 @@ class PointSourcePrior(Prior):
         value += (-self.alpha - 1) * torch.log(flux)
         value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
         return value_sum
+
+
+class ExponentialPrior(Prior):
+    """Sparse prior for point sources
+
+    Defined by a product of exponential distributions.
+
+    Parameters
+    ----------
+    alpha : float
+        Alpha parameter
+    """
+
+    def __init__(self, alpha, cycle_spin_subpix=False, generator=None):
+        super().__init__()
+        self.alpha = torch.tensor([alpha])
+
+        self.cycle_spin_subpix = cycle_spin_subpix
+
+        if generator is None:
+            generator = torch.Generator()
+
+        self.generator = generator
+
+    @lazyproperty
+    def mean(self):
+        """Mean of the distribution"""
+        return 1 / self.alpha
+
+    @lazyproperty
+    def mode(self):
+        """Mode of the distribution"""
+        return 0
+
+    @lazyproperty
+    def log_constant_term(self):
+        """Log constant term"""
+        return torch.log(self.alpha)
+
+    def __call__(self, flux):
+        """Evaluate the prior
+
+        Parameters
+        ----------
+        flux : `~pytorch.Tensor`
+            Reconstructed point source flux
+
+        Returns
+        -------
+        log_prior ; `~torch.tensor`
+            Log prior value.
+        """
+        if self.cycle_spin_subpix:
+            flux = cycle_spin_subpixel(image=flux, generator=self.generator)
+
+        value = - self.alpha * flux
+        value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
+        return value_sum
+
 
 
 class ImagePrior(Prior):
