@@ -74,7 +74,7 @@ class GaussianMixtureModel(nn.Module):
 
         for idx in range(self.n_components):
             w, v = linalg.eigh(self.covariances[idx])
-            data = (v @ w).reshape((8, 8))
+            data = (v @ w).reshape(self.patch_shape)
             eigen_images.append(data)
 
         return np.stack(eigen_images)

@@ -253,7 +253,7 @@ class MAPDeconvolver:
         row = {
             "total": loss_total,
             "datasets-total": loss_datasets_total,
-            "priors-total": loss_priors_total,
+            "priors-total": self.beta * loss_priors_total,
         }
 
         for name, value in zip(self.loss_function_prior, loss_priors):
