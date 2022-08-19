@@ -6,6 +6,7 @@ import torch
 import torch.nn.functional as F
 from jolideco.utils.torch import (
     view_as_overlapping_patches_torch,
+    view_as_windows_torch,
     convolve_fft_torch,
     cycle_spin,
 )
@@ -30,9 +31,13 @@ class GMMPatchPrior(Prior):
         Apply cycle spin.
     generator : `~torch.Generator`
         Random number generator
+    jitter : bool
+        Jitter patch positions.
     """
 
-    def __init__(self, gmm, stride=None, cycle_spin=True, generator=None, norm=None):
+    def __init__(
+        self, gmm, stride=None, cycle_spin=True, generator=None, norm=None, jitter=False
+    ):
         super().__init__()
 
         self.gmm = gmm
@@ -48,6 +53,7 @@ class GMMPatchPrior(Prior):
             norm = MaxImageNorm()
 
         self.norm = norm
+        self.jitter = jitter
 
     def prior_image(self, flux):
         """Compute a patch image from the eigenimages of the best fittign patches.
@@ -101,6 +107,11 @@ class GMMPatchPrior(Prior):
         return np.mean(images, axis=0)
 
     @lazyproperty
+    def overlap(self):
+        """Patch overlap"""
+        return max(self.patch_shape) - self.stride
+
+    @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
         shape_mean = self.gmm.means.shape
@@ -117,9 +128,24 @@ class GMMPatchPrior(Prior):
         else:
             shifts = (0, 0)
 
-        patches = view_as_overlapping_patches_torch(
-            image=normed, shape=self.patch_shape, stride=self.stride
-        )
+        if self.jitter:
+            ny, nx = flux.shape
+            idx = torch.arange(self.overlap, nx - self.stride, self.stride)
+            idy = torch.arange(self.overlap, ny - self.stride, self.stride)
+            idy, idx = torch.meshgrid(idy, idx)
+
+            patches = view_as_windows_torch(
+                image=normed, shape=self.patch_shape, stride=1
+            )
+
+            patches = patches[:, :, idy, idx]
+            size = np.mulitply(*self.patch_shape)
+            n_patches = np.mulitply(*idx.shape)
+            patches = torch.reshape(patches, (n_patches, size))
+        else:
+            patches = view_as_overlapping_patches_torch(
+                image=normed, shape=self.patch_shape, stride=self.stride
+            )
 
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean

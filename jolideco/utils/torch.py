@@ -5,7 +5,7 @@ import torch.nn.functional as F
 __all__ = [
     "convolve_fft_torch",
     "view_as_overlapping_patches_torch",
-    "view_as_windows",
+    "view_as_windows_torch",
     "dataset_to_torch",
     "TORCH_DEFAULT_DEVICE",
     "interp1d_torch",
@@ -101,7 +101,7 @@ def interp1d_torch(x, xp, fp, **kwargs):
 
 def view_as_windows_torch(image, shape, stride):
     """View tensor as overlapping rectangular windows
-    
+
     Parameters
     ----------
     image : `~torch.Tensor`
@@ -115,13 +115,13 @@ def view_as_windows_torch(image, shape, stride):
     -------
     windows : `~torch.Tensor`
         Tensor of overlapping windows
-    
+
     """
     if stride is None:
         stride = shape[0] // 2
 
     windows = image.unfold(2, shape[0], stride)
-    return windows.unfold(3, shape[0], stride)       
+    return windows.unfold(3, shape[0], stride)
 
 
 def view_as_overlapping_patches_torch(image, shape, stride=None):
