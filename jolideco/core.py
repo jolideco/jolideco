@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
 
-    Parameters
+    Attributes
     ----------
     n_epochs : int
         Number of epochs to train

@@ -100,13 +100,17 @@ class InverseGammaPrior(Prior):
         concrete_expand_log(log_like)
 
 
-    Parameters
+    Attributes
     ----------
     alpha : float
         Alpha parameter
     beta : float
         Beta parameter
-
+    cycle_spin_subpix : bool
+        Subpixel cycle spin.
+    generator : `~torch.Generator`
+        Random number generator
+    
     """
 
     def __init__(self, alpha, beta=3 / 2, cycle_spin_subpix=False, generator=None):
@@ -169,7 +173,7 @@ class ExponentialPrior(Prior):
 
     .. code::
 
-        from sympy import Symbol, Indexed, gamma, exp, Product, log
+        from sympy import Symbol, Indexed, exp, Product, log
         from jolideco.utils.sympy import concrete_expand_log
 
         alpha = Symbol("alpha")
@@ -188,10 +192,15 @@ class ExponentialPrior(Prior):
         concrete_expand_log(log_like)
 
 
-    Parameters
+    Attributes
     ----------
     alpha : float
         Alpha parameter
+    cycle_spin_subpix : bool
+        Subpixel cycle spin.
+    generator : `~torch.Generator`
+        Random number generator
+        
     """
 
     def __init__(self, alpha, cycle_spin_subpix=False, generator=None):
