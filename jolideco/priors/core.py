@@ -110,7 +110,7 @@ class InverseGammaPrior(Prior):
         Subpixel cycle spin.
     generator : `~torch.Generator`
         Random number generator
-    
+
     """
 
     def __init__(self, alpha, beta=3 / 2, cycle_spin_subpix=False, generator=None):
@@ -200,7 +200,7 @@ class ExponentialPrior(Prior):
         Subpixel cycle spin.
     generator : `~torch.Generator`
         Random number generator
-        
+
     """
 
     def __init__(self, alpha, cycle_spin_subpix=False, generator=None):

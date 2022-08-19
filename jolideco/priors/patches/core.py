@@ -167,11 +167,8 @@ class MultiScalePrior(Prior):
         super().__init__()
         self.n_levels = n_levels
 
-        if not isinstance(prior, GMMPatchPrior):
-            raise ValueError("Multi scale prior only supports `GMMPatchPrior`")
-
-        if prior.cycle_spin:
-            raise ValueError("`GMMPatchPrior.cycle_spin` must be false.")
+        #        if not isinstance(prior, GMMPatchPrior):
+        #            raise ValueError("Multi scale prior only supports `GMMPatchPrior`")
 
         self.cycle_spin = cycle_spin
         self.prior = prior
