@@ -1,8 +1,21 @@
-__all__ = ["expand_log"]
+__all__ = ["concrete_expand_log"]
 
 
-def expand_log(expr, first_call=True):
-    """Expand log explcitely"""
+def concrete_expand_log(expr, first_call=True):
+    """Expand log explcitely
+    
+    Parameters
+    ----------
+    expr :  `~sympy.log`
+        Sympy expression
+    first_call : bool
+        First call
+
+    Returns
+    -------
+    expr : `~sympy.Sum`
+        Expanded sum
+    """
     import sympy as sp
 
     if first_call:
@@ -21,4 +34,4 @@ def expand_log(expr, first_call=True):
             indices = Prod.args[1:]
             return sp.Sum(sp.log(term), *indices)
 
-    return func(*map(lambda x: expand_log(x, False), args))
+    return func(*map(lambda x: concrete_expand_log(x, False), args))

@@ -75,6 +75,31 @@ class InverseGammaPrior(Prior):
     .. [ref] https://doi.org/10.1051/0004-6361/201323006
 
 
+    To reproduce:
+
+    .. code::
+
+        from sympy import Symbol, Indexed, gamma, exp, Product, log
+        from jolideco.utils.sympy import concrete_expand_log
+
+        alpha = Symbol("alpha")
+        beta = Symbol("beta")
+
+        N = Symbol("N", integer=True, positive=True)
+        i = Symbol("i", integer=True, positive=True)
+
+        x = Indexed('x', i)
+
+        inverse_gamma = beta ** alpha / gamma(alpha) * x ** (-alpha - 1) * exp(-beta / x)
+        inverse_gamma
+
+        like = Product(inverse_gamma, (i, 1, N))
+
+        log_like = log(like)
+
+        concrete_expand_log(log_like)
+
+
     Parameters
     ----------
     alpha : float
@@ -139,6 +164,29 @@ class ExponentialPrior(Prior):
     """Sparse prior for point sources
 
     Defined by a product of exponential distributions.
+
+    To reproduce:
+    
+    .. code::
+
+        from sympy import Symbol, Indexed, gamma, exp, Product, log
+        from jolideco.utils.sympy import concrete_expand_log
+
+        alpha = Symbol("alpha")
+
+        N = Symbol("N", integer=True, positive=True)
+        i = Symbol("i", integer=True, positive=True)
+
+        x = Indexed('x', i)
+
+        exponential = alpha * exp(-x * alpha)
+
+        like = Product(exponential, (i, 1, N))
+
+        log_like = log(like)
+
+        concrete_expand_log(log_like)
+
 
     Parameters
     ----------
