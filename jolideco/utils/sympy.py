@@ -3,7 +3,7 @@ __all__ = ["concrete_expand_log"]
 
 def concrete_expand_log(expr, first_call=True):
     """Expand log explcitely
-    
+
     Parameters
     ----------
     expr :  `~sympy.log`

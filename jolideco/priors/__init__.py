@@ -5,8 +5,7 @@ from .core import (
     ImagePrior,
     SmoothnessPrior,
     InverseGammaPrior,
-    ExponentialPrior,
-    Priors
+    Priors,
 )
 from .lira import LIRAPrior
 

@@ -166,7 +166,7 @@ class ExponentialPrior(Prior):
     Defined by a product of exponential distributions.
 
     To reproduce:
-    
+
     .. code::
 
         from sympy import Symbol, Indexed, gamma, exp, Product, log
@@ -236,10 +236,9 @@ class ExponentialPrior(Prior):
         if self.cycle_spin_subpix:
             flux = cycle_spin_subpixel(image=flux, generator=self.generator)
 
-        value = - self.alpha * flux
+        value = -self.alpha * flux
         value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
         return value_sum
-
 
 
 class ImagePrior(Prior):
