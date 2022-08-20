@@ -6,7 +6,7 @@ import torch
 import torch.nn.functional as F
 from jolideco.utils.torch import (
     view_as_overlapping_patches_torch,
-    view_as_windows_torch,
+    view_as_random_overlapping_patches_torch,
     convolve_fft_torch,
     cycle_spin,
 )
@@ -31,6 +31,8 @@ class GMMPatchPrior(Prior):
         Apply cycle spin.
     generator : `~torch.Generator`
         Random number generator
+    norm : `~jolideco.utils.ImageNorm`
+        Image normalisation applied before the GMM patch prior.
     jitter : bool
         Jitter patch positions.
     """
@@ -129,19 +131,10 @@ class GMMPatchPrior(Prior):
             shifts = (0, 0)
 
         if self.jitter:
-            ny, nx = flux.shape
-            idx = torch.arange(self.overlap, nx - self.stride, self.stride)
-            idy = torch.arange(self.overlap, ny - self.stride, self.stride)
-            idy, idx = torch.meshgrid(idy, idx)
-
-            patches = view_as_windows_torch(
-                image=normed, shape=self.patch_shape, stride=1
+            patches = view_as_random_overlapping_patches_torch(
+                image=normed, shape=self.patch_shape, stride=self.stride,
+                generator=self.generator,
             )
-
-            patches = patches[:, :, idy, idx]
-            size = np.mulitply(*self.patch_shape)
-            n_patches = np.mulitply(*idx.shape)
-            patches = torch.reshape(patches, (n_patches, size))
         else:
             patches = view_as_overlapping_patches_torch(
                 image=normed, shape=self.patch_shape, stride=self.stride

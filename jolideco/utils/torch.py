@@ -151,6 +151,58 @@ def view_as_overlapping_patches_torch(image, shape, stride=None):
     return torch.reshape(patches, (-1, ncols))
 
 
+def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
+    """View tensor as randomly ("jittered") overlapping rectangular patches
+
+    Parameters
+    ----------
+    image : `~torch.Tensor`
+        Image tensor
+    shape : tuple
+        Shape of the patches.
+    stride : int
+        Stride of the patches. By default it is half of the patch size.
+    generator : `~torch.Generator`
+        Random number generator
+
+    Returns
+    -------
+    patches : `~torch.Tensor`
+        Tensor of overlapping patches of shape
+        (n_patches, patch_shape_flat)
+
+    """
+    overlap = max(shape) - stride
+    ny, nx = image.shape
+    idx = torch.arange(overlap, nx - stride, stride)
+    idy = torch.arange(overlap, ny - stride, stride)
+    
+    size = (len(idx))
+    jitter_x = torch.randint(
+        low=-overlap, high=overlap + 1, size=size, generator=generator
+    )
+    
+    jitter_y = torch.randint(
+        low=-overlap, high=overlap + 1, size=size, generator=generator
+    )
+
+    idx += jitter_x
+    idy += jitter_y
+
+    idy, idx = torch.meshgrid(idy, idx)
+
+    patches = view_as_windows_torch(
+        image=image, shape=shape, stride=1
+    )
+
+    patches = patches[:, :, idy, idx]
+    size = np.mulitply(*shape)
+    n_patches = np.mulitply(*idx.shape)
+    patches = torch.reshape(patches, (n_patches, size))
+    return patches
+
+
+
 def _centered(arr, newshape):
     # Return the center newshape portion of the array.
     newshape = torch.tensor(newshape)
