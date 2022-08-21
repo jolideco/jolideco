@@ -249,3 +249,41 @@ class GaussianMixtureModel(nn.Module):
             raise ValueError(f"Not a supported format {format}")
 
         return cls(means=means, covariances=covariances, weights=weights, device=device)
+
+    @lazyproperty
+    def covariance_det(self):
+        """Covariance determinant"""
+        covar = self.covariances[0]
+        return np.linalg.det(covar)
+
+    def kl_divergence(self, other):
+        """Compute KL divergence with respect to another GMM"
+
+        See https://mr-easy.github.io/2020-04-16-kl-divergence-between-2-gaussian-distributions/
+
+        Parameters
+        ----------
+        other : `~GaussianMixtureModel`
+            Other GMM
+
+        Returns
+        -------
+        value : float
+            KL divergence
+        """
+        if not (self.n_components == 1 and other.n_components == 1):
+            raise ValueError(
+                "KL divergence can onlyy be computed for single component GMM"
+            )
+
+        k = self.means.shape[1]
+
+        diff = self.means[0] - other.means[0]
+        term_mean = diff.T @ other.precisons_cholesky[0] @ diff
+        term_trace = np.trace(other.precisions_cholesky[0] * self.covariances[0])
+        term_log = np.log(other.covariance_det / self.covariance_det)
+        return 0.5 * (term_log - k + term_mean + term_trace)
+
+    def symmetric_kl_divergence(self, other):
+        """Symmetric KL divergence"""
+        return other.kl_divergence(other=self) + self.kl_divergence(other=other)

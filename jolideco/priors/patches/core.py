@@ -132,7 +132,9 @@ class GMMPatchPrior(Prior):
 
         if self.jitter:
             patches = view_as_random_overlapping_patches_torch(
-                image=normed, shape=self.patch_shape, stride=self.stride,
+                image=normed,
+                shape=self.patch_shape,
+                stride=self.stride,
                 generator=self.generator,
             )
         else:

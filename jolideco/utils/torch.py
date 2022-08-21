@@ -176,12 +176,12 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
     _, _, ny, nx = image.shape
     idx = torch.arange(overlap, nx - stride, stride)
     idy = torch.arange(overlap, ny - stride, stride)
-    
+
     size = (len(idx),)
     jitter_x = torch.randint(
         low=-overlap, high=overlap + 1, size=size, generator=generator
     )
-    
+
     jitter_y = torch.randint(
         low=-overlap, high=overlap + 1, size=size, generator=generator
     )
@@ -191,16 +191,13 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
 
     idy, idx = torch.meshgrid(idy, idx)
 
-    patches = view_as_windows_torch(
-        image=image, shape=shape, stride=1
-    )
+    patches = view_as_windows_torch(image=image, shape=shape, stride=1)
 
     patches = patches[:, :, idy, idx]
     size = np.multiply(*shape)
     n_patches = np.multiply(*idx.shape)
     patches = torch.reshape(patches, (n_patches, size))
     return patches
-
 
 
 def _centered(arr, newshape):
