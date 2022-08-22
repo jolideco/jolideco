@@ -2,7 +2,17 @@ import numpy as np
 from itertools import product
 
 
-__all__ = ["view_as_overlapping_patches"]
+__all__ = [
+    "view_as_overlapping_patches",
+    "is_power2",
+    "get_pixel_weights",
+    "reconstruct_from_overlapping_patches",
+]
+
+
+def is_power2(n):
+    """Check if an integer is a power of 2."""
+    return (n > 0) & ((n & (n - 1)) == 0)
 
 
 def evaluate_trapez(x, width, slope):

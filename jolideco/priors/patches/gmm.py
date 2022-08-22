@@ -281,7 +281,7 @@ class GaussianMixtureModel(nn.Module):
         diff = self.means[0] - other.means[0]
         term_mean = diff.T @ other.precisions_cholesky[0] @ diff
         term_trace = np.trace(other.precisions_cholesky[0] * self.covariances[0])
-        term_log = 0 #np.log(other.covariance_det / self.covariance_det)
+        term_log = 0  # np.log(other.covariance_det / self.covariance_det)
         return 0.5 * (term_log - k + term_mean + term_trace)
 
     def symmetric_kl_divergence(self, other):

@@ -1,4 +1,5 @@
 from math import sqrt
+from matplotlib import patches
 import numpy as np
 from astropy.utils import lazyproperty
 from astropy.convolution import Gaussian2DKernel
@@ -12,6 +13,8 @@ from jolideco.utils.torch import (
 )
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.norms import MaxImageNorm
+from .gmm import GaussianMixtureModel
+from .gmm_tree import BinaryTreeGaussianMixtureModel
 from ..core import Prior
 
 
@@ -57,6 +60,11 @@ class GMMPatchPrior(Prior):
         self.norm = norm
         self.jitter = jitter
 
+    @lazyproperty
+    def use_gmm_tree(self):
+        """Use binary tree GMM"""
+        return isinstance(self.gmm, BinaryTreeGaussianMixtureModel)
+
     def prior_image(self, flux):
         """Compute a patch image from the eigenimages of the best fittign patches.
 
@@ -70,7 +78,8 @@ class GMMPatchPrior(Prior):
         prior_image : `~numpy.ndarray`
             Average prior image.
         """
-        loglike, mean, shift = self._evaluate_log_like(flux=flux)
+        patches, mean, shift = self.split_into_patches(flux=flux)
+        loglike = self.gmm.estimate_log_prob_torch(x=patches)
         idx = torch.argmax(loglike, dim=1)
 
         eigen_images = self.gmm.eigen_images
@@ -116,11 +125,15 @@ class GMMPatchPrior(Prior):
     @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
-        shape_mean = self.gmm.means.shape
+        if self.use_gmm_tree:
+            shape_mean = self.gmm.gmm.means.shape
+        else:
+            shape_mean = self.gmm.means.shape
         npix = int(sqrt(shape_mean[-1]))
         return npix, npix
 
-    def _evaluate_log_like(self, flux):
+    def split_into_patches(self, flux):
+        """Split into patches"""
         normed = self.norm(flux)
 
         if self.cycle_spin:
@@ -144,8 +157,7 @@ class GMMPatchPrior(Prior):
 
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
-        loglike = self.gmm.estimate_log_prob_torch(patches)
-        return loglike, mean, shifts
+        return patches, mean, shifts
 
     @lazyproperty
     def log_like_weight(self):
@@ -165,9 +177,15 @@ class GMMPatchPrior(Prior):
         log_prior : float
             Summed log prior over all overlapping patches.
         """
-        loglike, _, _ = self._evaluate_log_like(flux=flux)
-        max_loglike = torch.max(loglike, dim=1)
-        return torch.sum(max_loglike.values) * self.log_like_weight
+        patches, _, _ = self.split_into_patches(flux=flux)
+
+        if self.use_gmm_tree:
+            max_loglike = self.gmm.estimate_log_prob_max_torch(x=patches)
+        else:
+            loglike = self.gmm.estimate_log_prob_torch(x=patches)
+            max_loglike = torch.max(loglike, dim=1).values
+
+        return torch.sum(max_loglike) * self.log_like_weight
 
 
 class MultiScalePrior(Prior):
