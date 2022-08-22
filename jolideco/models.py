@@ -10,7 +10,7 @@ __all__ = ["FluxComponent", "NPredModel"]
 class FluxComponent(nn.Module):
     """Flux component
 
-    Parameters
+    Attributes
     ----------
     flux_init : `~torch.Tensor`
         Initial flux tensor

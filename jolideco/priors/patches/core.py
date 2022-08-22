@@ -9,6 +9,7 @@ from jolideco.utils.torch import (
     view_as_random_overlapping_patches_torch,
     convolve_fft_torch,
     cycle_spin,
+    cycle_spin_subpixel,
 )
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.norms import MaxImageNorm
@@ -29,6 +30,8 @@ class GMMPatchPrior(Prior):
         Stride of the patches. By default it is half of the patch size.
     cycle_spin : bool
         Apply cycle spin.
+    cycle_spin_subpix : bool
+        Apply subpixel cycle spin.
     generator : `~torch.Generator`
         Random number generator
     norm : `~jolideco.utils.ImageNorm`
@@ -38,7 +41,14 @@ class GMMPatchPrior(Prior):
     """
 
     def __init__(
-        self, gmm, stride=None, cycle_spin=True, generator=None, norm=None, jitter=False
+        self,
+        gmm,
+        stride=None,
+        cycle_spin=True,
+        cycle_spin_subpix=False,
+        generator=None,
+        norm=None,
+        jitter=False,
     ):
         super().__init__()
 
@@ -56,6 +66,7 @@ class GMMPatchPrior(Prior):
 
         self.norm = norm
         self.jitter = jitter
+        self.cycle_spin_subpix = cycle_spin_subpix
 
     def prior_image(self, flux):
         """Compute a patch image from the eigenimages of the best fittign patches.
@@ -127,6 +138,10 @@ class GMMPatchPrior(Prior):
             normed, shifts = cycle_spin(
                 image=normed, patch_shape=self.patch_shape, generator=self.generator
             )
+
+        if self.cycle_spin_subpix:
+            normed = cycle_spin_subpixel(image=normed, generator=self.generator)
+
         else:
             shifts = (0, 0)
 
@@ -187,10 +202,6 @@ class MultiScalePrior(Prior):
     def __init__(self, prior, n_levels=2, weights=None, cycle_spin=False):
         super().__init__()
         self.n_levels = n_levels
-
-        #        if not isinstance(prior, GMMPatchPrior):
-        #            raise ValueError("Multi scale prior only supports `GMMPatchPrior`")
-
         self.cycle_spin = cycle_spin
         self.prior = prior
 
