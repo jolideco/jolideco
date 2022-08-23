@@ -80,9 +80,14 @@ class FluxComponent(nn.Module):
     @property
     def flux(self):
         """Flux (`torch.Tensor`)"""
-        flux = F.avg_pool2d(
-            self.flux_upsampled, kernel_size=self.upsampling_factor, divisor_override=1
-        )
+        flux = self.flux_upsampled
+
+        if self.upsampling_factor:
+            flux = F.avg_pool2d(
+                self.flux_upsampled,
+                kernel_size=self.upsampling_factor,
+                divisor_override=1,
+            )
         return flux
 
 

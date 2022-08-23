@@ -54,10 +54,10 @@ def test_simple_npred_model(dataset):
     flux_init = torch.zeros(dataset["exposure"].shape)
     flux_init[0, 0, 10, 10] = 1
 
-    flux = FluxComponent(flux_init=flux_init)
-    npred_model = NPredModel(components={"flux": flux})
+    component = FluxComponent(flux_upsampled=flux_init)
+    npred_model = NPredModel(**dataset)
 
-    npred = npred_model(**dataset)
+    npred = npred_model(flux=component.flux)
 
     npred = npred.detach().numpy()[0, 0]
     assert_allclose(npred[10, 10], 1.017218, rtol=1e-5)
@@ -68,10 +68,10 @@ def test_simple_npred_model_3d(dataset_3d):
     flux_init = torch.zeros(dataset_3d["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
 
-    flux = FluxComponent(flux_init=flux_init)
-    npred_model = NPredModel(components={"flux": flux})
+    component = FluxComponent(flux_upsampled=flux_init)
+    npred_model = NPredModel(**dataset_3d)
 
-    npred = npred_model(**dataset_3d)
+    npred = npred_model(flux=component.flux)
 
     npred = npred.detach().numpy()[0]
     assert npred.shape == (3, 25, 25)
@@ -83,10 +83,10 @@ def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     flux_init = torch.zeros(dataset_3d_rmf["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
 
-    flux = FluxComponent(flux_init=flux_init)
-    npred_model = NPredModel(components={"flux": flux})
+    component = FluxComponent(flux_upsampled=flux_init)
+    npred_model = NPredModel(**dataset_3d_rmf)
 
-    npred = npred_model(**dataset_3d_rmf)
+    npred = npred_model(flux=component.flux)
 
     npred = npred.detach().numpy()[0]
     assert npred.shape == (1, 25, 25)

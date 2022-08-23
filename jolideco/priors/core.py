@@ -30,8 +30,8 @@ class Priors(nn.ModuleDict):
 
         Parameters
         ----------
-        fluxes : dict of `~torch.Tensor`
-            Dict of flux tensors
+        fluxes : tuple of `~torch.Tensor`
+            Tuple of flux tensors
 
         Returns
         -------
@@ -40,8 +40,8 @@ class Priors(nn.ModuleDict):
         """
         value = 0
 
-        for name, flux in fluxes.items():
-            value += self[name](flux=flux)
+        for idx, prior in enumerate(self.values()):
+            value += prior(flux=fluxes[idx])
 
         return value
 

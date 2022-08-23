@@ -272,13 +272,14 @@ class MAPDeconvolver:
             for counts, npred_model in zip(counts_all, npred_models_all):
                 optimizer.zero_grad()
                 # evaluate npred model
-                npred = npred_model.evaluate(fluxes=components.to_flux_tuple())
+                fluxes = components.to_flux_tuple()
+                npred = npred_model.evaluate(fluxes=fluxes)
 
                 # compute Poisson loss
                 loss = self.loss_function(npred, counts)
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(fluxes=components.to_dict())
+                loss_prior = self.loss_function_prior(fluxes=fluxes)
 
                 loss_total = loss - self.beta * loss_prior / prior_weight
 
