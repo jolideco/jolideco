@@ -11,7 +11,7 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
 
-from .models import FluxComponent, FluxComponents, NPredModel
+from .models import FluxComponent, FluxComponents, NPredModel, NPredModels
 from .priors import PRIOR_REGISTRY, Priors, UniformPrior
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
 from .utils.plot import add_cbar
@@ -156,55 +156,6 @@ class MAPDeconvolver:
 
         return np.nanmean(fluxes, axis=0)
 
-    def prepare_flux_init(self, flux_init):
-        """Prepare flux init
-
-        Parameters
-        ----------
-        flux_init : `~numpy.ndarray`
-            Initial flux estimate.
-
-        Returns
-        -------
-        flux_init : `~torch.Tensor`
-            Initial flux estimate.
-        """
-        # convert to pytorch tensors
-        flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
-
-        flux_init = F.interpolate(
-            flux_init, scale_factor=self.upsampling_factor, mode="bilinear"
-        )
-
-        flux_init = flux_init.to(self.device)
-        return flux_init
-
-    def prepare_datasets(self, datasets):
-        """Prepare datasets by upsampling
-
-        Parameters
-        ----------
-        datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-
-        Returns
-        -------
-        datasets_torch : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-
-        """
-        datasets_torch = []
-
-        for dataset in datasets:
-            dataset_torch = dataset_to_torch(
-                dataset=dataset,
-                upsampling_factor=self.upsampling_factor,
-                device=self.device,
-            )
-            datasets_torch.append(dataset_torch)
-
-        return datasets_torch
-
     def prepare_trace_loss_init(self, datasets):
         """Prepare trace loss init
 
@@ -224,27 +175,22 @@ class MAPDeconvolver:
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
         return Table(names=names)
 
-    def get_trace_loss_row(self, datasets, npred_model, components):
+    def get_trace_loss_row(self, counts_all, npred_models_all, components):
         """Append traceloss table"""
 
         loss_datasets = []
 
-        for data in datasets:
-            npred = npred_model(
-                flux=components.evaluate(),
-                exposure=data["exposure"],
-                background=data["background"],
-                psf=data.get("psf", None),
-            )
-            loss = self.loss_function(npred, data["counts"])
+        for counts, npred_model in zip(counts_all, npred_models_all):
+            npred = npred_model.evaluate(components=components)
+            loss = self.loss_function(npred, counts)
             loss_datasets.append(loss.item())
 
-        prior_weight = len(datasets) * self.upsampling_factor**2
+        prior_weight = len(counts_all) * self.upsampling_factor**2
 
         loss_priors = []
 
         for name, prior in self.loss_function_prior.items():
-            flux = components[name].flux
+            flux = components[name].flux_upsampled
             value = prior(flux) / prior_weight
             loss_priors.append(value.item())
 
@@ -288,19 +234,24 @@ class MAPDeconvolver:
         components = FluxComponents()
 
         for name, flux_init in fluxes_init.items():
-            flux_init = self.prepare_flux_init(flux_init=flux_init)
-            flux_model = FluxComponent(
+            flux_model = FluxComponent.from_flux_init_numpy(
                 flux_init=flux_init,
                 use_log_flux=self.use_log_flux,
             )
-            components[name] = flux_model
+            components[name] = flux_model.to(self.device)
 
-        datasets = self.prepare_datasets(datasets=datasets)
         trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 
-        npred_model = NPredModel(
-            upsampling_factor=self.upsampling_factor,
-        ).to(self.device)
+        npred_models_all, counts_all = [], []
+
+        for dataset in datasets:
+            npred_models = NPredModels.from_dataset_nunpy(
+                dataset=dataset, components=components
+            )
+            npred_models_all.append(npred_models)
+
+            counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis])
+            counts_all.append(counts)
 
         parameters = list(self.loss_function_prior.parameters())
 
@@ -319,24 +270,16 @@ class MAPDeconvolver:
         prior_weight = len(datasets) * self.upsampling_factor**2
 
         for epoch in range(self.n_epochs):
-            for data in datasets:
+            for counts, npred_model in zip(counts_all, npred_models_all):
                 optimizer.zero_grad()
-
                 # evaluate npred model
-                npred = npred_model(
-                    flux=components.evaluate(),
-                    exposure=data["exposure"],
-                    background=data["background"],
-                    psf=data.get("psf", None),
-                )
+                npred = npred_model.evaluate(components=components)
 
                 # compute Poisson loss
-                loss = self.loss_function(npred, data["counts"])
+                loss = self.loss_function(npred, counts)
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(
-                    fluxes=components.to_dict()
-                )
+                loss_prior = self.loss_function_prior(fluxes=components.to_dict())
 
                 loss_total = loss - self.beta * loss_prior / prior_weight
 
@@ -344,8 +287,10 @@ class MAPDeconvolver:
                 optimizer.step()
 
             row = self.get_trace_loss_row(
-                    datasets=datasets, npred_model=npred_model, components=components
-                )
+                counts_all=counts_all,
+                npred_models_all=npred_models_all,
+                components=components,
+            )
 
             message = (
                 f'Epoch: {epoch}, {row["total"]}, '

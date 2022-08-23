@@ -34,7 +34,7 @@ class FluxComponent(nn.Module):
     @classmethod
     def from_flux_init_numpy(cls, flux_init, **kwargs):
         """Create flux component
-        
+
         Parameters
         ----------
         flux_init : `~numpy.ndarray`
@@ -48,10 +48,10 @@ class FluxComponent(nn.Module):
             Flux component
         """
         upsampling_factor = kwargs.get("upsampling_factor", None)
-        
+
         # convert to pytorch tensors
         flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis])
-        
+
         if upsampling_factor:
             flux_init = F.interpolate(
                 flux_init, scale_factor=upsampling_factor, mode="bilinear"
@@ -81,10 +81,8 @@ class FluxComponent(nn.Module):
     def flux(self):
         """Flux (`torch.Tensor`)"""
         flux = F.avg_pool2d(
-                self.flux_upsampled,
-                kernel_size=self.upsampling_factor,
-                divisor_override=1
-            )
+            self.flux_upsampled, kernel_size=self.upsampling_factor, divisor_override=1
+        )
         return flux
 
 
@@ -136,7 +134,7 @@ class FluxComponents(nn.ModuleDict):
 
 class NPredModel(nn.Module):
     """Predicted counts model with mutiple components
-    
+
     Parameters
     ----------
     flux : `~torch.Tensor`
@@ -151,7 +149,10 @@ class NPredModel(nn.Module):
         Energy redistribution matrix.
 
     """
-    def __init__(self, background, exposure, psf=None, rmf=None, upsampling_factor=None):
+
+    def __init__(
+        self, background, exposure, psf=None, rmf=None, upsampling_factor=None
+    ):
         super().__init__()
         self.background = background
         self.exposure = exposure
@@ -272,4 +273,3 @@ class NPredModels(nn.ModuleDict):
             values.append((name, npred_model))
 
         return cls(values)
-        
