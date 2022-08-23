@@ -1,8 +1,6 @@
-from webbrowser import MacOSX
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-from requests import session
 
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import gauss_and_point_sources_gauss_psf
@@ -52,6 +50,12 @@ def test_map_deconvolver_result(deconvolver_result):
     assert_allclose(deconvolver_result.flux_total[12, 12], 1.551957, rtol=1e-3)
     assert_allclose(deconvolver_result.flux_total[0, 0], 0.204177, rtol=1e-3)
 
+    trace_loss = deconvolver_result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 5816.533375, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1949.894236, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-1"], 1943.252298, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-2"], 1923.386841, rtol=1e-3)
+
 
 def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
     filename = tmpdir / "result.fits"
@@ -62,3 +66,8 @@ def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
     assert result.config["n_epochs"] == 100
     assert_allclose(result.flux_total[12, 12], 1.551957, rtol=1e-3)
     assert_allclose(result.flux_total[0, 0], 0.204177, rtol=1e-3)
+
+
+def test_map_deconvolver_result_plot(deconvolver_result):
+    deconvolver_result.plot_fluxes()
+    deconvolver_result.plot_trace_loss()
