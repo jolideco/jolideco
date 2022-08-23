@@ -25,7 +25,7 @@ def datasets():
 @pytest.fixture(scope="session")
 def deconvolver_result(datasets):
     priors = Priors()
-    priors["flux"] = UniformPrior()
+    priors["flux-1"] = UniformPrior()
 
     deco = MAPDeconvolver(
         n_epochs=100,
@@ -35,7 +35,7 @@ def deconvolver_result(datasets):
         use_log_flux=True,
     )
 
-    fluxes_init = {"flux": RANDOM_STATE.gamma(20, size=(32, 32))}
+    fluxes_init = {"flux-1": RANDOM_STATE.gamma(20, size=(32, 32))}
 
     result = deco.run(datasets=datasets, fluxes_init=fluxes_init)
     return result

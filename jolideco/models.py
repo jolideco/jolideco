@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -28,6 +29,11 @@ class FluxComponent(nn.Module):
         self._use_log_flux = use_log_flux
 
     @property
+    def shape(self):
+        """Shape of the flux component"""
+        return self._flux.shape
+
+    @property
     def use_log_flux(self):
         """Use log flux (`bool`)"""
         return self._use_log_flux
@@ -39,6 +45,55 @@ class FluxComponent(nn.Module):
             return torch.exp(self._flux)
         else:
             return self._flux
+
+
+class FluxComponents(nn.ModuleDict):
+    """Flux components"""
+
+    def to_dict(self):
+        """Fluxes of the components ()"""
+        fluxes = {}
+
+        for name, component in self.items():
+            fluxes[name] = component.flux
+
+        return fluxes
+
+    def to_numpy(self):
+        """Fluxes of the components ()"""
+        fluxes = {}
+
+        for name, component in self.items():
+            flux_cpu = component.flux.detach().cpu()
+            fluxes[name] = np.squeeze(flux_cpu.numpy())
+
+        return fluxes
+
+    def to_tuple(self):
+        """Fluxes as tuple"""
+        return tuple(self.values())
+
+    def evaluate(self):
+        """Total flux"""
+        # if not self:
+        #    return
+
+        values = list(self.values())
+
+        flux = torch.zeros(values[0].shape)
+
+        for component in values:
+            flux += component.flux
+
+        return flux
+
+    def read(self, filename):
+        """Read flux components"""
+        raise NotImplementedError
+
+    def write(self, filename, overwrite=False):
+        """Write flux components"""
+        raise NotImplementedError
 
 
 class NPredModel(nn.Module):
@@ -55,30 +110,9 @@ class NPredModel(nn.Module):
 
     def __init__(self, components, upsampling_factor=None):
         super().__init__()
-        self.components = nn.ModuleDict(components)
+        self.components = components
         self.upsampling_factor = upsampling_factor
         self.background_norm = nn.Parameter(torch.tensor([1.0]))
-
-    @property
-    def fluxes(self):
-        """Fluxes of the components"""
-        fluxes = {}
-
-        for name, component in self.components.items():
-            fluxes[name] = component.flux
-
-        return fluxes
-
-    @property
-    def fluxes_numpy(self):
-        """Fluxes of the components"""
-        fluxes = {}
-
-        for name, flux in self.fluxes.items():
-            flux_cpu = flux.detach().cpu()
-            fluxes[name] = flux_cpu.numpy()[0][0]
-
-        return fluxes
 
     def forward(self, background, exposure, psf=None, rmf=None):
         """Forward folding model evaluation.
@@ -99,11 +133,7 @@ class NPredModel(nn.Module):
         npred : `~torch.Tensor`
             Predicted number of counts
         """
-        flux = torch.zeros(exposure.shape)
-
-        for component in self.components.values():
-            flux += component.flux
-
+        flux = self.components.evaluate()
         npred = (flux + self.background_norm * background) * exposure
 
         if psf is not None:

@@ -11,7 +11,7 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
 
-from .models import FluxComponent, NPredModel
+from .models import FluxComponent, FluxComponents, NPredModel
 from .priors import PRIOR_REGISTRY, Priors, UniformPrior
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
 from .utils.plot import add_cbar
@@ -284,7 +284,7 @@ class MAPDeconvolver:
         if fluxes_init is None:
             fluxes_init = self.fluxes_init_from_datasets(datasets=datasets)
 
-        components = {}
+        components = FluxComponents()
 
         for name, flux_init in fluxes_init.items():
             flux_init = self.prepare_flux_init(flux_init=flux_init)
@@ -333,7 +333,9 @@ class MAPDeconvolver:
                 loss = self.loss_function(npred, data["counts"])
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(fluxes=npred_model.fluxes)
+                loss_prior = self.loss_function_prior(
+                    fluxes=npred_model.components.to_dict()
+                )
 
                 loss_total = loss - self.beta * loss_prior / prior_weight
 
@@ -352,7 +354,7 @@ class MAPDeconvolver:
 
         return MAPDeconvolverResult(
             config=self.to_dict(),
-            fluxes_upsampled=npred_model.fluxes_numpy,
+            fluxes_upsampled=npred_model.components.to_numpy(),
             fluxes_init=fluxes_init,
             trace_loss=trace_loss,
         )
