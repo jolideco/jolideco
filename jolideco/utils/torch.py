@@ -6,7 +6,6 @@ __all__ = [
     "convolve_fft_torch",
     "view_as_overlapping_patches_torch",
     "view_as_windows_torch",
-    "dataset_to_torch",
     "TORCH_DEFAULT_DEVICE",
     "interp1d_torch",
     "grid_weights",
@@ -234,54 +233,3 @@ def convolve_fft_torch(image, kernel):
     kernel_ft = torch.fft.rfft2(kernel, s=shape)
     result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
     return _centered(result, image.shape)
-
-
-def dataset_to_torch(
-    dataset,
-    upsampling_factor=None,
-    correct_exposure_edges=True,
-    device=TORCH_DEFAULT_DEVICE,
-):
-    """Convert dataset to dataset of pytorch tensors
-
-    Parameters
-    ----------
-    dataset : dict of `~numpy.ndarray`
-        Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
-    upsampling_factor : int
-        Upsampling factor for exposure, background and psf.
-    correct_exposure_edges : bool
-        Correct psf leakage at the exposure edges.
-    device : `~pytorch.Device`
-        Pytorch device
-
-    Returns
-    -------
-    datasets : dict of `~torch.Tensor`
-        Dict of pytorch tensors.
-    """
-    dims = (np.newaxis, np.newaxis)
-
-    dataset_torch = {}
-
-    for key, value in dataset.items():
-        tensor = torch.from_numpy(value[dims]).to(device)
-
-        if key in ["psf", "exposure", "background", "flux"] and upsampling_factor:
-            tensor = F.interpolate(
-                tensor, scale_factor=upsampling_factor, mode="bilinear"
-            )
-
-        if key in ["psf", "background", "flux"] and upsampling_factor:
-            tensor = tensor / upsampling_factor**2
-
-        dataset_torch[key] = tensor
-
-    if correct_exposure_edges:
-        exposure = dataset_torch["exposure"]
-        weights = convolve_fft_torch(
-            image=torch.ones_like(exposure), kernel=dataset_torch["psf"]
-        )
-        dataset_torch["exposure"] = exposure / weights
-
-    return dataset_torch

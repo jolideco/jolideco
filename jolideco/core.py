@@ -5,17 +5,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from astropy.nddata import block_reduce
 from astropy.table import Table
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
 
-from .models import FluxComponent, FluxComponents, NPredModel, NPredModels
+from .models import FluxComponent, FluxComponents, NPredModels
 from .priors import PRIOR_REGISTRY, Priors, UniformPrior
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
 from .utils.plot import add_cbar
-from .utils.torch import TORCH_DEFAULT_DEVICE, dataset_to_torch
+from .utils.torch import TORCH_DEFAULT_DEVICE
 
 logging.basicConfig(level=logging.INFO)
 
@@ -260,7 +259,7 @@ class MAPDeconvolver:
                 parameters += list(component.parameters())
 
         if self.fit_background_norm:
-            parameters += [npred_model.background_norm]
+            parameters += [_.background_norm for _ in npred_models_all]
 
         optimizer = torch.optim.Adam(
             params=parameters,
