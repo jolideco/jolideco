@@ -1,14 +1,14 @@
 import matplotlib.pyplot as plt
-import torch
-import torch.nn as nn
 import numpy as np
 import scipy.io as sio
-from scipy import linalg
-from astropy.utils import lazyproperty
+import torch
+import torch.nn as nn
 from astropy.table import Table
-from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
-from jolideco.utils.numpy import get_pixel_weights
+from astropy.utils import lazyproperty
+from scipy import linalg
 
+from jolideco.utils.numpy import get_pixel_weights
+from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
 
 __all__ = ["GaussianMixtureModel"]
 

@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose
+
 from jolideco.utils.numpy import (
     reconstruct_from_overlapping_patches,
     view_as_overlapping_patches,

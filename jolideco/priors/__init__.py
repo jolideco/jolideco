@@ -1,14 +1,13 @@
-from .patches import GMMPatchPrior, GaussianMixtureModel, MultiScalePrior
 from .core import (
     ExponentialPrior,
-    UniformPrior,
     ImagePrior,
-    SmoothnessPrior,
     InverseGammaPrior,
     Priors,
+    SmoothnessPrior,
+    UniformPrior,
 )
 from .lira import LIRAPrior
-
+from .patches import GaussianMixtureModel, GMMPatchPrior, MultiScalePrior
 
 PRIOR_REGISTRY = {
     "uniform": UniformPrior,

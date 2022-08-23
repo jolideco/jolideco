@@ -1,7 +1,8 @@
 import numpy as np
-from numpy.testing import assert_allclose
 import torch
-from astropy.convolution import convolve, Gaussian2DKernel
+from astropy.convolution import Gaussian2DKernel, convolve
+from numpy.testing import assert_allclose
+
 from jolideco.utils.torch import convolve_fft_torch, view_as_overlapping_patches_torch
 
 

@@ -1,20 +1,22 @@
 from math import sqrt
+
 import numpy as np
-from astropy.utils import lazyproperty
-from astropy.convolution import Gaussian2DKernel
 import torch
 import torch.nn.functional as F
+from astropy.convolution import Gaussian2DKernel
+from astropy.utils import lazyproperty
+
+from jolideco.utils.norms import MaxImageNorm
+from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
-    view_as_overlapping_patches_torch,
-    view_as_random_overlapping_patches_torch,
     convolve_fft_torch,
     cycle_spin,
     cycle_spin_subpixel,
+    view_as_overlapping_patches_torch,
+    view_as_random_overlapping_patches_torch,
 )
-from jolideco.utils.numpy import reconstruct_from_overlapping_patches
-from jolideco.utils.norms import MaxImageNorm
-from ..core import Prior
 
+from ..core import Prior
 
 __all__ = ["GMMPatchPrior", "MultiScalePrior"]
 

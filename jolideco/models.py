@@ -1,8 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .utils.torch import convolve_fft_torch
 
+from .utils.torch import convolve_fft_torch
 
 __all__ = ["FluxComponent", "NPredModel"]
 

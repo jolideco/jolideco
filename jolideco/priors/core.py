@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
-from jolideco.utils.torch import convolve_fft_torch, cycle_spin_subpixel
 from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
+
+from jolideco.utils.torch import convolve_fft_torch, cycle_spin_subpixel
 
 __all__ = [
     "Prior",

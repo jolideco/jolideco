@@ -1,19 +1,21 @@
+import logging
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import logging
-from pathlib import Path
-import matplotlib.pyplot as plt
-from astropy.table import Table
 from astropy.nddata import block_reduce
+from astropy.table import Table
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
-from .models import NPredModel, FluxComponent
-from .priors import UniformPrior, Priors, PRIOR_REGISTRY
-from .utils.torch import dataset_to_torch, TORCH_DEFAULT_DEVICE
-from .utils.io import IO_FORMATS_WRITE, IO_FORMATS_READ
+
+from .models import FluxComponent, NPredModel
+from .priors import PRIOR_REGISTRY, Priors, UniformPrior
+from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
 from .utils.plot import add_cbar
+from .utils.torch import TORCH_DEFAULT_DEVICE, dataset_to_torch
 
 logging.basicConfig(level=logging.INFO)
 

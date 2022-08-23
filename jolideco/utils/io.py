@@ -1,6 +1,6 @@
 from astropy.io import fits
-from astropy.wcs import WCS
 from astropy.table import Table
+from astropy.wcs import WCS
 
 
 def write_to_fits(result, filename, overwrite):

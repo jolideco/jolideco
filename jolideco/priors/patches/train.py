@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.table import Table
+
 from jolideco.utils.numpy import view_as_overlapping_patches
 
 

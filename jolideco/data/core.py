@@ -1,7 +1,6 @@
 import numpy as np
 from astropy.convolution import Gaussian2DKernel, Tophat2DKernel, convolve_fft
 
-
 __all__ = [
     "point_source_gauss_psf",
     "disk_source_gauss_psf",

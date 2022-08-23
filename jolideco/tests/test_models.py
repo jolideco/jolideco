@@ -1,9 +1,10 @@
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
-from astropy.convolution import Gaussian2DKernel
+import pytest
 import torch
-from jolideco.models import NPredModel, FluxComponent
+from astropy.convolution import Gaussian2DKernel
+from numpy.testing import assert_allclose
+
+from jolideco.models import FluxComponent, NPredModel
 
 
 @pytest.fixture
