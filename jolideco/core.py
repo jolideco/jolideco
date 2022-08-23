@@ -180,7 +180,7 @@ class MAPDeconvolver:
         loss_datasets = []
 
         for counts, npred_model in zip(counts_all, npred_models_all):
-            npred = npred_model.evaluate(components=components)
+            npred = npred_model.evaluate(fluxes=components.to_flux_tuple())
             loss = self.loss_function(npred, counts)
             loss_datasets.append(loss.item())
 
@@ -272,7 +272,7 @@ class MAPDeconvolver:
             for counts, npred_model in zip(counts_all, npred_models_all):
                 optimizer.zero_grad()
                 # evaluate npred model
-                npred = npred_model.evaluate(components=components)
+                npred = npred_model.evaluate(fluxes=components.to_flux_tuple())
 
                 # compute Poisson loss
                 loss = self.loss_function(npred, counts)

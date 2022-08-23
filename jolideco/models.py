@@ -108,9 +108,9 @@ class FluxComponents(nn.ModuleDict):
 
         return fluxes
 
-    def to_tuple(self):
+    def to_flux_tuple(self):
         """Fluxes as tuple"""
-        return tuple(self.values())
+        return tuple([_.flux_upsampled for _ in self.values()])
 
     def evaluate(self):
         """Total flux"""
@@ -249,14 +249,14 @@ class NPredModel(nn.Module):
 class NPredModels(nn.ModuleDict):
     """Flux components"""
 
-    def evaluate(self, components):
+    def evaluate(self, fluxes):
         """Evaluate npred model"""
         values = list(self.values())
 
         npred_total = torch.zeros(values[0].shape)
 
-        for npred_model, component in zip(values, components.values()):
-            npred = npred_model(flux=component.flux_upsampled)
+        for npred_model, flux in zip(values, fluxes):
+            npred = npred_model(flux=flux)
             npred_total += npred
 
         return npred_total
