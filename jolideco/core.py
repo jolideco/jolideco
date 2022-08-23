@@ -224,13 +224,14 @@ class MAPDeconvolver:
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
         return Table(names=names)
 
-    def get_trace_loss_row(self, datasets, npred_model):
+    def get_trace_loss_row(self, datasets, npred_model, components):
         """Append traceloss table"""
 
         loss_datasets = []
 
         for data in datasets:
             npred = npred_model(
+                flux=components.evaluate(),
                 exposure=data["exposure"],
                 background=data["background"],
                 psf=data.get("psf", None),
@@ -243,7 +244,7 @@ class MAPDeconvolver:
         loss_priors = []
 
         for name, prior in self.loss_function_prior.items():
-            flux = npred_model.components[name].flux
+            flux = components[name].flux
             value = prior(flux) / prior_weight
             loss_priors.append(value.item())
 
@@ -298,13 +299,12 @@ class MAPDeconvolver:
         trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 
         npred_model = NPredModel(
-            components=components,
             upsampling_factor=self.upsampling_factor,
         ).to(self.device)
 
         parameters = list(self.loss_function_prior.parameters())
 
-        for name, component in npred_model.components.items():
+        for name, component in components.items():
             if name not in self.freeze:
                 parameters += list(component.parameters())
 
@@ -324,6 +324,7 @@ class MAPDeconvolver:
 
                 # evaluate npred model
                 npred = npred_model(
+                    flux=components.evaluate(),
                     exposure=data["exposure"],
                     background=data["background"],
                     psf=data.get("psf", None),
@@ -334,7 +335,7 @@ class MAPDeconvolver:
 
                 # compute prior losses
                 loss_prior = self.loss_function_prior(
-                    fluxes=npred_model.components.to_dict()
+                    fluxes=components.to_dict()
                 )
 
                 loss_total = loss - self.beta * loss_prior / prior_weight
@@ -342,7 +343,9 @@ class MAPDeconvolver:
                 loss_total.backward()
                 optimizer.step()
 
-            row = self.get_trace_loss_row(datasets=datasets, npred_model=npred_model)
+            row = self.get_trace_loss_row(
+                    datasets=datasets, npred_model=npred_model, components=components
+                )
 
             message = (
                 f'Epoch: {epoch}, {row["total"]}, '
@@ -354,7 +357,7 @@ class MAPDeconvolver:
 
         return MAPDeconvolverResult(
             config=self.to_dict(),
-            fluxes_upsampled=npred_model.components.to_numpy(),
+            fluxes_upsampled=components.to_numpy(),
             fluxes_init=fluxes_init,
             trace_loss=trace_loss,
         )

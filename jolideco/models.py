@@ -101,24 +101,23 @@ class NPredModel(nn.Module):
 
     Attributes
     ----------
-    components : dict of `FluxModel`
-        Dict of flux model components
     upsampling_factor : None
         Spatial upsampling factor for the flux
 
     """
 
-    def __init__(self, components, upsampling_factor=None):
+    def __init__(self, upsampling_factor=None):
         super().__init__()
-        self.components = components
         self.upsampling_factor = upsampling_factor
         self.background_norm = nn.Parameter(torch.tensor([1.0]))
 
-    def forward(self, background, exposure, psf=None, rmf=None):
+    def forward(self, flux, background, exposure, psf=None, rmf=None):
         """Forward folding model evaluation.
 
         Parameters
         ----------
+        flux : `~torch.Tensor`
+            Flux tensor
         background : `~torch.Tensor`
             Background tensor
         exposure : `~torch.Tensor`
@@ -133,7 +132,6 @@ class NPredModel(nn.Module):
         npred : `~torch.Tensor`
             Predicted number of counts
         """
-        flux = self.components.evaluate()
         npred = (flux + self.background_norm * background) * exposure
 
         if psf is not None:
