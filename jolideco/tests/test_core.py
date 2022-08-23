@@ -1,15 +1,17 @@
+from webbrowser import MacOSX
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose
+from requests import session
 
-from jolideco.core import MAPDeconvolver
+from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import gauss_and_point_sources_gauss_psf
 from jolideco.priors import Priors, UniformPrior
 
 RANDOM_STATE = np.random.RandomState(642020)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def datasets():
     datasets = []
 
@@ -22,13 +24,8 @@ def datasets():
     return datasets
 
 
-def test_map_deconvolver_str():
-    deco = MAPDeconvolver(n_epochs=1_000)
-
-    assert "n_epochs" in str(deco)
-
-
-def test_map_deconvolver_uniform(datasets):
+@pytest.fixture(scope="session")
+def deconvolver_result(datasets):
     priors = Priors()
     priors["flux"] = UniformPrior()
 
@@ -43,6 +40,25 @@ def test_map_deconvolver_uniform(datasets):
     fluxes_init = {"flux": RANDOM_STATE.gamma(20, size=(32, 32))}
 
     result = deco.run(datasets=datasets, fluxes_init=fluxes_init)
+    return result
 
+
+def test_map_deconvolver_str():
+    deco = MAPDeconvolver(n_epochs=1_000)
+    assert "n_epochs" in str(deco)
+
+
+def test_map_deconvolver_result(deconvolver_result):
+    assert_allclose(deconvolver_result.flux_total[12, 12], 1.551957, rtol=1e-3)
+    assert_allclose(deconvolver_result.flux_total[0, 0], 0.204177, rtol=1e-3)
+
+
+def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
+    filename = tmpdir / "result.fits"
+    deconvolver_result.write(filename)
+
+    result = MAPDeconvolverResult.read(filename=filename)
+
+    assert result.config["n_epochs"] == 100
     assert_allclose(result.flux_total[12, 12], 1.551957, rtol=1e-3)
     assert_allclose(result.flux_total[0, 0], 0.204177, rtol=1e-3)
