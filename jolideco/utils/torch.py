@@ -46,7 +46,9 @@ def cycle_spin(image, patch_shape, generator):
     shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator)
     shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator)
     shifts = (int(shift_x), int(shift_y))
-    return torch.roll(image, shifts=shifts, dims=(2, 3)), shifts
+
+    dims = (2, 3) if image.ndim == 4 else (1, 2)
+    return torch.roll(image, shifts=shifts, dims=dims), shifts
 
 
 def cycle_spin_subpixel(image, generator):
@@ -172,7 +174,7 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
 
     """
     overlap = max(shape) - stride
-    _, _, ny, nx = image.shape
+    ny, nx = image.shape[-2:]
     idx = torch.arange(overlap, nx - stride - overlap, stride)
     idy = torch.arange(overlap, ny - stride - overlap, stride)
 

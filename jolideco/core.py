@@ -58,7 +58,7 @@ class PoissonLoss:
         for counts, npred_model in zip(self.counts_all, self.npred_models_all):
             npred = npred_model.evaluate(fluxes=fluxes)
             loss = self.loss_function(npred, counts)
-            loss_datasets.append(loss.item())
+            loss_datasets.append(loss)
 
         return loss_datasets
 
@@ -128,7 +128,7 @@ class PriorLoss:
 
         for flux, prior in zip(fluxes, self.priors.values()):
             value = prior(flux)
-            loss_priors.append(value.item())
+            loss_priors.append(value)
 
         return loss_priors
 
@@ -178,8 +178,8 @@ class TotalLoss:
         fluxes : tuple of  `~torch.tensor`
             Flux components
         """
-        loss_datasets = self.poisson_loss.evaluate(fluxes=fluxes)
-        loss_priors = self.prior_loss.evaluate(fluxes=fluxes)
+        loss_datasets = [_.item() for _ in self.poisson_loss.evaluate(fluxes=fluxes)]
+        loss_priors = [_.item() for _ in self.prior_loss.evaluate(fluxes=fluxes)]
 
         loss_datasets_total = sum(loss_datasets)
         loss_priors_total = self.beta * sum(loss_priors) / self.prior_weight
@@ -209,19 +209,45 @@ class TotalLoss:
         """Evaluate total loss"""
         loss_datasets = self.poisson_loss.evaluate(fluxes=fluxes)
         loss_priors = self.prior_loss.evaluate(fluxes=fluxes)
-        return loss_datasets - self.beta * loss_priors / self.prior_weight
+        return sum(loss_datasets) - self.beta * sum(loss_priors)
 
-    def hessian_diagonal(self, fluxes):
-        """Compute Hessian diagonal"""
-        hessian = torch.autograd.hpv(self, inputs=fluxes)
-        return hessian
+    def hessian_diagonals(self, fluxes):
+        """Compute Hessian diagonal
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+
+        Returns
+        -------
+        hessian_diagonals : tuple of  `~torch.tensor`
+            Hessian diagonals
+        """
+        shapes = tuple([_.size() for _ in fluxes])
+        unit_vectors = tuple([torch.ones(shape) for shape in shapes])
+        results = torch.autograd.functional.hvp(self, inputs=fluxes, v=unit_vectors)[1]
+        return tuple(results)
 
     def fluxes_error(self, fluxes):
-        """Compute flux errors"""
-        fluxes_error = {}
+        """Compute flux errors
 
-        hessian = self.hessian_diagonal(fluxes=fluxes)
-        error = torch.sqrt(1 / hessian)
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+
+        Returns
+        -------
+        fluxes_error : tuple of  `~torch.tensor`
+            Flux errors
+        """
+        fluxes_error = {}
+        hessian_diagonals = self.hessian_diagonals(fluxes=fluxes)
+
+        for name, hessian in zip(self.prior_loss.priors, hessian_diagonals):
+            fluxes_error[name] = torch.sqrt(1 / hessian)
+
         return fluxes_error
 
 
@@ -364,6 +390,9 @@ class MAPDeconvolver:
                 f'{row["datasets-total"]}, {row["priors-total"]}'
             )
             log.info(message)
+
+        flux_errors = total_loss.fluxes_error(fluxes=fluxes)
+        components.set_flux_errors(flux_errors=flux_errors)
 
         return MAPDeconvolverResult(
             config=self.to_dict(),

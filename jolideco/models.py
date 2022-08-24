@@ -17,6 +17,8 @@ class FluxComponent(nn.Module):
     ----------
     flux_upsampled : `~torch.Tensor`
         Initial flux tensor
+    flux_upsampled_error : `~torch.Tensor`
+        Flux tensor error
     use_log_flux : bool
         Use log scaling for flux
     upsampling_factor : None
@@ -30,6 +32,7 @@ class FluxComponent(nn.Module):
     def __init__(
         self,
         flux_upsampled,
+        flux_upsampled_error=None,
         use_log_flux=True,
         upsampling_factor=1,
         prior=None,
@@ -41,6 +44,7 @@ class FluxComponent(nn.Module):
             flux_upsampled = torch.log(flux_upsampled)
 
         self._flux_upsampled = nn.Parameter(flux_upsampled)
+        self._flux_upsampled_error = flux_upsampled_error
         self._use_log_flux = use_log_flux
         self.upsampling_factor = upsampling_factor
 
@@ -49,6 +53,11 @@ class FluxComponent(nn.Module):
 
         self.prior = prior
         self.frozen = frozen
+
+    @property
+    def flux_upsampled_error(self):
+        """Flux error"""
+        return self._flux_upsampled_error
 
     def parameters(self, recurse=True):
         """Parameter list"""
@@ -180,6 +189,11 @@ class FluxComponents(nn.ModuleDict):
             flux += component.flux_upsampled
 
         return flux
+
+    def set_flux_errors(self, flux_errors):
+        """"""
+        for name, flux_error in flux_errors.items():
+            self[name]._flux_upsampled_error = flux_error
 
     def read(self, filename):
         """Read flux components"""
