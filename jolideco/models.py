@@ -178,7 +178,8 @@ class NPredModel(nn.Module):
         Point spread function
     rmf : `~torch.Tensor`
         Energy redistribution matrix.
-
+    upsampling_factor : int
+            Upsampling factor.
     """
 
     def __init__(
@@ -194,7 +195,10 @@ class NPredModel(nn.Module):
     @property
     def shape(self):
         """Shape of the NPred model"""
-        return self.background.shape
+        shape = list(self.background.shape)
+        shape[-1] //= self.upsampling_factor
+        shape[-2] //= self.upsampling_factor
+        return tuple(shape)
 
     @classmethod
     def from_dataset_numpy(
@@ -221,7 +225,9 @@ class NPredModel(nn.Module):
         """
         dims = (np.newaxis, np.newaxis)
 
-        kwargs = {}
+        kwargs = {
+            "upsampling_factor": upsampling_factor,
+        }
 
         for name in ["psf", "exposure", "background"]:
             value = dataset[name]

@@ -253,6 +253,7 @@ class MAPDeconvolver:
             flux_model = FluxComponent.from_flux_init_numpy(
                 flux_init=flux_init,
                 use_log_flux=self.use_log_flux,
+                upsampling_factor=self.upsampling_factor,
             )
             components[name] = flux_model.to(self.device)
 
