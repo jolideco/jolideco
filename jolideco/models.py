@@ -193,9 +193,14 @@ class NPredModel(nn.Module):
         self.upsampling_factor = upsampling_factor
 
     @property
+    def shape_upsampled(self):
+        """Shape of the NPred model"""
+        return tuple(self.background.shape)
+
+    @property
     def shape(self):
         """Shape of the NPred model"""
-        shape = list(self.background.shape)
+        shape = list(self.shape_upsampled)
         shape[-1] //= self.upsampling_factor
         shape[-2] //= self.upsampling_factor
         return tuple(shape)
