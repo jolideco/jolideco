@@ -47,7 +47,7 @@ def cycle_spin(image, patch_shape, generator):
     shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator)
     shifts = (int(shift_x), int(shift_y))
 
-    dims = (2, 3) if image.ndim == 4 else (1, 2)
+    dims = (image.ndim - 2, image.ndim - 1)
     return torch.roll(image, shifts=shifts, dims=dims), shifts
 
 
@@ -121,8 +121,8 @@ def view_as_windows_torch(image, shape, stride):
     if stride is None:
         stride = shape[0] // 2
 
-    windows = image.unfold(2, shape[0], stride)
-    return windows.unfold(3, shape[0], stride)
+    windows = image.unfold(image.ndim - 2, shape[0], stride)
+    return windows.unfold(image.ndim - 1, shape[0], stride)
 
 
 def view_as_overlapping_patches_torch(image, shape, stride=None):
