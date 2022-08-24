@@ -40,6 +40,11 @@ class PoissonLoss:
             log_input=False, reduction="mean", eps=1e-25, full=True
         )
 
+    @property
+    def n_datasets(self):
+        """Number of datasets"""
+        return len(self.counts_all)
+
     def evaluate(self, fluxes):
         """Evaluate loss per dataset
 
@@ -59,6 +64,7 @@ class PoissonLoss:
 
     @property
     def iter_by_dataset(self):
+        """Iterate by counts and predicted counts"""
         for data in zip(self.counts_all, self.npred_models_all):
             yield data
 
@@ -95,6 +101,128 @@ class PoissonLoss:
         """Evaluate and sum all losses"""
         losses = self.evaluate(fluxes=fluxes)
         return torch.sum(losses)
+
+
+class PriorLoss:
+    """Prior loss function
+
+    Attributes
+    ----------
+    priors : `Priors`
+        Priors for each model componenet
+
+    """
+
+    def __init__(self, priors):
+        self.priors = priors
+
+    def evaluate(self, fluxes):
+        """Evaluate loss per flux componenet
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+        """
+        loss_priors = []
+
+        for flux, prior in zip(fluxes, self.priors.values()):
+            value = prior(flux)
+            loss_priors.append(value.item())
+
+        return loss_priors
+
+    def __call__(self, fluxes):
+        """Evaluate and sum all losses"""
+        losses = self.evaluate(fluxes=fluxes)
+        return torch.sum(losses)
+
+
+class TotalLoss:
+    """Total loss function
+
+    Attributes
+    ----------
+    poisson_loss : `PoissonLoss`
+        Poisson dataset loss
+    prior_loss : `PriorLoss`
+        Prior loss
+    beta : float
+        Relative weight of the prior.
+    """
+
+    def __init__(self, poisson_loss, prior_loss, beta=1):
+        self.poisson_loss = poisson_loss
+        self.prior_loss = prior_loss
+        self.beta = beta
+
+    @lazyproperty
+    def trace(self):
+        """Trace of the total loss
+
+        Returns
+        -------
+        trace : `~astroy.table.Table`
+            Trace table
+        """
+        names = ["total", "datasets-total", "priors-total"]
+        names += [f"prior-{name}" for name in self.prior_loss.priors]
+        names += [f"dataset-{idx}" for idx in range(self.poisson_loss.n_datasets)]
+        return Table(names=names)
+
+    def append_trace(self, fluxes):
+        """Append trace
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+        """
+        loss_datasets = self.poisson_loss.evaluate(fluxes=fluxes)
+        loss_priors = self.prior_loss.evaluate(fluxes=fluxes)
+
+        loss_datasets_total = sum(loss_datasets)
+        loss_priors_total = self.beta * sum(loss_priors) / self.prior_weight
+
+        loss_total = loss_datasets_total - loss_priors_total
+
+        row = {
+            "total": loss_total,
+            "datasets-total": loss_datasets_total,
+            "priors-total": loss_priors_total,
+        }
+
+        for name, value in zip(self.prior_loss.priors, loss_priors):
+            row[f"prior-{name}"] = value / self.prior_weight
+
+        for idx, value in enumerate(loss_datasets):
+            row[f"dataset-{idx}"] = value
+
+        self.trace.add_row(row)
+
+    @lazyproperty
+    def prior_weight(self):
+        """Prior weight"""
+        return len(self.poisson_loss.counts_all)
+
+    def __call__(self, fluxes):
+        """Evaluate total loss"""
+        loss_datasets = self.poisson_loss.evaluate(fluxes=fluxes)
+        loss_priors = self.prior_loss.evaluate(fluxes=fluxes)
+        return loss_datasets - self.beta * loss_priors / self.prior_weight
+
+    def hessian_diagonal(self, fluxes):
+        """Compute Hessian diagonal"""
+        hessian = torch.autograd.hpv(self, inputs=fluxes)
+        return hessian
+
+    def fluxes_error(self, fluxes):
+        """Compute flux errors"""
+        fluxes_error = {}
+
+        hessian = self.hessian_diagonal(fluxes=fluxes)
+        error = torch.sqrt(1 / hessian)
+        return fluxes_error
 
 
 class MAPDeconvolver:
@@ -152,7 +280,6 @@ class MAPDeconvolver:
         """
         data = {}
         data.update(self.__dict__)
-        data.pop("loss_function")
 
         for key, value in PRIOR_REGISTRY.items():
             if isinstance(self.loss_function_prior, value):
@@ -172,58 +299,6 @@ class MAPDeconvolver:
             info += f"\t{key:21s}: {value}\n"
 
         return info.expandtabs(tabsize=4)
-
-    def prepare_trace_loss_init(self, datasets):
-        """Prepare trace loss init
-
-        Parameters
-        ----------
-        datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-
-
-        Returns
-        -------
-        tarce_loss : `~astropy.table.Table`
-            Trace loss table.
-        """
-        names = ["total", "datasets-total", "priors-total"]
-        names += [f"prior-{name}" for name in self.loss_function_prior]
-        names += [f"dataset-{idx}" for idx in range(len(datasets))]
-        return Table(names=names)
-
-    def get_trace_loss_row(self, poisson_loss, components):
-        """Append traceloss table"""
-
-        loss_datasets = poisson_loss.evaluate(fluxes=components.to_flux_tuple())
-
-        prior_weight = len(poisson_loss.counts_all)
-
-        loss_priors = []
-
-        for name, prior in self.loss_function_prior.items():
-            flux = components[name].flux_upsampled
-            value = prior(flux) / prior_weight
-            loss_priors.append(value.item())
-
-        loss_datasets_total = sum(loss_datasets)
-        loss_priors_total = sum(loss_priors)
-
-        loss_total = loss_datasets_total - self.beta * loss_priors_total
-
-        row = {
-            "total": loss_total,
-            "datasets-total": loss_datasets_total,
-            "priors-total": self.beta * loss_priors_total,
-        }
-
-        for name, value in zip(self.loss_function_prior, loss_priors):
-            row[f"prior-{name}"] = value
-
-        for idx, value in enumerate(loss_datasets):
-            row[f"dataset-{idx}"] = value
-
-        return row
 
     def run(self, datasets, components):
         """Run the MAP deconvolver
@@ -245,8 +320,6 @@ class MAPDeconvolver:
 
         components_init = copy.deepcopy(components)
 
-        trace_loss = self.prepare_trace_loss_init(datasets=datasets)
-
         parameters = components.parameters()
 
         optimizer = torch.optim.Adam(
@@ -254,10 +327,14 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        prior_weight = len(datasets)
-
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets, components=components
+        )
+
+        prior_loss = PriorLoss(priors=self.loss_function_prior)
+
+        total_loss = TotalLoss(
+            poisson_loss=poisson_loss, prior_loss=prior_loss, beta=self.beta
         )
 
         for epoch in range(self.n_epochs):
@@ -268,20 +345,19 @@ class MAPDeconvolver:
                 npred = npred_model.evaluate(fluxes=fluxes)
 
                 # compute Poisson loss
-                loss = self.loss_function(npred, counts)
+                loss = poisson_loss.loss_function(npred, counts)
 
                 # compute prior losses
                 loss_prior = self.loss_function_prior(fluxes=fluxes)
 
-                loss_total = loss - self.beta * loss_prior / prior_weight
+                loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
                 loss_total.backward()
                 optimizer.step()
 
-            row = self.get_trace_loss_row(
-                poisson_loss=poisson_loss,
-                components=components,
-            )
+            total_loss.append_trace(fluxes=fluxes)
+
+            row = total_loss.trace[-1]
 
             message = (
                 f'Epoch: {epoch}, {row["total"]}, '
@@ -289,13 +365,11 @@ class MAPDeconvolver:
             )
             log.info(message)
 
-            trace_loss.add_row(row)
-
         return MAPDeconvolverResult(
             config=self.to_dict(),
             fluxes_upsampled=components.to_numpy(),
             fluxes_init=components_init.to_numpy(),
-            trace_loss=trace_loss,
+            trace_loss=total_loss.trace,
         )
 
 
