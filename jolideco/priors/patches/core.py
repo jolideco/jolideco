@@ -83,6 +83,9 @@ class GMMPatchPrior(Prior):
         prior_image : `~numpy.ndarray`
             Average prior image.
         """
+        if self.jitter:
+            raise ValueError("Computing prior images with jittering is not supported.")
+
         loglike, mean, shift = self._evaluate_log_like(flux=flux)
         idx = torch.argmax(loglike, dim=1)
 
