@@ -37,7 +37,7 @@ class PoissonLoss:
         self.counts_all = counts_all
         self.npred_models_all = npred_models_all
         self.loss_function = nn.PoissonNLLLoss(
-            log_input=False, reduction="sum", eps=1e-25, full=True
+            log_input=False, reduction="mean", eps=1e-25, full=True
         )
 
     def evaluate(self, fluxes):
@@ -53,9 +53,43 @@ class PoissonLoss:
         for counts, npred_model in zip(self.counts_all, self.npred_models_all):
             npred = npred_model.evaluate(fluxes=fluxes)
             loss = self.loss_function(npred, counts)
-            loss_datasets.append(loss)
+            loss_datasets.append(loss.item())
 
         return loss_datasets
+
+    @property
+    def iter_by_dataset(self):
+        for data in zip(self.counts_all, self.npred_models_all):
+            yield data
+
+    @classmethod
+    def from_datasets(cls, datasets, components):
+        """Create loss function from datasets
+
+        Parameters
+        ----------
+        datasets : list of dict
+            List of datasets
+        components : `FluxComponents`
+            Flux components
+
+        Returns
+        -------
+        poisson_loss : `PoissonLoss`
+            Poisson loss function.
+        """
+        npred_models_all, counts_all = [], []
+
+        for dataset in datasets:
+            npred_models = NPredModels.from_dataset_nunpy(
+                dataset=dataset, components=components
+            )
+            npred_models_all.append(npred_models)
+
+            counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis])
+            counts_all.append(counts)
+
+        return cls(counts_all=counts_all, npred_models_all=npred_models_all)
 
     def __call__(self, fluxes):
         """Evaluate and sum all losses"""
@@ -107,9 +141,6 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
-        self.loss_function = nn.PoissonNLLLoss(
-            log_input=False, reduction="mean", eps=1e-25, full=True
-        )
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -161,17 +192,12 @@ class MAPDeconvolver:
         names += [f"dataset-{idx}" for idx in range(len(datasets))]
         return Table(names=names)
 
-    def get_trace_loss_row(self, counts_all, npred_models_all, components):
+    def get_trace_loss_row(self, poisson_loss, components):
         """Append traceloss table"""
 
-        loss_datasets = []
+        loss_datasets = poisson_loss.evaluate(fluxes=components.to_flux_tuple())
 
-        for counts, npred_model in zip(counts_all, npred_models_all):
-            npred = npred_model.evaluate(fluxes=components.to_flux_tuple())
-            loss = self.loss_function(npred, counts)
-            loss_datasets.append(loss.item())
-
-        prior_weight = len(counts_all)
+        prior_weight = len(poisson_loss.counts_all)
 
         loss_priors = []
 
@@ -221,17 +247,6 @@ class MAPDeconvolver:
 
         trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 
-        npred_models_all, counts_all = [], []
-
-        for dataset in datasets:
-            npred_models = NPredModels.from_dataset_nunpy(
-                dataset=dataset, components=components
-            )
-            npred_models_all.append(npred_models)
-
-            counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis])
-            counts_all.append(counts)
-
         parameters = components.parameters()
 
         optimizer = torch.optim.Adam(
@@ -241,8 +256,12 @@ class MAPDeconvolver:
 
         prior_weight = len(datasets)
 
+        poisson_loss = PoissonLoss.from_datasets(
+            datasets=datasets, components=components
+        )
+
         for epoch in range(self.n_epochs):
-            for counts, npred_model in zip(counts_all, npred_models_all):
+            for counts, npred_model in poisson_loss.iter_by_dataset:
                 optimizer.zero_grad()
                 # evaluate npred model
                 fluxes = components.to_flux_tuple()
@@ -260,8 +279,7 @@ class MAPDeconvolver:
                 optimizer.step()
 
             row = self.get_trace_loss_row(
-                counts_all=counts_all,
-                npred_models_all=npred_models_all,
+                poisson_loss=poisson_loss,
                 components=components,
             )
 
