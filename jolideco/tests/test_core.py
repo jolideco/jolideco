@@ -46,7 +46,6 @@ def deconvolver_result(datasets_gauss):
         learning_rate=0.1,
         loss_function_prior=priors,
         upsampling_factor=1,
-        use_log_flux=True,
     )
 
     fluxes_init = RANDOM_STATE.gamma(20, size=(32, 32))
@@ -99,7 +98,6 @@ def test_map_deconvolver_usampling(datasets_disk):
         learning_rate=0.1,
         loss_function_prior=priors,
         upsampling_factor=2,
-        use_log_flux=True,
     )
 
     flux_init = RANDOM_STATE.gamma(20, size=(32, 32))

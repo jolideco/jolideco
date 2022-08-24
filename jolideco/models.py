@@ -76,7 +76,9 @@ class FluxComponent(nn.Module):
         upsampling_factor = kwargs.get("upsampling_factor", None)
 
         # convert to pytorch tensors
-        flux_init = torch.from_numpy(flux_init[np.newaxis, np.newaxis].astype(np.float32))
+        flux_init = torch.from_numpy(
+            flux_init[np.newaxis, np.newaxis].astype(np.float32)
+        )
 
         if upsampling_factor:
             flux_init = F.interpolate(

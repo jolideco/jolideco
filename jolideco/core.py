@@ -76,8 +76,6 @@ class MAPDeconvolver:
         Loss functions for the priors (optional).
     learning_rate : float
         Learning rate
-    upsampling_factor : int
-        Internal spatial upsampling factor for the reconstructed flux.
     fit_background_norm : bool
         Whether to fit background norm.
     device : `~pytorch.Device`
@@ -92,7 +90,6 @@ class MAPDeconvolver:
         beta=1,
         loss_function_prior=None,
         learning_rate=0.1,
-        upsampling_factor=1,
         fit_background_norm=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -108,11 +105,10 @@ class MAPDeconvolver:
 
         self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
-        self.upsampling_factor = upsampling_factor
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
         self.loss_function = nn.PoissonNLLLoss(
-            log_input=False, reduction="sum", eps=1e-25, full=True
+            log_input=False, reduction="mean", eps=1e-25, full=True
         )
 
     def to_dict(self):
@@ -175,7 +171,7 @@ class MAPDeconvolver:
             loss = self.loss_function(npred, counts)
             loss_datasets.append(loss.item())
 
-        prior_weight = len(counts_all) * self.upsampling_factor**2
+        prior_weight = len(counts_all)
 
         loss_priors = []
 
@@ -243,7 +239,7 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        prior_weight = len(datasets) * self.upsampling_factor**2
+        prior_weight = len(datasets)
 
         for epoch in range(self.n_epochs):
             for counts, npred_model in zip(counts_all, npred_models_all):

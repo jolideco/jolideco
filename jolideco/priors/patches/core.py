@@ -184,7 +184,7 @@ class GMMPatchPrior(Prior):
         """
         loglike, _, _ = self._evaluate_log_like(flux=flux)
         max_loglike = torch.max(loglike, dim=1)
-        return torch.sum(max_loglike.values) * self.log_like_weight
+        return torch.sum(max_loglike.values) * self.log_like_weight / flux.numel()
 
 
 class MultiScalePrior(Prior):
