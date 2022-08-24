@@ -3,6 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from jolideco.priors.core import UniformPrior
+
 from .utils.torch import convolve_fft_torch
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
@@ -19,9 +21,20 @@ class FluxComponent(nn.Module):
         Use log scaling for flux
     upsampling_factor : None
         Spatial upsampling factor for the flux.
+    prior : `Prior`
+        Prior for this flux component.
+    frozen : bool
+        Whether to freeze component.
     """
 
-    def __init__(self, flux_upsampled, use_log_flux=True, upsampling_factor=None):
+    def __init__(
+        self,
+        flux_upsampled,
+        use_log_flux=True,
+        upsampling_factor=None,
+        prior=None,
+        frozen=False,
+    ):
         super().__init__()
 
         if use_log_flux:
@@ -30,6 +43,19 @@ class FluxComponent(nn.Module):
         self._flux_upsampled = nn.Parameter(flux_upsampled)
         self._use_log_flux = use_log_flux
         self.upsampling_factor = upsampling_factor
+
+        if prior is None:
+            prior = UniformPrior()
+
+        self.prior = prior
+        self.frozen = frozen
+
+    def parameters(self, recurse=True):
+        """Parameter list"""
+        if self.frozen:
+            return []
+        else:
+            return super().parameters(recurse)
 
     @classmethod
     def from_flux_init_numpy(cls, flux_init, **kwargs):
@@ -163,7 +189,6 @@ class NPredModel(nn.Module):
         self.exposure = exposure
         self.psf = psf
         self.rmf = rmf
-        self.background_norm = nn.Parameter(torch.tensor([1.0]))
         self.upsampling_factor = upsampling_factor
 
     @property
@@ -234,7 +259,7 @@ class NPredModel(nn.Module):
         npred : `~torch.Tensor`
             Predicted number of counts
         """
-        npred = (flux + self.background_norm * self.background) * self.exposure
+        npred = (flux + self.background) * self.exposure
 
         if self.psf is not None:
             npred = convolve_fft_torch(npred, self.psf)

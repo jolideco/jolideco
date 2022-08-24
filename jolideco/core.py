@@ -21,6 +21,47 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 
+class PoissonLoss:
+    """Poisson loss functions
+
+    Attributes
+    ----------
+    counts_all : list of `~torch.tensor`
+        List of counts
+    npred_models_all : list of `~NPredModels`
+        List of predicted counts models
+    """
+
+    def __init__(self, counts_all, npred_models_all):
+        self.counts_all = counts_all
+        self.npred_models_all = npred_models_all
+        self.loss_function = nn.PoissonNLLLoss(
+            log_input=False, reduction="sum", eps=1e-25, full=True
+        )
+
+    def evaluate(self, fluxes):
+        """Evaluate loss per dataset
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+        """
+        loss_datasets = []
+
+        for counts, npred_model in zip(self.counts_all, self.npred_models_all):
+            npred = npred_model.evaluate(fluxes=fluxes)
+            loss = self.loss_function(npred, counts)
+            loss_datasets.append(loss)
+
+        return loss_datasets
+
+    def __call__(self, fluxes):
+        """Evaluate and sum all losses"""
+        losses = self.evaluate(fluxes=fluxes)
+        return torch.sum(losses)
+
+
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
 
@@ -56,7 +97,6 @@ class MAPDeconvolver:
         learning_rate=0.1,
         upsampling_factor=1,
         use_log_flux=True,
-        freeze={},
         fit_background_norm=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -74,33 +114,11 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
         self.use_log_flux = use_log_flux
-        self.freeze = freeze
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
-
         self.loss_function = nn.PoissonNLLLoss(
             log_input=False, reduction="sum", eps=1e-25, full=True
         )
-
-    @property
-    def freeze(self):
-        """Model components to freeze"""
-        return self._freeze
-
-    @freeze.setter
-    def freeze(self, value):
-        """Set model components to freeze"""
-        valid_names = set(self.loss_function_prior)
-
-        diff_names = set(value).difference(valid_names)
-
-        if diff_names:
-            raise ValueError(
-                f"Not a valid model component to freeze {diff_names}."
-                f"Choose from {valid_names}."
-            )
-
-        self._freeze = value
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -119,7 +137,6 @@ class MAPDeconvolver:
                 data["loss_function_prior"] = key
 
         data["device"] = str(self.device)
-        data["freeze"] = ",".join(data.pop("_freeze"))
         return data
 
     def __str__(self):
@@ -252,14 +269,7 @@ class MAPDeconvolver:
             counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis])
             counts_all.append(counts)
 
-        parameters = list(self.loss_function_prior.parameters())
-
-        for name, component in components.items():
-            if name not in self.freeze:
-                parameters += list(component.parameters())
-
-        if self.fit_background_norm:
-            parameters += [_.background_norm for _ in npred_models_all]
+        parameters = components.parameters()
 
         optimizer = torch.optim.Adam(
             params=parameters,
