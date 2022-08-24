@@ -264,6 +264,8 @@ class MAPDeconvolver:
         Loss functions for the priors (optional).
     learning_rate : float
         Learning rate
+    compute_error : bool
+        Whether to compute flux error
     fit_background_norm : bool
         Whether to fit background norm.
     device : `~pytorch.Device`
@@ -278,6 +280,7 @@ class MAPDeconvolver:
         beta=1,
         loss_function_prior=None,
         learning_rate=0.1,
+        compute_error=False,
         fit_background_norm=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -293,6 +296,7 @@ class MAPDeconvolver:
 
         self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
+        self.compute_error = compute_error
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
 
@@ -391,8 +395,9 @@ class MAPDeconvolver:
             )
             log.info(message)
 
-        flux_errors = total_loss.fluxes_error(fluxes=fluxes)
-        components.set_flux_errors(flux_errors=flux_errors)
+        if self.compute_error:
+            flux_errors = total_loss.fluxes_error(fluxes=fluxes)
+            components.set_flux_errors(flux_errors=flux_errors)
 
         return MAPDeconvolverResult(
             config=self.to_dict(),
