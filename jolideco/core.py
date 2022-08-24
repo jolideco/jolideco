@@ -78,8 +78,6 @@ class MAPDeconvolver:
         Learning rate
     upsampling_factor : int
         Internal spatial upsampling factor for the reconstructed flux.
-    use_log_flux : bool
-        Use log scaling for flux
     fit_background_norm : bool
         Whether to fit background norm.
     device : `~pytorch.Device`
@@ -95,7 +93,6 @@ class MAPDeconvolver:
         loss_function_prior=None,
         learning_rate=0.1,
         upsampling_factor=1,
-        use_log_flux=True,
         fit_background_norm=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -112,7 +109,6 @@ class MAPDeconvolver:
         self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
         self.upsampling_factor = upsampling_factor
-        self.use_log_flux = use_log_flux
         self.fit_background_norm = fit_background_norm
         self.device = torch.device(device)
         self.loss_function = nn.PoissonNLLLoss(
