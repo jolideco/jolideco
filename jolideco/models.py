@@ -31,7 +31,7 @@ class FluxComponent(nn.Module):
         self,
         flux_upsampled,
         use_log_flux=True,
-        upsampling_factor=None,
+        upsampling_factor=1,
         prior=None,
         frozen=False,
     ):
@@ -66,7 +66,7 @@ class FluxComponent(nn.Module):
         flux_init : `~numpy.ndarray`
             Flux init array
         **kwargs : dict
-            Keyword arguments passsed to `FluxComponent`
+            Keyword arguments passed to `FluxComponent`
 
         Returns
         -------
@@ -84,6 +84,31 @@ class FluxComponent(nn.Module):
             )
 
         return cls(flux_upsampled=flux_init, **kwargs)
+
+    @classmethod
+    def from_flux_init_datasets(cls, datasets, **kwargs):
+        """Compute flux init from datasets by averaging over the raw flux estimate.
+
+        Parameters
+        ----------
+        datasets : list of dict
+            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+        **kwargs : dict
+            Keyword arguments passed to `FluxComponent`
+
+        Returns
+        -------
+        flux_init : `~numpy.ndarray`
+            Initial flux estimate.
+        """
+        fluxes = []
+
+        for dataset in datasets:
+            flux = dataset["counts"] / dataset["exposure"] - dataset["background"]
+            fluxes.append(flux)
+
+        flux_init = np.nanmean(fluxes, axis=0)
+        return cls.from_flux_init_numpy(flux_init=flux_init, **kwargs)
 
     @property
     def shape(self):
@@ -291,7 +316,18 @@ class NPredModels(nn.ModuleDict):
     """Flux components"""
 
     def evaluate(self, fluxes):
-        """Evaluate npred model"""
+        """Evaluate npred model
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+
+        Returns
+        -------
+        npred_total : `~torch.tensor`
+            Predicted counts tensort
+        """
         values = list(self.values())
 
         npred_total = torch.zeros(values[0].shape)
@@ -304,7 +340,20 @@ class NPredModels(nn.ModuleDict):
 
     @classmethod
     def from_dataset_nunpy(cls, dataset, components):
-        """Create multiple npred models."""
+        """Create multiple npred models.
+
+        Parameters
+        ----------
+        dataset : dict of `~torch.tensor`
+            Dataset
+        components : `FluxComponents`
+            Flux components
+
+        Returns
+        -------
+        npred_models : `NPredModel`
+            NPredModels
+        """
         values = []
 
         for name, component in components.items():

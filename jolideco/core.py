@@ -1,3 +1,4 @@
+import copy
 import logging
 from pathlib import Path
 
@@ -79,8 +80,6 @@ class MAPDeconvolver:
         Internal spatial upsampling factor for the reconstructed flux.
     use_log_flux : bool
         Use log scaling for flux
-    freeze : set
-        Components to freeze.
     fit_background_norm : bool
         Whether to fit background norm.
     device : `~pytorch.Device`
@@ -151,27 +150,6 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
-    def fluxes_init_from_datasets(self, datasets):
-        """Compute flux init from datasets by averaging over the raw uncolvved flux estimate.
-
-        Parameters
-        ----------
-        datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-
-        Returns
-        -------
-        flux_init : `~numpy.ndarray`
-            Initial flux estimate.
-        """
-        fluxes = []
-
-        for dataset in datasets:
-            flux = dataset["counts"] / dataset["exposure"] - dataset["background"]
-            fluxes.append(flux)
-
-        return np.nanmean(fluxes, axis=0)
-
     def prepare_trace_loss_init(self, datasets):
         """Prepare trace loss init
 
@@ -229,33 +207,25 @@ class MAPDeconvolver:
 
         return row
 
-    def run(self, datasets, fluxes_init=None):
+    def run(self, datasets, components):
         """Run the MAP deconvolver
 
         Parameters
         ----------
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        fluxes_init : dict of `~numpy.ndarray`
-            Initial flux estimates.
+        components : `FluxComponents` or `FluxComponent`
+            Flux components.
 
         Returns
         -------
         flux : `~numpy.ndarray`
             Reconstructed flux.
         """
-        if fluxes_init is None:
-            fluxes_init = self.fluxes_init_from_datasets(datasets=datasets)
+        if isinstance(components, FluxComponent):
+            components = FluxComponents({self._default_flux_component: components})
 
-        components = FluxComponents()
-
-        for name, flux_init in fluxes_init.items():
-            flux_model = FluxComponent.from_flux_init_numpy(
-                flux_init=flux_init,
-                use_log_flux=self.use_log_flux,
-                upsampling_factor=self.upsampling_factor,
-            )
-            components[name] = flux_model.to(self.device)
+        fluxes_init = copy.deepcopy(components).to_numpy()
 
         trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 

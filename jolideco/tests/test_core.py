@@ -3,7 +3,8 @@ import pytest
 from numpy.testing import assert_allclose
 
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
-from jolideco.data import gauss_and_point_sources_gauss_psf, disk_source_gauss_psf
+from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
+from jolideco.models import FluxComponent, FluxComponents
 from jolideco.priors import Priors, UniformPrior
 
 RANDOM_STATE = np.random.RandomState(642020)
@@ -48,9 +49,12 @@ def deconvolver_result(datasets_gauss):
         use_log_flux=True,
     )
 
-    fluxes_init = {"flux-1": RANDOM_STATE.gamma(20, size=(32, 32))}
+    fluxes_init = RANDOM_STATE.gamma(20, size=(32, 32))
 
-    result = deco.run(datasets=datasets_gauss, fluxes_init=fluxes_init)
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_flux_init_numpy(flux_init=fluxes_init)
+
+    result = deco.run(datasets=datasets_gauss, components=components)
     return result
 
 
@@ -98,9 +102,14 @@ def test_map_deconvolver_usampling(datasets_disk):
         use_log_flux=True,
     )
 
-    fluxes_init = {"flux-1": RANDOM_STATE.gamma(20, size=(32, 32))}
+    flux_init = RANDOM_STATE.gamma(20, size=(32, 32))
 
-    result = deco.run(datasets=datasets_disk, fluxes_init=fluxes_init)
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_flux_init_numpy(
+        flux_init=flux_init, upsampling_factor=2
+    )
+
+    result = deco.run(datasets=datasets_disk, components=components)
 
     assert result.flux_upsampled_total.shape == (64, 64)
     assert_allclose(result.flux_total[12, 12], 2.960147, rtol=1e-3)
