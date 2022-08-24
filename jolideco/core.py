@@ -221,7 +221,7 @@ class MAPDeconvolver:
         if isinstance(components, FluxComponent):
             components = FluxComponents({self._default_flux_component: components})
 
-        fluxes_init = copy.deepcopy(components).to_numpy()
+        components_init = copy.deepcopy(components)
 
         trace_loss = self.prepare_trace_loss_init(datasets=datasets)
 
@@ -280,7 +280,7 @@ class MAPDeconvolver:
         return MAPDeconvolverResult(
             config=self.to_dict(),
             fluxes_upsampled=components.to_numpy(),
-            fluxes_init=fluxes_init,
+            fluxes_init=components_init.to_numpy(),
             trace_loss=trace_loss,
         )
 
