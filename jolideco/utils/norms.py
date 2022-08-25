@@ -10,6 +10,7 @@ __all__ = [
     "SigmoidImageNorm",
     "ATanImageNorm",
     "FixedMaxImageNorm",
+    "ASinhImageNorm",
 ]
 
 
@@ -67,6 +68,22 @@ class ImageNorm(abc.ABC):
 
         plt.legend()
         return ax
+
+
+class ASinhImageNorm(ImageNorm):
+    """Inverse hyperbolic sine image norm"""
+    def __init__(self, alpha, beta):
+        self.alpha = torch.Tensor([alpha])
+        self.beta = torch.Tensor([beta])
+
+    def __call__(self, image):
+        top = torch.asinh(image / self.alpha)
+        bottom = torch.asinh(self.beta / self.alpha)
+        return top / bottom
+
+    def inverse(self, image):
+        value = image * torch.asinh(self.beta / self.alpha)
+        return self.alpha * torch.sinh(value)
 
 
 class MaxImageNorm(ImageNorm):
@@ -150,4 +167,5 @@ NORMS_REGISTRY = {
     "sigmoid": SigmoidImageNorm,
     "atan": ATanImageNorm,
     "inverse-cdf": InverseCDFImageNorm,
+    "asinh": ASinhImageNorm,
 }
