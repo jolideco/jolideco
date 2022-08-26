@@ -6,6 +6,7 @@ from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponent, FluxComponents
 from jolideco.priors import Priors, UniformPrior, InverseGammaPrior
+from jolideco.priors.core import ExponentialPrior
 
 
 @pytest.fixture(scope="session")
@@ -122,7 +123,7 @@ def test_map_deconvolver_usampling(datasets_disk):
     assert_allclose(trace_loss["dataset-2"], 1.927711, rtol=1e-3)
 
 
-def test_map_deconvolver_invere_gamma_prior(datasets_disk):
+def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     priors = Priors()
     priors["flux-1"] = InverseGammaPrior(alpha=10)
 
@@ -153,3 +154,39 @@ def test_map_deconvolver_invere_gamma_prior(datasets_disk):
     assert_allclose(trace_loss["dataset-2"], 1.737586, rtol=1e-3)
 
     assert_allclose(trace_loss["prior-flux-1"], 0.651003, rtol=1e-3)
+
+
+def test_map_deconvolver_validation_datasets(datasets_disk):
+    priors = Priors()
+    priors["flux-1"] = ExponentialPrior(alpha=1)
+
+    deco = MAPDeconvolver(
+        n_epochs=100,
+        learning_rate=0.1,
+        loss_function_prior=priors,
+        stop_early_n_average=10,
+    )
+
+    random_state = np.random.RandomState(642020)
+    flux_init = random_state.gamma(20, size=(32, 32))
+
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_flux_init_numpy(
+        flux_init=flux_init, upsampling_factor=1
+    )
+
+    result = deco.run(
+        datasets=datasets_disk[:2],
+        components=components,
+        datasets_validation=datasets_disk[2:],
+    )
+
+    assert result.flux_upsampled_total.shape == (32, 32)
+    assert_allclose(result.flux_total[12, 12], 1.3698, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.320872, rtol=1e-3)
+
+    trace_loss = result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 4.141166, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.846206, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], -0.4010013, rtol=1e-3)
+    assert_allclose(trace_loss["datasets-validation-total"], 1.881669, rtol=1e-3)
