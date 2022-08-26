@@ -66,7 +66,7 @@ def cycle_spin_subpixel(image, generator):
     image: `~pytorch.Tensor`
         Shifted tensor
     """
-    y, x = torch.meshgrid(torch.arange(-1, 2), torch.arange(-1, 2))
+    y, x = torch.meshgrid(torch.arange(-1, 2), torch.arange(-1, 2), indexing="ij")
     x_0 = torch.rand(1, generator=generator) - 0.5
     y_0 = torch.rand(1, generator=generator) - 0.5
     kernel = grid_weights(x, y, x_0, y_0)
@@ -190,7 +190,7 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
     idx += jitter_x
     idy += jitter_y
 
-    idy, idx = torch.meshgrid(idy, idx)
+    idy, idx = torch.meshgrid(idy, idx, indexing="ij")
 
     patches = view_as_windows_torch(image=image, shape=shape, stride=1)
 

@@ -199,7 +199,7 @@ class MAPDeconvolver:
                 f'Epoch: {epoch}, {row["total"]}, '
                 f'{row["datasets-total"]}, {row["priors-total"]}'
             )
-            log.info(message)
+            log.debug(message)
 
         if self.compute_error:
             flux_errors = total_loss.fluxes_error(fluxes=fluxes)
