@@ -39,6 +39,8 @@ class MAPDeconvolver:
         Whether to compute flux error
     fit_background_norm : bool
         Whether to fit background norm.
+    stop_early: bool
+        Stop training early, once the results on the test datasets do not improve any more.
     device : `~pytorch.Device`
         Pytorch device
     """
@@ -53,6 +55,7 @@ class MAPDeconvolver:
         learning_rate=0.1,
         compute_error=False,
         fit_background_norm=False,
+        stop_early=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
         self.n_epochs = n_epochs
@@ -69,6 +72,7 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.compute_error = compute_error
         self.fit_background_norm = fit_background_norm
+        self.stop_early = stop_early
         self.device = torch.device(device)
 
     def to_dict(self):
@@ -101,21 +105,27 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
-    def run(self, datasets, components):
+    def run(self, datasets, datasets_test=None, components=None):
         """Run the MAP deconvolver
 
         Parameters
         ----------
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
+        datasets_test : list of dict
+            List of test datasets. List of dictionaries containing, "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
+
 
         Returns
         -------
         flux : `~numpy.ndarray`
             Reconstructed flux.
         """
+        if self.stop_early and datasets_test is None:
+            raise ValueError("Early stopping requires providing test datasets")
+
         if isinstance(components, FluxComponent):
             components = {self._default_flux_component: components}
 
@@ -134,10 +144,20 @@ class MAPDeconvolver:
             datasets=datasets, components=components
         )
 
+        if datasets_test:
+            poisson_loss_test = PoissonLoss.from_datasets(
+                datasets=datasets_test, components=components
+            )
+        else:
+            poisson_loss_test = None
+
         prior_loss = PriorLoss(priors=self.loss_function_prior)
 
         total_loss = TotalLoss(
-            poisson_loss=poisson_loss, prior_loss=prior_loss, beta=self.beta
+            poisson_loss=poisson_loss,
+            poisson_loss_test=poisson_loss_test,
+            prior_loss=prior_loss,
+            beta=self.beta,
         )
 
         for epoch in range(self.n_epochs):
@@ -159,6 +179,9 @@ class MAPDeconvolver:
                 optimizer.step()
 
             total_loss.append_trace(fluxes=fluxes)
+
+            if self.stop_early:
+                pass
 
             row = total_loss.trace[-1]
 

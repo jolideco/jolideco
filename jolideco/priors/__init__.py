@@ -16,7 +16,7 @@ PRIOR_REGISTRY = {
     "multiscale-prior": MultiScalePrior,
     "smooth": SmoothnessPrior,
     "lira": LIRAPrior,
-    "point": InverseGammaPrior,
+    "inverse-gamma": InverseGammaPrior,
     "exponetial": ExponentialPrior,
 }
 

@@ -136,8 +136,9 @@ class TotalLoss:
         Relative weight of the prior.
     """
 
-    def __init__(self, poisson_loss, prior_loss, beta=1):
+    def __init__(self, poisson_loss, prior_loss, poisson_loss_test=None, beta=1):
         self.poisson_loss = poisson_loss
+        self.poisson_loss_test = poisson_loss_test
         self.prior_loss = prior_loss
         self.beta = beta
 
@@ -153,6 +154,10 @@ class TotalLoss:
         names = ["total", "datasets-total", "priors-total"]
         names += [f"prior-{name}" for name in self.prior_loss.priors]
         names += [f"dataset-{idx}" for idx in range(self.poisson_loss.n_datasets)]
+
+        if self.poisson_loss_test:
+            names += ["datasets-test-total"]
+
         return Table(names=names)
 
     def append_trace(self, fluxes):
@@ -182,6 +187,12 @@ class TotalLoss:
 
         for idx, value in enumerate(loss_datasets):
             row[f"dataset-{idx}"] = value
+
+        if self.poisson_loss_test:
+            loss_datasets_total_test = [
+                _.item() for _ in self.poisson_loss_test.evaluate(fluxes=fluxes)
+            ]
+            row["datasets-test-total"] = sum(loss_datasets_total_test)
 
         self.trace.add_row(row)
 
