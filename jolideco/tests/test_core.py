@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponent, FluxComponents
-from jolideco.priors import Priors, UniformPrior
+from jolideco.priors import Priors, UniformPrior, InverseGammaPrior
 
 
 @pytest.fixture(scope="session")
@@ -120,3 +120,36 @@ def test_map_deconvolver_usampling(datasets_disk):
     assert_allclose(trace_loss["dataset-0"], 1.919231, rtol=1e-3)
     assert_allclose(trace_loss["dataset-1"], 1.937949, rtol=1e-3)
     assert_allclose(trace_loss["dataset-2"], 1.927711, rtol=1e-3)
+
+
+def test_map_deconvolver_invere_gamma_prior(datasets_disk):
+    priors = Priors()
+    priors["flux-1"] = InverseGammaPrior(alpha=10)
+
+    deco = MAPDeconvolver(
+        n_epochs=100,
+        learning_rate=0.1,
+        loss_function_prior=priors,
+    )
+
+    random_state = np.random.RandomState(642020)
+    flux_init = random_state.gamma(20, size=(32, 32))
+
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_flux_init_numpy(
+        flux_init=flux_init, upsampling_factor=1
+    )
+
+    result = deco.run(datasets=datasets_disk, components=components)
+
+    assert result.flux_upsampled_total.shape == (32, 32)
+    assert_allclose(result.flux_total[12, 12], 0.136744, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.135454, rtol=1e-3)
+
+    trace_loss = result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 4.593177, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.743475, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-1"], 1.76312, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-2"], 1.737586, rtol=1e-3)
+
+    assert_allclose(trace_loss["prior-flux-1"], 0.651003, rtol=1e-3)

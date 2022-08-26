@@ -72,6 +72,7 @@ class ImageNorm(abc.ABC):
 
 class ASinhImageNorm(ImageNorm):
     """Inverse hyperbolic sine image norm"""
+
     def __init__(self, alpha, beta):
         self.alpha = torch.Tensor([alpha])
         self.beta = torch.Tensor([beta])

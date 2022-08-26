@@ -117,7 +117,9 @@ class MAPDeconvolver:
             Reconstructed flux.
         """
         if isinstance(components, FluxComponent):
-            components = FluxComponents({self._default_flux_component: components})
+            components = {self._default_flux_component: components}
+
+        components = FluxComponents(components)
 
         components_init = copy.deepcopy(components)
 

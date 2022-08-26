@@ -161,7 +161,7 @@ class InverseGammaPrior(Prior):
 
         value = -self.beta / flux
         value += (-self.alpha - 1) * torch.log(flux)
-        value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
+        value_sum = torch.sum(value) / flux.numel() + self.log_constant_term
         return value_sum
 
 
@@ -247,7 +247,7 @@ class ExponentialPrior(Prior):
             flux = cycle_spin_subpixel(image=flux, generator=self.generator)
 
         value = -self.alpha * flux
-        value_sum = torch.sum(value) + flux.numel() * self.log_constant_term
+        value_sum = torch.sum(value) / flux.numel() + self.log_constant_term
         return value_sum
 
 
