@@ -39,8 +39,8 @@ class MAPDeconvolver:
         Whether to compute flux error
     fit_background_norm : bool
         Whether to fit background norm.
-    stop_early: bool
-        Stop training early, once the results on the test datasets do not improve any more.
+    stop_early_n_average: int or None
+        Stop training early, once the average results on the last n test datasets do not improve any more.
     device : `~pytorch.Device`
         Pytorch device
     """
@@ -55,7 +55,7 @@ class MAPDeconvolver:
         learning_rate=0.1,
         compute_error=False,
         fit_background_norm=False,
-        stop_early=False,
+        stop_early_n_average=None,
         device=TORCH_DEFAULT_DEVICE,
     ):
         self.n_epochs = n_epochs
@@ -72,7 +72,7 @@ class MAPDeconvolver:
         self.learning_rate = learning_rate
         self.compute_error = compute_error
         self.fit_background_norm = fit_background_norm
-        self.stop_early = stop_early
+        self.stop_early_n_average = stop_early_n_average
         self.device = torch.device(device)
 
     def to_dict(self):
@@ -105,15 +105,15 @@ class MAPDeconvolver:
 
         return info.expandtabs(tabsize=4)
 
-    def run(self, datasets, datasets_test=None, components=None):
+    def run(self, datasets, datasets_validation=None, components=None):
         """Run the MAP deconvolver
 
         Parameters
         ----------
         datasets : list of dict
             List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        datasets_test : list of dict
-            List of test datasets. List of dictionaries containing, "counts", "psf", "background" and "exposure".
+        datasets_validation : list of dict
+            List of validation datasets. List of dictionaries containing, "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
 
@@ -123,7 +123,7 @@ class MAPDeconvolver:
         flux : `~numpy.ndarray`
             Reconstructed flux.
         """
-        if self.stop_early and datasets_test is None:
+        if self.stop_early_n_average and datasets_validation is None:
             raise ValueError("Early stopping requires providing test datasets")
 
         if isinstance(components, FluxComponent):
@@ -144,18 +144,18 @@ class MAPDeconvolver:
             datasets=datasets, components=components
         )
 
-        if datasets_test:
-            poisson_loss_test = PoissonLoss.from_datasets(
-                datasets=datasets_test, components=components
+        if datasets_validation:
+            poisson_loss_validation = PoissonLoss.from_datasets(
+                datasets=datasets_validation, components=components
             )
         else:
-            poisson_loss_test = None
+            poisson_loss_validation = None
 
         prior_loss = PriorLoss(priors=self.loss_function_prior)
 
         total_loss = TotalLoss(
             poisson_loss=poisson_loss,
-            poisson_loss_test=poisson_loss_test,
+            poisson_loss_validation=poisson_loss_validation,
             prior_loss=prior_loss,
             beta=self.beta,
         )
@@ -180,10 +180,17 @@ class MAPDeconvolver:
 
             total_loss.append_trace(fluxes=fluxes)
 
-            if self.stop_early:
-                pass
-
+            trace_loss_validation = total_loss.trace["datasets-validation-total"]
             row = total_loss.trace[-1]
+
+            if (
+                self.stop_early_n_average
+                and len(total_loss.trace) > self.stop_early_n_average
+            ):
+                range_mean = slice(-self.stop_early_n_average, None)
+                loss_test_average = np.mean(trace_loss_validation[range_mean])
+                if row["datasets-validation-total"] > loss_test_average:
+                    break
 
             message = (
                 f'Epoch: {epoch}, {row["total"]}, '
