@@ -1,7 +1,7 @@
 import torch
 from torch.distributions import Dirichlet
 
-from jolideco.utils.torch import view_as_overlapping_patches_torch
+from jolideco.utils.torch import view_as_overlapping_patches_torch, cycle_spin
 
 from .core import Prior
 
@@ -13,21 +13,19 @@ class LIRAPrior(Prior):
     ----------
     """
 
-    def __init__(self, alphas, random_state=None):
+    def __init__(self, alphas, cycle_spin=True, random_state=None, generator=None):
         self.alphas = alphas
         self.random_state = random_state
+        self.cycle_spin = cycle_spin
 
-    def cycle_spin(self, flux):
-        """Cycle spin"""
-        shift_x, shift_y = self.random_state, 0
-        shifted = torch.roll(flux, shifts=(shift_y, shift_x))
-        return shifted
+        if generator is None:
+            generator = torch.Generator()
 
-    def multiscale(self):
-        pass
+        self.generator = generator
 
     def __call__(self, flux):
-        flux = self.cycle_spin(flux)
+        if self.cycle_spin:
+            flux = cycle_spin(image=flux, patch_shape=(2, 2), generator=self.generator)
 
         log_prior = 0
 

@@ -202,9 +202,17 @@ class MultiScalePrior(Prior):
         Prior instance
     n_levels : int, optional
         Number of multiscale levels
+    weights : list of floats
+        Weight to be applied per level.
+    cycle_spin : bool
+        Apply cycle spin.
+    anti_alias : bool
+        Apply Gaussian smoothing before downsampling.
     """
 
-    def __init__(self, prior, n_levels=2, weights=None, cycle_spin=False):
+    def __init__(
+        self, prior, n_levels=2, weights=None, cycle_spin=False, anti_alias=False
+    ):
         super().__init__()
         self.n_levels = n_levels
         self.cycle_spin = cycle_spin
@@ -214,6 +222,7 @@ class MultiScalePrior(Prior):
             weights = [1 / n_levels] * n_levels
 
         self.weights = weights
+        self.anti_alias = anti_alias
 
     def __call__(self, flux):
         """Evaluate the prior
@@ -241,12 +250,13 @@ class MultiScalePrior(Prior):
             if weight == 0:
                 continue
 
-            factor = 2**idx
-            sigma = 2 * factor / 6.0
-            kernel = Gaussian2DKernel(sigma).array[None, None]
-            kernel = torch.from_numpy(kernel.astype(np.float32))
+            if self.anti_alias:
+                factor = 2**idx
+                sigma = 2 * factor / 6.0
+                kernel = Gaussian2DKernel(sigma).array[None, None]
+                kernel = torch.from_numpy(kernel.astype(np.float32))
+                flux = convolve_fft_torch(flux, kernel=kernel)
 
-            flux = convolve_fft_torch(flux, kernel=kernel)
             flux_downsampled = F.avg_pool2d(flux, kernel_size=factor)
             log_like_level = self.prior(flux=flux_downsampled)
             log_like += factor**2 * weight * log_like_level
