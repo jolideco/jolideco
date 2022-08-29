@@ -205,8 +205,10 @@ class MAPDeconvolver:
             flux_errors = total_loss.fluxes_error(fluxes=fluxes)
             components.set_flux_errors(flux_errors=flux_errors)
 
+        config = self.to_dict()
+        config["upsampling_factor"] = list(components.values())[0].upsampling_factor
         return MAPDeconvolverResult(
-            config=self.to_dict(),
+            config=config,
             fluxes_upsampled=components.to_numpy(),
             fluxes_init=components_init.to_numpy(),
             trace_loss=total_loss.trace,
