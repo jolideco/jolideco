@@ -114,8 +114,8 @@ def test_map_deconvolver_usampling(datasets_disk):
 
     assert result.flux_upsampled_total.shape == (64, 64)
     assert result.components["flux-1"].upsampling_factor == 2
-    assert_allclose(result.flux_total[12, 12], 0.238865, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 0.222219, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 3.620424, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.849501, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
     assert_allclose(trace_loss["total"], 5.784892, rtol=1e-3)
