@@ -1,4 +1,7 @@
+from astropy.visualization import simple_norm
+from astropy.utils import lazyproperty
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,6 +9,8 @@ import torch.nn.functional as F
 from jolideco.priors.core import UniformPrior
 
 from .utils.torch import convolve_fft_torch
+from .utils.plot import add_cbar
+
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 
@@ -27,6 +32,8 @@ class FluxComponent(nn.Module):
         Prior for this flux component.
     frozen : bool
         Whether to freeze component.
+    wcs : `~astropy.wcs.WCS`
+        World coordinate transform object
     """
 
     def __init__(
@@ -37,6 +44,7 @@ class FluxComponent(nn.Module):
         upsampling_factor=1,
         prior=None,
         frozen=False,
+        wcs=None,
     ):
         super().__init__()
 
@@ -53,11 +61,12 @@ class FluxComponent(nn.Module):
 
         self.prior = prior
         self.frozen = frozen
+        self._wcs = wcs
 
     @property
-    def flux_upsampled_error(self):
+    def wcs(self):
         """Flux error"""
-        return self._flux_upsampled_error
+        return self._wcs
 
     def parameters(self, recurse=True):
         """Parameter list"""
@@ -133,7 +142,7 @@ class FluxComponent(nn.Module):
 
     @property
     def flux_upsampled(self):
-        """Flux (`torch.Tensor`)"""
+        """Flux (`~torch.Tensor`)"""
         if self.use_log_flux:
             return torch.exp(self._flux_upsampled)
         else:
@@ -141,23 +150,81 @@ class FluxComponent(nn.Module):
 
     @property
     def flux(self):
-        """Flux (`torch.Tensor`)"""
+        """Flux (`~torch.Tensor`)"""
         flux = self.flux_upsampled
 
         if self.upsampling_factor:
             flux = F.avg_pool2d(
-                self.flux_upsampled,
+                flux,
                 kernel_size=self.upsampling_factor,
                 divisor_override=1,
             )
         return flux
 
+    @property
+    def flux_upsampled_error(self):
+        """Flux error (`~torch.Tensor`)"""
+        return self._flux_upsampled_error
+
+    @property
+    def flux_numpy(self):
+        """Flux (`~numpy.ndarray`)"""
+        flux_cpu = self.flux.detach().cpu()
+        return flux_cpu.numpy()[0, 0]
+
+    @property
+    def flux_upsampled_numpy(self):
+        """Flux (`~numpy.ndarray`)"""
+        return self.flux_upsampled.detach().numpy()[0, 0]
+
+    @property
+    def flux_upsampled_error_numpy(self):
+        """Flux error (`~numpy.ndarray`)"""
+        return self.flux_upsampled_error.detach().numpy()[0, 0]
+
 
 class FluxComponents(nn.ModuleDict):
     """Flux components"""
 
+    @property
+    def flux_upsampled_total(self):
+        """Total summed flux (`~torch.tensor`)"""
+        values = list(self.values())
+
+        flux = torch.zeros(values[0].shape)
+
+        for component in values:
+            flux += component.flux_upsampled
+
+        return flux
+
+    @property
+    def fluxes_numpy(self):
+        """Fluxes (`dict` of `~numpy.ndarray`)"""
+        fluxes = {}
+
+        for name, component in self.items():
+            fluxes[name] = component.flux_numpy
+
+        return fluxes
+
+    @property
+    def fluxes_upsampled_numpy(self):
+        """Upsampled fluxes (`dict` of `~numpy.ndarray`)"""
+        return self.to_numpy()
+
+    @property
+    def flux_upsampled_total_numpy(self):
+        """Usampled total flux"""
+        return np.sum([flux for flux in self.fluxes_upsampled_numpy.values()], axis=0)
+
+    @property
+    def flux_total_numpy(self):
+        """Usampled total flux"""
+        return np.sum([flux for flux in self.fluxes_numpy.values()], axis=0)
+
     def to_dict(self):
-        """Fluxes of the components ()"""
+        """Fluxes of the components (dict of `~torch.tensor`)"""
         fluxes = {}
 
         for name, component in self.items():
@@ -176,22 +243,11 @@ class FluxComponents(nn.ModuleDict):
         return fluxes
 
     def to_flux_tuple(self):
-        """Fluxes as tuple"""
+        """Fluxes as tuple (tuple of `~torch.tensor`)"""
         return tuple([_.flux_upsampled for _ in self.values()])
 
-    def evaluate(self):
-        """Total flux"""
-        values = list(self.values())
-
-        flux = torch.zeros(values[0].shape)
-
-        for component in values:
-            flux += component.flux_upsampled
-
-        return flux
-
     def set_flux_errors(self, flux_errors):
-        """"""
+        """Set flux errors"""
         for name, flux_error in flux_errors.items():
             self[name]._flux_upsampled_error = flux_error
 
@@ -202,6 +258,48 @@ class FluxComponents(nn.ModuleDict):
     def write(self, filename, overwrite=False):
         """Write flux components"""
         raise NotImplementedError
+
+    def plot_fluxes(self, figsize=None, **kwargs):
+        """Plot images of the flux components
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Keywords forwared to `~matplotlib.pyplot.imshow`
+
+        Returns
+        -------
+        axes : list of `~matplotlib.pyplot.Axes`
+            Plot axes
+        """
+        ncols = len(self) + 1
+
+        if figsize is None:
+            figsize = (ncols * 5, 5)
+
+        norm = simple_norm(
+            self.flux_upsampled_total_numpy, min_cut=0, stretch="asinh", asinh_a=0.01
+        )
+
+        kwargs.setdefault("norm", norm)
+
+        fig, axes = plt.subplots(
+            nrows=1,
+            ncols=ncols,
+            subplot_kw={"projection": list(self.values())[0].wcs},
+            figsize=figsize,
+        )
+
+        im = axes[0].imshow(self.flux_upsampled_total_numpy, origin="lower", **kwargs)
+        axes[0].set_title("Total")
+
+        for ax, name in zip(axes[1:], self.fluxes_upsampled_numpy):
+            flux = self.fluxes_upsampled_numpy[name]
+            im = ax.imshow(flux, origin="lower", **kwargs)
+            ax.set_title(name.title())
+
+        add_cbar(im=im, ax=ax, fig=fig)
+        return axes
 
 
 class NPredModel(nn.Module):

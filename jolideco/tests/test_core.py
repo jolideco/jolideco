@@ -88,7 +88,7 @@ def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
 
 
 def test_map_deconvolver_result_plot(deconvolver_result):
-    deconvolver_result.plot_fluxes()
+    deconvolver_result.components.plot_fluxes()
     deconvolver_result.plot_trace_loss()
 
 
@@ -113,6 +113,7 @@ def test_map_deconvolver_usampling(datasets_disk):
     result = deco.run(datasets=datasets_disk, components=components)
 
     assert result.flux_upsampled_total.shape == (64, 64)
+    assert result.components["flux-1"].upsampling_factor == 2
     assert_allclose(result.flux_total[12, 12], 0.238865, rtol=1e-3)
     assert_allclose(result.flux_total[0, 0], 0.222219, rtol=1e-3)
 

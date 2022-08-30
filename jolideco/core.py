@@ -206,11 +206,10 @@ class MAPDeconvolver:
             components.set_flux_errors(flux_errors=flux_errors)
 
         config = self.to_dict()
-        config["upsampling_factor"] = list(components.values())[0].upsampling_factor
         return MAPDeconvolverResult(
             config=config,
-            fluxes_upsampled=components.to_numpy(),
-            fluxes_init=components_init.to_numpy(),
+            components=components,
+            components_init=components_init,
             trace_loss=total_loss.trace,
         )
 
@@ -222,48 +221,35 @@ class MAPDeconvolverResult:
     ----------
     config : `dict`
         Configuration from the `LIRADeconvolver`
-    fluxes_upsampled : `~numpy.ndarray`
-        Flux array
-    fluxes_init : `~numpy.ndarray`
-        Flux init array
+    components: `FluxComponents`
+        Flux components.
+    components_init : `FluxComponents`
+        Initial flux components.
     trace_loss : `~astropy.table.Table` or dict
         Trace of the total loss.
-    wcs : `~astropy.wcs.WCS`
-        World coordinate transform object
     """
 
-    def __init__(self, config, fluxes_upsampled, fluxes_init, trace_loss, wcs=None):
-        self._fluxes_upsampled = fluxes_upsampled
-        self.fluxes_init = fluxes_init
+    def __init__(self, config, components, components_init, trace_loss, wcs=None):
+        self._components = components
+        self.components_init = components_init
         self.trace_loss = trace_loss
         self._config = config
         self._wcs = wcs
 
-    @lazyproperty
-    def fluxes_upsampled(self):
-        """Upsampled fluxes (`dict` of `~numpy.ndarray`)"""
-        return self._fluxes_upsampled
+    @property
+    def components(self):
+        """Flux components (`FluxComponents`)"""
+        return self._components
 
-    @lazyproperty
-    def flux_upsampled_total(self):
-        """Usampled total flux"""
-        return np.sum([flux for flux in self.fluxes_upsampled.values()], axis=0)
-
-    @lazyproperty
-    def fluxes(self):
-        """Fluxes (`dict` of `~numpy.ndarray`)"""
-        fluxes = {}
-        block_size = self._config.get("upsampling_factor", 1)
-
-        for name, flux in self.fluxes_upsampled.items():
-            fluxes[name] = block_reduce(flux, block_size=block_size)
-
-        return fluxes
-
-    @lazyproperty
+    @property
     def flux_total(self):
-        """Usampled total flux"""
-        return np.sum([flux for flux in self.fluxes.values()], axis=0)
+        """Total flux"""
+        return self.components.flux_total_numpy
+
+    @property
+    def flux_upsampled_total(self):
+        """Total flux"""
+        return self.components.flux_upsampled_total_numpy
 
     @lazyproperty
     def config(self):
@@ -291,48 +277,6 @@ class MAPDeconvolverResult:
 
         plot_trace_loss(ax=ax, trace_loss=self.trace_loss, which=which, **kwargs)
         return ax
-
-    def plot_fluxes(self, figsize=None, **kwargs):
-        """Plot images of the flux components
-
-        Parameters
-        ----------
-        **kwargs : dict
-            Keywords forwared to `~matplotlib.pyplot.imshow`
-
-        Returns
-        -------
-        axes : list of `~matplotlib.pyplot.Axes`
-            Plot axes
-        """
-        ncols = len(self.fluxes) + 1
-
-        if figsize is None:
-            figsize = (ncols * 5, 5)
-
-        norm = simple_norm(
-            self.flux_upsampled_total, min_cut=0, stretch="asinh", asinh_a=0.01
-        )
-
-        kwargs.setdefault("norm", norm)
-
-        fig, axes = plt.subplots(
-            nrows=1,
-            ncols=ncols,
-            subplot_kw={"projection": self.wcs},
-            figsize=figsize,
-        )
-
-        im = axes[0].imshow(self.flux_upsampled_total, origin="lower", **kwargs)
-        axes[0].set_title("Total")
-
-        for ax, name in zip(axes[1:], self.fluxes_upsampled):
-            flux = self.fluxes_upsampled[name]
-            im = ax.imshow(flux, origin="lower", **kwargs)
-            ax.set_title(name.title())
-
-        add_cbar(im=im, ax=ax, fig=fig)
-        return axes
 
     @property
     def config_table(self):
