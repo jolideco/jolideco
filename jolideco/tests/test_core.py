@@ -5,7 +5,7 @@ from numpy.testing import assert_allclose
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponent, FluxComponents
-from jolideco.priors import Priors, UniformPrior, InverseGammaPrior
+from jolideco.priors import InverseGammaPrior, Priors, UniformPrior
 from jolideco.priors.core import ExponentialPrior
 
 

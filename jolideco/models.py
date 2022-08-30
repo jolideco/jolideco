@@ -1,16 +1,14 @@
-from astropy.visualization import simple_norm
-from astropy.utils import lazyproperty
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from astropy.visualization import simple_norm
 
 from jolideco.priors.core import UniformPrior
 
-from .utils.torch import convolve_fft_torch
 from .utils.plot import add_cbar
-
+from .utils.torch import convolve_fft_torch
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 

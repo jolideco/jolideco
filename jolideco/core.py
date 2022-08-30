@@ -5,16 +5,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from astropy.nddata import block_reduce
 from astropy.table import Table
 from astropy.utils import lazyproperty
-from astropy.visualization import simple_norm
 
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
 from .priors import PRIOR_REGISTRY, Priors, UniformPrior
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
-from .utils.plot import add_cbar
 from .utils.torch import TORCH_DEFAULT_DEVICE
 
 logging.basicConfig(level=logging.INFO)
@@ -122,7 +119,6 @@ class MAPDeconvolver:
             "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
-
 
         Returns
         -------
@@ -287,11 +283,6 @@ class MAPDeconvolverResult:
             config[key] = [value]
 
         return config
-
-    @property
-    def wcs(self):
-        """Optional wcs"""
-        return self._wcs
 
     def write(self, filename, overwrite=False, format="fits"):
         """Write result fo file
