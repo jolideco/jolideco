@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from astropy.table import Table
 from astropy.utils import lazyproperty
+from tqdm.auto import tqdm
 
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
@@ -144,40 +145,51 @@ class MAPDeconvolver:
             beta=self.beta,
         )
 
-        for epoch in range(self.n_epochs):
-            for counts, npred_model in poisson_loss.iter_by_dataset:
-                optimizer.zero_grad()
-                # evaluate npred model
-                fluxes = components.to_flux_tuple()
-                npred = npred_model.evaluate(fluxes=fluxes)
+        with tqdm(total=self.n_epochs) as pbar:
+            for epoch in range(self.n_epochs):
+                pbar.set_description(f"Epoch {epoch + 1}")
 
-                # compute Poisson loss
-                loss = poisson_loss.loss_function(npred, counts)
+                components.train()
+                for counts, npred_model in poisson_loss.iter_by_dataset:
+                    optimizer.zero_grad()
+                    # evaluate npred model
+                    fluxes = components.to_flux_tuple()
+                    npred = npred_model.evaluate(fluxes=fluxes)
 
-                # compute prior losses
-                loss_prior = prior_loss(fluxes=fluxes)
+                    # compute Poisson loss
+                    loss = poisson_loss.loss_function(npred, counts)
 
-                loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
+                    # compute prior losses
+                    loss_prior = prior_loss(fluxes=fluxes)
 
-                loss_total.backward()
-                optimizer.step()
+                    loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
-            total_loss.append_trace(fluxes=fluxes)
+                    loss_total.backward()
+                    optimizer.step()
 
-            row = total_loss.trace[-1]
+                components.eval()
+                total_loss.append_trace(fluxes=fluxes)
 
-            if self.stop_early and len(total_loss.trace) > self.stop_early_n_average:
-                range_mean = slice(-self.stop_early_n_average, None)
-                trace_loss_validation = total_loss.trace["datasets-validation-total"]
-                loss_test_average = np.mean(trace_loss_validation[range_mean])
-                if row["datasets-validation-total"] > loss_test_average:
-                    break
+                row = total_loss.trace[-1]
 
-            message = (
-                f'Epoch: {epoch}, {row["total"]}, '
-                f'{row["datasets-total"]}, {row["priors-total"]}'
-            )
-            log.debug(message)
+                if (
+                    self.stop_early
+                    and len(total_loss.trace) > self.stop_early_n_average
+                ):
+                    range_mean = slice(-self.stop_early_n_average, None)
+                    trace_loss_validation = total_loss.trace[
+                        "datasets-validation-total"
+                    ]
+                    loss_test_average = np.mean(trace_loss_validation[range_mean])
+                    if row["datasets-validation-total"] > loss_test_average:
+                        break
+
+                pbar.update(1)
+                pbar.set_postfix(
+                    total=row["total"],
+                    datasets_total=row["datasets-total"],
+                    priors_total=row["priors-total"],
+                )
 
         if self.compute_error:
             flux_errors = total_loss.fluxes_error(fluxes=fluxes)
