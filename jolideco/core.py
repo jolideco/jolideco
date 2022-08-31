@@ -10,7 +10,6 @@ from astropy.utils import lazyproperty
 
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
-from .priors import PRIOR_REGISTRY, Priors, UniformPrior
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
 from .utils.torch import TORCH_DEFAULT_DEVICE
 

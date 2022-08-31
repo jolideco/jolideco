@@ -22,12 +22,13 @@ class Prior(nn.Module):
     # TODO: this is a workaround for https://github.com/pytorch/pytorch/issues/43672
     # maybe remove the generator state from flux components?
     def __getstate__(self):
-        generator = self.__dict__.pop("generator", None)
+        state = self.__dict__.copy()
+        generator = state.pop("generator", None)
 
         if generator:
-            self.__dict__["generator"] = generator.get_state()
+            state["generator"] = generator.get_state()
 
-        return self.__dict__
+        return state
 
     def __setstate__(self, state):
         generator_state = state.pop("generator", None)
