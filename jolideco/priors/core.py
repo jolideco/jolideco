@@ -19,7 +19,25 @@ __all__ = [
 class Prior(nn.Module):
     """Prior base class"""
 
-    pass
+    # TODO: this is a workaround for https://github.com/pytorch/pytorch/issues/43672
+    # maybe remove the generator state from flux components?
+    def __getstate__(self):
+        generator = self.__dict__.pop("generator", None)
+
+        if generator:
+            self.__dict__["generator"] = generator.get_state()
+
+        return self.__dict__
+
+    def __setstate__(self, state):
+        generator_state = state.pop("generator", None)
+
+        if generator_state is not None:
+            generator = torch.Generator()
+            generator.set_state(generator_state)
+            state["generator"] = generator
+
+        self.__dict__ = state
 
 
 class Priors(nn.ModuleDict):

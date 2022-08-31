@@ -28,8 +28,6 @@ class MAPDeconvolver:
         Number of epochs to train
     beta : float
         Scale factor for the prior.
-    loss_function_prior : `~jolideco.priors.Priors`
-        Loss functions for the priors (optional).
     learning_rate : float
         Learning rate
     compute_error : bool
@@ -51,7 +49,6 @@ class MAPDeconvolver:
         self,
         n_epochs,
         beta=1,
-        loss_function_prior=None,
         learning_rate=0.1,
         compute_error=False,
         fit_background_norm=False,
@@ -61,15 +58,6 @@ class MAPDeconvolver:
     ):
         self.n_epochs = n_epochs
         self.beta = beta
-
-        if loss_function_prior is None:
-            loss_function_prior = Priors()
-            loss_function_prior[self._default_flux_component] = UniformPrior()
-
-        for prior in loss_function_prior.values():
-            prior.to(device=device)
-
-        self.loss_function_prior = loss_function_prior
         self.learning_rate = learning_rate
         self.compute_error = compute_error
         self.fit_background_norm = fit_background_norm
@@ -87,11 +75,6 @@ class MAPDeconvolver:
         """
         data = {}
         data.update(self.__dict__)
-
-        for key, value in PRIOR_REGISTRY.items():
-            if isinstance(self.loss_function_prior, value):
-                data["loss_function_prior"] = key
-
         data["device"] = str(self.device)
         return data
 
@@ -153,7 +136,7 @@ class MAPDeconvolver:
         else:
             poisson_loss_validation = None
 
-        prior_loss = PriorLoss(priors=self.loss_function_prior)
+        prior_loss = PriorLoss(priors=components.priors)
 
         total_loss = TotalLoss(
             poisson_loss=poisson_loss,
@@ -173,7 +156,7 @@ class MAPDeconvolver:
                 loss = poisson_loss.loss_function(npred, counts)
 
                 # compute prior losses
-                loss_prior = self.loss_function_prior(fluxes=fluxes)
+                loss_prior = prior_loss(fluxes=fluxes)
 
                 loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 

@@ -41,20 +41,18 @@ def datasets_disk():
 
 @pytest.fixture(scope="session")
 def deconvolver_result(datasets_gauss):
-    priors = Priors()
-    priors["flux-1"] = UniformPrior()
-
     deco = MAPDeconvolver(
         n_epochs=100,
         learning_rate=0.1,
-        loss_function_prior=priors,
     )
 
     random_state = np.random.RandomState(642020)
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_flux_init_numpy(flux_init=flux_init)
+    components["flux-1"] = FluxComponent.from_flux_init_numpy(
+        flux_init=flux_init, prior=UniformPrior()
+    )
 
     result = deco.run(datasets=datasets_gauss, components=components)
     return result
@@ -93,13 +91,9 @@ def test_map_deconvolver_result_plot(deconvolver_result):
 
 
 def test_map_deconvolver_usampling(datasets_disk):
-    priors = Priors()
-    priors["flux-1"] = UniformPrior()
-
     deco = MAPDeconvolver(
         n_epochs=100,
         learning_rate=0.1,
-        loss_function_prior=priors,
     )
 
     random_state = np.random.RandomState(642020)
@@ -107,7 +101,7 @@ def test_map_deconvolver_usampling(datasets_disk):
 
     components = FluxComponents()
     components["flux-1"] = FluxComponent.from_flux_init_numpy(
-        flux_init=flux_init, upsampling_factor=2
+        flux_init=flux_init, upsampling_factor=2, prior=UniformPrior()
     )
 
     result = deco.run(datasets=datasets_disk, components=components)
@@ -125,13 +119,9 @@ def test_map_deconvolver_usampling(datasets_disk):
 
 
 def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
-    priors = Priors()
-    priors["flux-1"] = InverseGammaPrior(alpha=10)
-
     deco = MAPDeconvolver(
         n_epochs=100,
         learning_rate=0.1,
-        loss_function_prior=priors,
     )
 
     random_state = np.random.RandomState(642020)
@@ -139,7 +129,7 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
 
     components = FluxComponents()
     components["flux-1"] = FluxComponent.from_flux_init_numpy(
-        flux_init=flux_init, upsampling_factor=1
+        flux_init=flux_init, upsampling_factor=1, prior=InverseGammaPrior(alpha=10)
     )
 
     result = deco.run(datasets=datasets_disk, components=components)
@@ -158,13 +148,9 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
 
 
 def test_map_deconvolver_validation_datasets(datasets_disk):
-    priors = Priors()
-    priors["flux-1"] = ExponentialPrior(alpha=1)
-
     deco = MAPDeconvolver(
         n_epochs=100,
         learning_rate=0.1,
-        loss_function_prior=priors,
         stop_early_n_average=10,
     )
 
@@ -173,7 +159,7 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
 
     components = FluxComponents()
     components["flux-1"] = FluxComponent.from_flux_init_numpy(
-        flux_init=flux_init, upsampling_factor=1
+        flux_init=flux_init, upsampling_factor=1, prior=ExponentialPrior(alpha=1)
     )
 
     result = deco.run(

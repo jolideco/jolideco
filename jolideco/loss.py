@@ -120,7 +120,7 @@ class PriorLoss:
     def __call__(self, fluxes):
         """Evaluate and sum all losses"""
         losses = self.evaluate(fluxes=fluxes)
-        return torch.sum(losses)
+        return sum(losses)
 
 
 class TotalLoss:

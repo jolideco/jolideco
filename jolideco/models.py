@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from astropy.visualization import simple_norm
 
-from jolideco.priors.core import UniformPrior
+from jolideco.priors.core import Priors, UniformPrior
 
 from .utils.plot import add_cbar
 from .utils.torch import convolve_fft_torch
@@ -183,6 +183,16 @@ class FluxComponent(nn.Module):
 
 class FluxComponents(nn.ModuleDict):
     """Flux components"""
+
+    @property
+    def priors(self):
+        """Priors associated with the componenet"""
+        priors = Priors()
+
+        for name, component in self.items():
+            priors[name] = component.prior
+
+        return priors
 
     @property
     def flux_upsampled_total(self):
