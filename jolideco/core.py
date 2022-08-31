@@ -12,6 +12,7 @@ from tqdm.auto import tqdm
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
 from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
+from .utils.misc import format_class_str
 from .utils.torch import TORCH_DEFAULT_DEVICE
 
 logging.basicConfig(level=logging.INFO)
@@ -80,15 +81,7 @@ class MAPDeconvolver:
 
     def __str__(self):
         """String representation"""
-        cls_name = self.__class__.__name__
-        info = cls_name + "\n"
-        info += len(cls_name) * "-" + "\n\n"
-        data = self.to_dict()
-
-        for key, value in data.items():
-            info += f"\t{key:21s}: {value}\n"
-
-        return info.expandtabs(tabsize=4)
+        return format_class_str(instance=self)
 
     def run(self, datasets, datasets_validation=None, components=None):
         """Run the MAP deconvolver

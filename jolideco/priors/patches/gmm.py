@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.io as sio
@@ -10,7 +13,15 @@ from scipy import linalg
 from jolideco.utils.numpy import get_pixel_weights
 from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
 
-__all__ = ["GaussianMixtureModel"]
+__all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
+
+
+path = os.environ.get("JOLIDECO_GMM_LIBRARY", None)
+
+if path is None:
+    raise ValueError("Please set the $JOLIDECO_GMM_LIBRARY environment variable!")
+
+JOLIDECO_GMM_LIBRARY_PATH = Path(path)
 
 
 class GaussianMixtureModel(nn.Module):
@@ -209,6 +220,32 @@ class GaussianMixtureModel(nn.Module):
         )
 
     @classmethod
+    def from_registry(cls, name):
+        """Create GMM from registry
+
+        Parameters
+        ----------
+        name : str
+            Name of the registered GMM.
+
+        Returns
+        -------
+        gmm : `GaussianMixtureModel`
+            Gaussian mixture model.
+        """
+        from jolideco.priors.patches.gmm import GMM_REGISTRY
+
+        available_names = list(GMM_REGISTRY.keys())
+
+        if name not in available_names:
+            raise ValueError(
+                f"Not a supported GMM {name}, choose from {available_names}"
+            )
+
+        kwargs = GMM_REGISTRY[name]
+        return cls.read(**kwargs)
+
+    @classmethod
     def read(cls, filename, format="epll-matlab", device=TORCH_DEFAULT_DEVICE):
         """Read from matlab file
 
@@ -284,6 +321,44 @@ class GaussianMixtureModel(nn.Module):
         term_log = np.log(other.covariance_det / self.covariance_det)
         return 0.5 * (term_log - k + term_mean + term_trace)
 
+    def __eq__(self, other):
+        # TODO: improve check here?
+        if not self.covariances.shape == other.covariances.shape:
+            return False
+        else:
+            return np.allclose(self.covariances, other.covariances)
+
     def symmetric_kl_divergence(self, other):
         """Symmetric KL divergence"""
         return other.kl_divergence(other=self) + self.kl_divergence(other=other)
+
+    def to_dict(self):
+        """To dict"""
+        data = {}
+
+        from jolideco.priors.patches.gmm import GMM_REGISTRY
+
+        for name in GMM_REGISTRY:
+            gmm = GaussianMixtureModel.from_registry(name=name)
+            if gmm == self:
+                break
+
+        data["type"] = name
+        data["stride"] = self.stride
+        return data
+
+
+GMM_REGISTRY = {
+    "zoran-weiss": {
+        "filename": JOLIDECO_GMM_LIBRARY_PATH / "GSModel_8x8_200_2M_noDC_zeromean.mat",
+        "format": "epll-matlab",
+    },
+    "gleam-v0.1": {
+        "filename": JOLIDECO_GMM_LIBRARY_PATH / "patch-priors-gleam.fits",
+        "format": "table",
+    },
+    "gleam-v0.2": {
+        "filename": JOLIDECO_GMM_LIBRARY_PATH / "patch-priors-gleam-new.fits",
+        "format": "table",
+    },
+}

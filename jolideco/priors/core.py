@@ -40,6 +40,25 @@ class Prior(nn.Module):
 
         self.__dict__ = state
 
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        from jolideco.priors import PRIOR_REGISTRY
+
+        data = {}
+
+        for name, cls in PRIOR_REGISTRY.items():
+            if isinstance(self, cls):
+                data["type"] = name
+                break
+
+        return data
+
 
 class Priors(nn.ModuleDict):
     """Dict of mutiple priors"""
@@ -183,6 +202,20 @@ class InverseGammaPrior(Prior):
         value_sum = torch.sum(value) / flux.numel() + self.log_constant_term
         return value_sum
 
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        data["beta"] = float(self.beta)
+        data["cycle_spin_subpix"] = bool(self.cycle_spin_subpix)
+        return data
+
 
 class ExponentialPrior(Prior):
     """Sparse prior for point sources
@@ -269,6 +302,19 @@ class ExponentialPrior(Prior):
         value_sum = torch.sum(value) / flux.numel() + self.log_constant_term
         return value_sum
 
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        data["cycle_spin_subpix"] = bool(self.cycle_spin_subpix)
+        return data
+
 
 class ImagePrior(Prior):
     """Image prior
@@ -296,6 +342,10 @@ class ImagePrior(Prior):
         """
         return ((flux - self.flux_prior) / self.flux_prior_error) ** 2
 
+    def to_dict(self):
+        """To dict"""
+        raise NotImplementedError
+
 
 class SmoothnessPrior(Prior):
     """Gradient based smoothness prior"""
@@ -308,3 +358,7 @@ class SmoothnessPrior(Prior):
     def __call__(self, flux):
         smooth = convolve_fft_torch(flux, self.kernel)
         return -torch.sum(flux * smooth)
+
+    def to_dict(self):
+        """To dict"""
+        raise NotImplementedError

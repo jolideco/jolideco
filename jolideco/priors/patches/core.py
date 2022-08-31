@@ -70,6 +70,17 @@ class GMMPatchPrior(Prior):
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
 
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["stride"] = int(self.stride)
+        data["cycle_spin"] = bool(self.cycle_spin)
+        data["cycle_spin_subpix"] = bool(self.cycle_spin_subpix)
+        data["jitter"] = bool(self.jitter)
+        data["gmm"] = self.gmm.to_dict()
+        data["norm"] = self.norm.to_dict()
+        return data
+
     def prior_image(self, flux):
         """Compute a patch image from the eigenimages of the best fittign patches.
 

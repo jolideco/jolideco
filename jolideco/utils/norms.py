@@ -21,6 +21,25 @@ class ImageNorm(abc.ABC):
         self.vmin = vmin
         self.vmax = vmax
 
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        from jolideco.utils.norms import NORMS_REGISTRY
+
+        data = {}
+
+        for name, cls in NORMS_REGISTRY.items():
+            if isinstance(self, cls):
+                data["type"] = name
+                break
+
+        return data
+
     @abc.abstractmethod
     def __call__(self, image):
         pass
@@ -86,6 +105,13 @@ class ASinhImageNorm(ImageNorm):
         value = image * torch.asinh(self.beta / self.alpha)
         return self.alpha * torch.sinh(value)
 
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        data["beta"] = float(self.beta)
+        return data
+
 
 class MaxImageNorm(ImageNorm):
     """Max image normalisation"""
@@ -95,6 +121,10 @@ class MaxImageNorm(ImageNorm):
 
     def inverse(self, image):
         return super().inverse(image)
+
+    def to_dict(self):
+        """To dict"""
+        raise NotImplementedError
 
 
 class FixedMaxImageNorm(ImageNorm):
@@ -110,6 +140,12 @@ class FixedMaxImageNorm(ImageNorm):
         """Inverse image norm"""
         return image * self.max_value
 
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["max_value"] = float(self.max_value)
+        return data
+
 
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
@@ -119,6 +155,12 @@ class SigmoidImageNorm(ImageNorm):
 
     def __call__(self, image):
         return 1 / (1 + torch.exp(-image / self.alpha))
+
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        return data
 
 
 class ATanImageNorm(ImageNorm):
@@ -133,6 +175,12 @@ class ATanImageNorm(ImageNorm):
     def inverse(self, image):
         """Inverse image norm"""
         return 0.5 * torch.pi * torch.tan(image)
+
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        return data
 
 
 class InverseCDFImageNorm(ImageNorm):
@@ -160,6 +208,10 @@ class InverseCDFImageNorm(ImageNorm):
 
     def __call__(self, image):
         return interp1d_torch(image, self.x, self.cdf)
+
+    def to_dict(self):
+        """To dict"""
+        raise NotImplementedError
 
 
 NORMS_REGISTRY = {

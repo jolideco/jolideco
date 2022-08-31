@@ -38,3 +38,7 @@ class LIRAPrior(Prior):
             log_prior += torch.sum(values)
 
         return log_prior
+
+    def to_dict(self):
+        """To dict"""
+        raise NotImplementedError

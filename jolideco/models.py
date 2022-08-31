@@ -7,6 +7,7 @@ from astropy.visualization import simple_norm
 
 from jolideco.priors.core import Priors, UniformPrior
 
+from .utils.misc import format_class_str
 from .utils.plot import add_cbar
 from .utils.torch import convolve_fft_torch
 
@@ -60,6 +61,26 @@ class FluxComponent(nn.Module):
         self.prior = prior
         self.frozen = frozen
         self._wcs = wcs
+
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        # TODO: add all parameters, flux_upsampled could be filename
+        data = {}
+        data["use_log_flux"] = self.use_log_flux
+        data["upsampling_factor"] = self.upsampling_factor
+        data["frozen"] = self.frozen
+        data["prior"] = self.prior.to_dict()
+        return data
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
 
     @property
     def wcs(self):
