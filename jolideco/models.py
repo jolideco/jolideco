@@ -257,7 +257,7 @@ class FluxComponents(nn.ModuleDict):
         fluxes = {}
 
         for name, component in self.items():
-            fluxes[name] = component.flux_upsampled
+            fluxes[name] = component.to_dict()
 
         return fluxes
 
@@ -329,6 +329,9 @@ class FluxComponents(nn.ModuleDict):
 
         add_cbar(im=im, ax=ax, fig=fig)
         return axes
+
+    def __str__(self):
+        return format_class_str(instance=self)
 
 
 class NPredModel(nn.Module):

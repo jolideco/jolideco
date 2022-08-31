@@ -1,5 +1,5 @@
 TABSIZE = 2
-MAX_WIDTH = 22
+MAX_WIDTH = 24
 
 
 def to_str(data, level=1):
