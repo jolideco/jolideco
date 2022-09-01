@@ -1,3 +1,4 @@
+from msilib.schema import Component
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
@@ -5,7 +6,61 @@ from astropy.wcs import WCS
 from jolideco.models import FluxComponent, FluxComponents
 
 
-def write_to_fits(result, filename, overwrite):
+def flux_component_to_image_hdu(flux_component, name):
+    """Convert a flux component into and image HDU
+
+    The meta information is just dumbed as a YAML string into the
+    FITS header. 
+
+    Parameters
+    ----------
+    flux_component : `FluxComponent`
+        Flux component to serialize to an image HDU
+    name : str
+        Name of the HDU
+
+    Returns
+    -------
+    hdu : `~astropy.io.fits.ImageHDU`
+        Image HDU
+    """
+    if flux_component.wcs:
+        header = flux_component.wcs.to_header()
+    else:
+        header = fits.Header()
+
+    return fits.ImageHDU(
+        header=header,
+        data=flux_component.flux_upsampled_numpy,
+        name=f"{name.upper()}",
+    )
+
+
+def flux_components_to_hdulist(flux_components, name_suffix=""):
+    """_summary_
+
+    Parameters
+    ----------
+    flux_components : `FluxComponents`
+        Flux components
+    name_suffix : str
+        Suffix to be used for the name
+
+    Returns
+    -------
+    hdulist : `~astropy.io.fits.HDUList`
+        HDU list
+    """
+    hdulist = fits.HDUList()
+
+    for name, component in flux_components.items():
+        hdu = flux_component_to_image_hdu(name=name + name_suffix, flux_component=component)
+        hdulist.append(hdu)
+
+    return hdulist
+
+
+def write_map_result_to_fits(result, filename, overwrite):
     """Write MAP result to FITS.
 
     Parameters
@@ -17,50 +72,26 @@ def write_to_fits(result, filename, overwrite):
     overwrite : bool
         Overwrite file.
     """
+    hdulist = fits.HDUList([fits.PrimaryHDU()])
 
-    hdus = [fits.PrimaryHDU()]
+    hdus = flux_components_to_hdulist(result.components)
+    hdulist.extend(hdus)
 
-    for name, component in result.components.items():
-        if component.wcs:
-            header = component.wcs.to_header()
-        else:
-            header = fits.Header()
-
-        header["UPSAMPLE"] = component.upsampling_factor
-        hdu = fits.ImageHDU(
-            header=header,
-            data=component.flux_upsampled_numpy,
-            name=f"{name.upper()}",
-        )
-        hdus.append(hdu)
-
-    for name, component in result.components_init.items():
-        if component.wcs:
-            header = component.wcs.to_header()
-        else:
-            header = fits.Header()
-
-        header["UPSAMPLE"] = component.upsampling_factor
-        hdu = fits.ImageHDU(
-            header=header,
-            data=component.flux_upsampled_numpy,
-            name=f"{name.upper()}_INIT",
-        )
+    hdus = flux_components_to_hdulist(result.components, name_suffix="_init")
+    hdulist.extend(hdus)
 
     table = result.trace_loss.copy()
     table.meta = None
     trace_hdu = fits.BinTableHDU(table, name="TRACE_LOSS")
-    hdus.append(trace_hdu)
+    hdulist.append(trace_hdu)
 
     config_hdu = fits.BinTableHDU(result.config_table, name="CONFIG")
-    hdus.append(config_hdu)
-
-    hdulist = fits.HDUList(hdus=hdus)
+    hdulist.append(config_hdu)
 
     hdulist.writeto(filename, overwrite=overwrite)
 
 
-def read_from_fits(filename):
+def read_map_result_from_fits(filename):
     """Read Jolideco result from FITS.
 
     Parameters
@@ -107,6 +138,3 @@ def read_from_fits(filename):
         "wcs": wcs,
     }
 
-
-IO_FORMATS_READ = {"fits": read_from_fits}
-IO_FORMATS_WRITE = {"fits": write_to_fits}
