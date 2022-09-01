@@ -1,5 +1,3 @@
-from msilib.schema import Component
-
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
@@ -55,6 +53,7 @@ def flux_component_from_image_hdu(hdu):
     kwargs = {}
 
     kwargs["flux_init"] = hdu.data
+    kwargs["wcs"] = WCS(hdu.header)
 
     return FluxComponent.from_flux_init_numpy(**kwargs)
 
@@ -71,10 +70,10 @@ def flux_components_to_hdulist(flux_components, name_suffix=""):
 
     Returns
     -------
-    hdulist : `~astropy.io.fits.HDUList`
+    hdulist : list of `~astropy.io.fits.ImageHDU`
         HDU list
     """
-    hdulist = fits.HDUList()
+    hdulist = []
 
     for name, component in flux_components.items():
         hdu = flux_component_to_image_hdu(
@@ -155,8 +154,6 @@ def read_map_result_from_fits(filename):
     """
     hdulist = fits.open(filename)
 
-    wcs = WCS(hdulist["PRIMARY"].header)
-
     config_table = Table.read(hdulist["CONFIG"])
     config = dict(config_table[0])
 
@@ -173,5 +170,4 @@ def read_map_result_from_fits(filename):
         "components": components,
         "components_init": components_init,
         "trace_loss": trace_loss,
-        "wcs": wcs,
     }

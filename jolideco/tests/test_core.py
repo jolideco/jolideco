@@ -86,7 +86,7 @@ def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
 
 
 def test_map_deconvolver_result_plot(deconvolver_result):
-    deconvolver_result.components.plot_fluxes()
+    deconvolver_result.components.plot()
     deconvolver_result.plot_trace_loss()
 
 
