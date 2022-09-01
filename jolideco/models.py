@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -10,6 +11,11 @@ from jolideco.priors.core import Prior, Priors, UniformPrior
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
 from .utils.torch import convolve_fft_torch
+from .utils.io import (
+    IO_FORMATS_FLUX_COMPONENT_READ,
+    IO_FORMATS_FLUX_COMPONENT_WRITE,
+    guess_format_from_filename,
+)
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 
@@ -209,14 +215,35 @@ class FluxComponent(nn.Module):
         return self.flux_upsampled_error.detach().numpy()[0, 0]
 
     @classmethod
-    def read(cls, filename, format="fits"):
+    def read(cls, filename, format="fits", **kwargs):
         """Pass"""
         kwargs = {}
         return cls(**kwargs)
 
-    def write(self, filename, format="fits", overvwrite=False):
-        """"""
-        pass
+    def write(self, filename, format=None, overwrite=False, **kwargs):
+        """Write result fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        overwrite : bool
+            Overwrite file.
+        format : {"fits"}
+            Format to use.
+        """
+        filename = Path(filename)
+
+        if format not in IO_FORMATS_FLUX_COMPONENT_WRITE:
+            raise ValueError(
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_FLUX_COMPONENT_WRITE)}"
+            )
+
+        if format is None:
+            format = guess_format_from_filename(filename=filename)
+
+        writer = IO_FORMATS_FLUX_COMPONENT_WRITE[format]
+        writer(result=self, filename=filename, overwrite=overwrite, **kwargs)
 
     def plot(self, ax=None, **kwargs):
         """Plot flux component as sky image

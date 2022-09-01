@@ -6,6 +6,8 @@ __all__ = [
     "guess_format_from_filename",
     "IO_FORMATS_MAP_RESULT_READ",
     "IO_FORMATS_MAP_RESULT_WRITE",
+    "IO_FORMATS_FLUX_COMPONENT_READ",
+    "IO_FORMATS_FLUX_COMPONENT_WRITE",
 ]
 
 
