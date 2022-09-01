@@ -40,6 +40,20 @@ class ImageNorm(abc.ABC):
 
         return data
 
+    @classmethod
+    def from_dict(cls, data):
+        """Create from dict"""
+        from jolideco.utils.norms import NORMS_REGISTRY
+
+        kwargs = data.copy()
+
+        if "type" in data:
+            type_ = kwargs.pop("type")
+            cls = NORMS_REGISTRY[type_]
+            return cls.from_dict(kwargs)
+
+        return cls(**kwargs)
+
     @abc.abstractmethod
     def __call__(self, image):
         pass

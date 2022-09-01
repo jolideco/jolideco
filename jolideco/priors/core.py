@@ -59,6 +59,20 @@ class Prior(nn.Module):
 
         return data
 
+    @classmethod
+    def from_dict(cls, data):
+        """Create from dict"""
+        from jolideco.priors import PRIOR_REGISTRY
+
+        kwargs = data.copy()
+
+        if "type" in data:
+            type_ = kwargs.pop("type")
+            cls = PRIOR_REGISTRY[type_]
+            return cls.from_dict(data=kwargs)
+
+        return cls(**kwargs)
+
 
 class Priors(nn.ModuleDict):
     """Dict of mutiple priors"""

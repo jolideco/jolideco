@@ -5,7 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from astropy.visualization import simple_norm
 
-from jolideco.priors.core import Priors, UniformPrior
+from jolideco.priors.core import Prior, Priors, UniformPrior
 
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
@@ -63,7 +63,7 @@ class FluxComponent(nn.Module):
         self._wcs = wcs
 
     def to_dict(self):
-        """Convert deconvolver configuration to dict, with simple data types.
+        """Convert flux component configuration to dict, with simple data types.
 
         Returns
         -------
@@ -77,6 +77,13 @@ class FluxComponent(nn.Module):
         data["frozen"] = self.frozen
         data["prior"] = self.prior.to_dict()
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create from dict"""
+        kwargs = data.copy()
+        kwargs["prior"] = Prior.from_dict(kwargs.pop("prior"))
+        return cls(**kwargs)
 
     def __str__(self):
         """String representation"""
@@ -288,7 +295,7 @@ class FluxComponents(nn.ModuleDict):
         """Write flux components"""
         raise NotImplementedError
 
-    def plot_fluxes(self, figsize=None, **kwargs):
+    def plot(self, figsize=None, **kwargs):
         """Plot images of the flux components
 
         Parameters
@@ -485,7 +492,7 @@ class NPredModels(nn.ModuleDict):
         return npred_total
 
     @classmethod
-    def from_dataset_nunpy(cls, dataset, components):
+    def from_dataset_numpy(cls, dataset, components):
         """Create multiple npred models.
 
         Parameters

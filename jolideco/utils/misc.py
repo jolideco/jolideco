@@ -1,9 +1,11 @@
+__all__ = ["to_str", "format_class_str"]
+
 TABSIZE = 2
 MAX_WIDTH = 24
 
 
 def to_str(data, level=1):
-    """Convert dixct to string"""
+    """Convert dict to string"""
     if isinstance(data, dict):
         info = "\n"
         for key, value in data.items():

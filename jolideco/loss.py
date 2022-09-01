@@ -72,7 +72,7 @@ class PoissonLoss:
         npred_models_all, counts_all = [], []
 
         for dataset in datasets:
-            npred_models = NPredModels.from_dataset_nunpy(
+            npred_models = NPredModels.from_dataset_numpy(
                 dataset=dataset, components=components
             )
             npred_models_all.append(npred_models)

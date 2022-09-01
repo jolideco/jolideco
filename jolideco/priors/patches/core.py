@@ -6,7 +6,8 @@ import torch.nn.functional as F
 from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
 
-from jolideco.utils.norms import MaxImageNorm
+from jolideco.priors.patches.gmm import GaussianMixtureModel
+from jolideco.utils.norms import ImageNorm, MaxImageNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     convolve_fft_torch,
@@ -80,6 +81,19 @@ class GMMPatchPrior(Prior):
         data["gmm"] = self.gmm.to_dict()
         data["norm"] = self.norm.to_dict()
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create from dict"""
+        kwargs = data.copy()
+
+        gmm_config = kwargs.pop("gmm")
+        kwargs["gmm"] = GaussianMixtureModel.from_dict(gmm_config)
+
+        norm_config = kwargs.pop("norm")
+        kwargs["norm"] = ImageNorm.from_dict(norm_config)
+
+        return cls(**kwargs)
 
     def prior_image(self, flux):
         """Compute a patch image from the eigenimages of the best fittign patches.

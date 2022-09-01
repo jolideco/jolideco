@@ -220,7 +220,7 @@ class GaussianMixtureModel(nn.Module):
         )
 
     @classmethod
-    def from_registry(cls, name):
+    def from_registry(cls, name, stride=None):
         """Create GMM from registry
 
         Parameters
@@ -243,10 +243,10 @@ class GaussianMixtureModel(nn.Module):
             )
 
         kwargs = GMM_REGISTRY[name]
-        return cls.read(**kwargs)
+        return cls.read(stride=stride, **kwargs)
 
     @classmethod
-    def read(cls, filename, format="epll-matlab", device=TORCH_DEFAULT_DEVICE):
+    def read(cls, filename, format="epll-matlab", **kwargs):
         """Read from matlab file
 
         Parameters
@@ -255,8 +255,8 @@ class GaussianMixtureModel(nn.Module):
             Filename
         format : {"epll-matlab", "epll-matlab-16x16", "table"}
             Format
-        device : `~pytorch.Device`
-            Pytorch device
+        **kwargs : dict
+            Keyword arguments passed to GaussianMixtureModel
 
         Returns
         -------
@@ -285,7 +285,7 @@ class GaussianMixtureModel(nn.Module):
         else:
             raise ValueError(f"Not a supported format {format}")
 
-        return cls(means=means, covariances=covariances, weights=weights, device=device)
+        return cls(means=means, covariances=covariances, weights=weights, **kwargs)
 
     @lazyproperty
     def covariance_det(self):
@@ -346,6 +346,12 @@ class GaussianMixtureModel(nn.Module):
         data["type"] = name
         data["stride"] = self.stride
         return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create from dict"""
+        name, stride = data["type"], data["stride"]
+        return cls.from_registry(name=name, stride=stride)
 
 
 GMM_REGISTRY = {
