@@ -16,6 +16,6 @@ def to_yaml_str(data):
     yaml_str : str
         YAML string
     """
-    yaml = YAML(typ=['rt', 'string'])
+    yaml = YAML(typ=["rt", "string"])
     yaml.default_flow_style = False
     return yaml.dump_to_string(data)

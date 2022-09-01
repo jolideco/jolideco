@@ -11,7 +11,7 @@ from tqdm.auto import tqdm
 
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
-from .utils.io import IO_FORMATS_READ, IO_FORMATS_WRITE
+from .utils.io import IO_FORMATS_MAP_RESULT_READ, IO_FORMATS_MAP_RESULT_WRITE
 from .utils.misc import format_class_str
 from .utils.torch import TORCH_DEFAULT_DEVICE
 
@@ -285,12 +285,12 @@ class MAPDeconvolverResult:
         """
         filename = Path(filename)
 
-        if format not in IO_FORMATS_WRITE:
+        if format not in IO_FORMATS_MAP_RESULT_WRITE:
             raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_WRITE)}"
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_MAP_RESULT_WRITE)}"
             )
 
-        writer = IO_FORMATS_WRITE[format]
+        writer = IO_FORMATS_MAP_RESULT_WRITE[format]
         writer(result=self, filename=filename, overwrite=overwrite)
 
     @classmethod
@@ -311,11 +311,11 @@ class MAPDeconvolverResult:
         """
         filename = Path(filename)
 
-        if format not in IO_FORMATS_READ:
+        if format not in IO_FORMATS_MAP_RESULT_READ:
             raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_READ)}"
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_MAP_RESULT_READ)}"
             )
 
-        reader = IO_FORMATS_READ[format]
+        reader = IO_FORMATS_MAP_RESULT_READ[format]
         kwargs = reader(filename=filename)
         return cls(**kwargs)

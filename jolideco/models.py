@@ -208,6 +208,16 @@ class FluxComponent(nn.Module):
         """Flux error (`~numpy.ndarray`)"""
         return self.flux_upsampled_error.detach().numpy()[0, 0]
 
+    @classmethod
+    def read(cls, filename, format="fits"):
+        """Pass"""
+        kwargs = {}
+        return cls(**kwargs)
+
+    def write(self, filename, format="fits", overvwrite=False):
+        """"""
+        pass
+
 
 class FluxComponents(nn.ModuleDict):
     """Flux components"""

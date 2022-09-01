@@ -33,6 +33,7 @@ dependencies:
   - codespell
   - flake8
   - isort
+  - ruamel.yaml
   - sphinx
   - sphinx-astropy
   - sphinx-click

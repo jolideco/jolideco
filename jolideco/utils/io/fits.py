@@ -1,16 +1,19 @@
 from msilib.schema import Component
+
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
 from jolideco.models import FluxComponent, FluxComponents
 
+SUFFIX_INIT = "_INIT"
+
 
 def flux_component_to_image_hdu(flux_component, name):
     """Convert a flux component into and image HDU
 
     The meta information is just dumbed as a YAML string into the
-    FITS header. 
+    FITS header.
 
     Parameters
     ----------
@@ -36,8 +39,28 @@ def flux_component_to_image_hdu(flux_component, name):
     )
 
 
+def flux_component_from_image_hdu(hdu):
+    """Create flux component from image HDU
+
+    Parameters
+    ----------
+    hdu : `~astropy.io.fits.ImageHDU`
+        Image HDU
+
+    Returns
+    -------
+    flux_component : `FluxComponent`
+        Flux component to serialize to an image HDU
+    """
+    kwargs = {}
+
+    kwargs["flux_init"] = hdu.data
+
+    return FluxComponent.from_flux_init_numpy(**kwargs)
+
+
 def flux_components_to_hdulist(flux_components, name_suffix=""):
-    """_summary_
+    """Convert flux components to hdu list
 
     Parameters
     ----------
@@ -54,10 +77,36 @@ def flux_components_to_hdulist(flux_components, name_suffix=""):
     hdulist = fits.HDUList()
 
     for name, component in flux_components.items():
-        hdu = flux_component_to_image_hdu(name=name + name_suffix, flux_component=component)
+        hdu = flux_component_to_image_hdu(
+            name=name + name_suffix, flux_component=component
+        )
         hdulist.append(hdu)
 
     return hdulist
+
+
+def flux_components_from_hdulist(hdulist):
+    """Create flux components from HDU list
+
+    Parameters
+    ----------
+    hdulist : `~astropy.io.fits.HDUList`
+        HDU list
+
+    Returns
+    -------
+    flux_components : `FluxComponents`
+        Flux components
+    """
+    flux_components = FluxComponents()
+
+    for hdu in hdulist:
+        if isinstance(hdu, fits.ImageHDU):
+            name = hdu.name.replace(SUFFIX_INIT, "").lower()
+            component = flux_component_from_image_hdu(hdu=hdu)
+            flux_components[name] = component
+
+    return flux_components
 
 
 def write_map_result_to_fits(result, filename, overwrite):
@@ -77,7 +126,7 @@ def write_map_result_to_fits(result, filename, overwrite):
     hdus = flux_components_to_hdulist(result.components)
     hdulist.extend(hdus)
 
-    hdus = flux_components_to_hdulist(result.components, name_suffix="_init")
+    hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
     hdulist.extend(hdus)
 
     table = result.trace_loss.copy()
@@ -113,22 +162,11 @@ def read_map_result_from_fits(filename):
 
     trace_loss = Table.read(hdulist["TRACE_LOSS"])
 
-    components = FluxComponents()
-    components_init = FluxComponents()
+    hdulist = [hdu for hdu in hdulist if SUFFIX_INIT not in hdu.name]
+    components = flux_components_from_hdulist(hdulist=hdulist)
 
-    for hdu in hdulist:
-        if isinstance(hdu, fits.ImageHDU):
-            name = hdu.name.replace("_INIT", "").lower()
-            if "INIT" in hdu.name:
-                components_init[name] = FluxComponent.from_flux_init_numpy(
-                    flux_init=hdu.data,
-                    upsampling_factor=hdu.header.get("UPSAMPLE", 1),
-                )
-            else:
-                components[name] = FluxComponent.from_flux_init_numpy(
-                    flux_init=hdu.data,
-                    upsampling_factor=hdu.header.get("UPSAMPLE", 1),
-                )
+    hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
+    components_init = flux_components_from_hdulist(hdulist=hdulist)
 
     return {
         "config": config,
@@ -137,4 +175,3 @@ def read_map_result_from_fits(filename):
         "trace_loss": trace_loss,
         "wcs": wcs,
     }
-
