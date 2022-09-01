@@ -12,7 +12,10 @@ from jolideco.priors.core import Prior, Priors, UniformPrior
 from .utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
     IO_FORMATS_FLUX_COMPONENT_WRITE,
-    guess_format_from_filename,
+    IO_FORMATS_FLUX_COMPONENTS_READ,
+    IO_FORMATS_FLUX_COMPONENTS_WRITE,
+    get_reader,
+    get_writer,
 )
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
@@ -239,19 +242,10 @@ class FluxComponent(nn.Module):
         flux_component : `FluxComponent`
             Flux component
         """
-        filename = Path(filename)
-
-        if format is None:
-            format = guess_format_from_filename(filename=filename)
-
-        if format not in IO_FORMATS_FLUX_COMPONENT_READ:
-            raise ValueError(
-                f"Not a valid format '{format}', choose from "
-                f"{list(IO_FORMATS_FLUX_COMPONENT_READ)}"
-            )
-
-        reader = IO_FORMATS_FLUX_COMPONENT_READ[format]
-        return reader(filename=filename)
+        reader = get_reader(
+            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENT_READ
+        )
+        return reader(filename)
 
     def write(self, filename, format=None, overwrite=False, **kwargs):
         """Write flux component fo file
@@ -265,19 +259,12 @@ class FluxComponent(nn.Module):
         format : {"fits"}
             Format to use.
         """
-        filename = Path(filename)
-
-        if format is None:
-            format = guess_format_from_filename(filename=filename)
-
-        if format not in IO_FORMATS_FLUX_COMPONENT_WRITE:
-            raise ValueError(
-                f"Not a valid format '{format}', choose from "
-                f"{list(IO_FORMATS_FLUX_COMPONENT_WRITE)}"
-            )
-
-        writer = IO_FORMATS_FLUX_COMPONENT_WRITE[format]
-        writer(flux_component=self, filename=filename, overwrite=overwrite, **kwargs)
+        writer = get_writer(
+            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENT_WRITE
+        )
+        return writer(
+            flux_component=self, filename=filename, overwrite=overwrite, **kwargs
+        )
 
     def plot(self, ax=None, **kwargs):
         """Plot flux component as sky image
@@ -380,13 +367,45 @@ class FluxComponents(nn.ModuleDict):
         for name, flux_error in flux_errors.items():
             self[name]._flux_upsampled_error = flux_error
 
-    def read(self, filename, format="fits"):
-        """Read flux components"""
-        raise NotImplementedError
+    @classmethod
+    def read(cls, filename, format=None):
+        """Read flux components from fo file
 
-    def write(self, filename, overwrite=False, format="fits"):
-        """Write flux components"""
-        raise NotImplementedError
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {"fits"}
+            Format to use.
+
+        Returns
+        -------
+        flux_components : `FluxComponents`
+            Flux components
+        """
+        reader = get_reader(
+            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_READ
+        )
+        return reader(filename=filename)
+
+    def write(self, filename, overwrite=False, format=None, **kwargs):
+        """Write flux components fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        overwrite : bool
+            Overwrite file.
+        format : {"fits"}
+            Format to use.
+        """
+        writer = get_writer(
+            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_WRITE
+        )
+        return writer(
+            flux_components=self, filename=filename, overwrite=overwrite, **kwargs
+        )
 
     def plot(self, figsize=None, **kwargs):
         """Plot images of the flux components

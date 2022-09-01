@@ -28,10 +28,10 @@ def write_flux_component_to_asdf(flux_component, filename, overwrite, **kwargs):
     path = Path(filename)
 
     if path.exists() and not overwrite:
-        raise OSError(f"{filename} already exists!")
+        raise OSError(f"{path} already exists!")
 
     # Write the data to a new file
-    af.write_to(filename, **kwargs)
+    af.write_to(path, **kwargs)
 
 
 def read_flux_component_from_asdf(filename):
@@ -49,6 +49,8 @@ def read_flux_component_from_asdf(filename):
     """
     from jolideco.models import FluxComponent
 
-    with asdf.open(filename, copy_arrays=True) as af:
+    path = Path(filename)
+
+    with asdf.open(path, copy_arrays=True) as af:
         data = recursive_update({}, af)
         return FluxComponent.from_dict(data=data)

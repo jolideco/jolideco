@@ -55,7 +55,6 @@ def flux_component_from_image_hdu(hdu):
     from jolideco.models import FluxComponent
 
     kwargs = {}
-
     kwargs["flux"] = hdu.data
     kwargs["wcs"] = WCS(hdu.header)
 
@@ -112,6 +111,40 @@ def flux_components_from_hdulist(hdulist):
             flux_components[name] = component
 
     return flux_components
+
+
+def write_flux_components_to_fits(flux_components, filename, overwrite):
+    """Write flux components to FITS file
+
+    Parameters
+    ----------
+    flux_components : `FluxComponents`
+        Flux component to serialize to FITS file
+    filename : `Path`
+        Output filename
+    overwrite : bool
+        Overwrite file.
+    """
+    hdulist = flux_components_to_hdulist(flux_components=flux_components)
+    log.info(f"writing {filename}")
+    hdulist.writeto(filename, overwrite=overwrite)
+
+
+def read_flux_components_from_fits(filename):
+    """Write flux components to FITS file
+
+    Parameters
+    ----------
+    filename : `Path`
+        Output filename
+
+    Returns
+    -------
+    flux_component : `FluxComponent`
+        Flux component
+    """
+    hdulist = fits.open(filename)
+    return flux_components_from_hdulist(hdu=hdulist)
 
 
 def write_flux_component_to_fits(flux_component, filename, overwrite):
