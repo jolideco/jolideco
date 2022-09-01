@@ -10,10 +10,9 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 from scipy import linalg
 
+from jolideco.utils.misc import format_class_str
 from jolideco.utils.numpy import get_pixel_weights
 from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
-from jolideco.utils.misc import format_class_str
-
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
 

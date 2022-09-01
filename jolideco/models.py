@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -8,14 +9,14 @@ from astropy.visualization import simple_norm
 
 from jolideco.priors.core import Prior, Priors, UniformPrior
 
-from .utils.misc import format_class_str
-from .utils.plot import add_cbar
-from .utils.torch import convolve_fft_torch
 from .utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     guess_format_from_filename,
 )
+from .utils.misc import format_class_str
+from .utils.plot import add_cbar
+from .utils.torch import convolve_fft_torch
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 
@@ -52,6 +53,11 @@ class FluxComponent(nn.Module):
         wcs=None,
     ):
         super().__init__()
+
+        if not flux_upsampled.ndim == 4:
+            raise ValueError(
+                f"Flux tensor must be four dimensional. Got {flux_upsampled.ndim}"
+            )
 
         if use_log_flux:
             flux_upsampled = torch.log(flux_upsampled)
@@ -215,13 +221,36 @@ class FluxComponent(nn.Module):
         return self.flux_upsampled_error.detach().numpy()[0, 0]
 
     @classmethod
-    def read(cls, filename, format="fits", **kwargs):
-        """Pass"""
-        kwargs = {}
-        return cls(**kwargs)
+    def read(cls, filename, format=None):
+        """Write result fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {"fits"}
+            Format to use.
+
+        Returns
+        -------
+        flux_component : `FluxComponent`
+            Flux component
+        """
+        filename = Path(filename)
+
+        if format is None:
+            format = guess_format_from_filename(filename=filename)
+
+        if format not in IO_FORMATS_FLUX_COMPONENT_READ:
+            raise ValueError(
+                f"Not a valid format '{format}', choose from {list(IO_FORMATS_FLUX_COMPONENT_READ)}"
+            )
+
+        reader = IO_FORMATS_FLUX_COMPONENT_READ[format]
+        return reader(filename=filename)
 
     def write(self, filename, format=None, overwrite=False, **kwargs):
-        """Write result fo file
+        """Write flux component fo file
 
         Parameters
         ----------
@@ -234,16 +263,16 @@ class FluxComponent(nn.Module):
         """
         filename = Path(filename)
 
+        if format is None:
+            format = guess_format_from_filename(filename=filename)
+
         if format not in IO_FORMATS_FLUX_COMPONENT_WRITE:
             raise ValueError(
                 f"Not a valid format '{format}', choose from {list(IO_FORMATS_FLUX_COMPONENT_WRITE)}"
             )
 
-        if format is None:
-            format = guess_format_from_filename(filename=filename)
-
         writer = IO_FORMATS_FLUX_COMPONENT_WRITE[format]
-        writer(result=self, filename=filename, overwrite=overwrite, **kwargs)
+        writer(flux_component=self, filename=filename, overwrite=overwrite, **kwargs)
 
     def plot(self, ax=None, **kwargs):
         """Plot flux component as sky image
@@ -261,7 +290,7 @@ class FluxComponent(nn.Module):
             Plotting axes
         """
         if ax is None:
-            ax = plt.subplot(projcetion=self.wcs)
+            ax = plt.subplot(projection=self.wcs)
 
         flux = self.flux_upsampled_numpy
         _ = ax.imshow(flux, origin="lower", **kwargs)

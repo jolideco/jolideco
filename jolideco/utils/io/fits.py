@@ -4,8 +4,6 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
-from jolideco.models import FluxComponent, FluxComponents
-
 log = logging.getLogger(__name__)
 
 SUFFIX_INIT = "_INIT"
@@ -54,6 +52,8 @@ def flux_component_from_image_hdu(hdu):
     flux_component : `FluxComponent`
         Flux component to serialize to an image HDU
     """
+    from jolideco.models import FluxComponent
+
     kwargs = {}
 
     kwargs["flux_init"] = hdu.data
@@ -101,6 +101,8 @@ def flux_components_from_hdulist(hdulist):
     flux_components : `FluxComponents`
         Flux components
     """
+    from jolideco.models import FluxComponents
+
     flux_components = FluxComponents()
 
     for hdu in hdulist:
@@ -110,6 +112,46 @@ def flux_components_from_hdulist(hdulist):
             flux_components[name] = component
 
     return flux_components
+
+
+def write_flux_component_to_fits(flux_component, filename, overwrite):
+    """Write flux component to FITS file
+
+    Parameters
+    ----------
+    flux_component : `FluxComponent`
+        Flux component to serialize to FITS file
+    filename : `Path`
+        Output filename
+    overwrite : bool
+        Overwrite file.
+    """
+    hdulist = fits.HDUList()
+
+    hdu = flux_component_to_image_hdu(flux_component=flux_component, name="primary")
+    hdulist.append(hdu)
+
+    log.info(f"writing {filename}")
+    hdulist.writeto(filename, overwrite=overwrite)
+
+
+def read_flux_component_from_fits(filename, hdu_name=0):
+    """Write flux component to FITS file
+
+    Parameters
+    ----------
+    filename : `Path`
+        Output filename
+    hdu_name : int or str
+        HDU name
+
+    Returns
+    -------
+    flux_component : `FluxComponent`
+        Flux component
+    """
+    hdulist = fits.open(filename)
+    return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
 
 
 def write_map_result_to_fits(result, filename, overwrite):

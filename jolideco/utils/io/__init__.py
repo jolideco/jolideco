@@ -1,6 +1,12 @@
 from pathlib import Path
 
-from .fits import read_map_result_from_fits, write_map_result_to_fits
+from .fits import (
+    read_flux_component_from_fits,
+    read_map_result_from_fits,
+    write_flux_component_to_fits,
+    write_map_result_to_fits,
+)
+from .yaml import read_flux_component_from_yaml, write_flux_component_to_yaml
 
 __all__ = [
     "guess_format_from_filename",
@@ -38,5 +44,12 @@ IO_FORMATS_MAP_RESULT_READ = {"fits": read_map_result_from_fits}
 IO_FORMATS_MAP_RESULT_WRITE = {"fits": write_map_result_to_fits}
 
 
-IO_FORMATS_FLUX_COMPONENT_READ = {}
-IO_FORMATS_FLUX_COMPONENT_WRITE = {}
+IO_FORMATS_FLUX_COMPONENT_READ = {
+    "fits": read_flux_component_from_fits,
+    "yaml": read_flux_component_from_yaml,
+}
+
+IO_FORMATS_FLUX_COMPONENT_WRITE = {
+    "yaml": write_flux_component_to_yaml,
+    "fits": write_flux_component_to_fits,
+}

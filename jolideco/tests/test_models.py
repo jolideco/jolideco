@@ -5,6 +5,7 @@ from astropy.convolution import Gaussian2DKernel
 from numpy.testing import assert_allclose
 
 from jolideco.models import FluxComponent, NPredModel
+from jolideco.priors import UniformPrior
 
 
 @pytest.fixture
@@ -92,3 +93,27 @@ def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     assert npred.shape == (1, 25, 25)
     assert_allclose(npred[0, 10, 10], 0.00963, rtol=1e-4)
     assert_allclose(npred.sum(), 1, rtol=2e-5)
+
+
+@pytest.mark.parametrize("format", ["fits", "yaml"])
+def test_flux_component_io(format, tmpdir):
+    flux_init = torch.ones((1, 1, 32, 32))
+
+    component = FluxComponent(
+        flux_upsampled=flux_init,
+        upsampling_factor=2,
+        use_log_flux=False,
+        frozen=False,
+        prior=UniformPrior(),
+    )
+
+    filename = tmpdir / f"test.{format}"
+
+    component.write(filename=filename, format=format)
+
+    component_new = FluxComponent.read(filename=filename, format=format)
+
+    assert component.shape == component_new.shape
+    assert component.upsampling_factor == component_new.upsampling_factor
+    assert component.use_log_flux == component_new.use_log_flux
+    assert isinstance(component_new.prior, UniformPrior)
