@@ -243,7 +243,8 @@ class FluxComponent(nn.Module):
 
         if format not in IO_FORMATS_FLUX_COMPONENT_READ:
             raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_FLUX_COMPONENT_READ)}"
+                f"Not a valid format '{format}', choose from "
+                f"{list(IO_FORMATS_FLUX_COMPONENT_READ)}"
             )
 
         reader = IO_FORMATS_FLUX_COMPONENT_READ[format]
@@ -268,7 +269,8 @@ class FluxComponent(nn.Module):
 
         if format not in IO_FORMATS_FLUX_COMPONENT_WRITE:
             raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_FLUX_COMPONENT_WRITE)}"
+                f"Not a valid format '{format}', choose from "
+                f"{list(IO_FORMATS_FLUX_COMPONENT_WRITE)}"
             )
 
         writer = IO_FORMATS_FLUX_COMPONENT_WRITE[format]
