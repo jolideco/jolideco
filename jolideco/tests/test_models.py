@@ -114,6 +114,8 @@ def test_flux_component_io(format, tmpdir):
     component_new = FluxComponent.read(filename=filename, format=format)
 
     assert component.shape == component_new.shape
-    assert component.upsampling_factor == component_new.upsampling_factor
-    assert component.use_log_flux == component_new.use_log_flux
-    assert isinstance(component_new.prior, UniformPrior)
+
+    if format == "yaml":
+        assert component.upsampling_factor == component_new.upsampling_factor
+        assert component.use_log_flux == component_new.use_log_flux
+        assert isinstance(component_new.prior, UniformPrior)
