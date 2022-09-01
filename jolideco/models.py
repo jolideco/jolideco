@@ -319,11 +319,11 @@ class FluxComponents(nn.ModuleDict):
         for name, flux_error in flux_errors.items():
             self[name]._flux_upsampled_error = flux_error
 
-    def read(self, filename):
+    def read(self, filename, format="fits"):
         """Read flux components"""
         raise NotImplementedError
 
-    def write(self, filename, overwrite=False):
+    def write(self, filename, overwrite=False, format="fits"):
         """Write flux components"""
         raise NotImplementedError
 

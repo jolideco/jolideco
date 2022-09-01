@@ -1,8 +1,12 @@
+import logging
+
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
 from jolideco.models import FluxComponent, FluxComponents
+
+log = logging.getLogger(__name__)
 
 SUFFIX_INIT = "_INIT"
 
@@ -136,6 +140,7 @@ def write_map_result_to_fits(result, filename, overwrite):
     config_hdu = fits.BinTableHDU(result.config_table, name="CONFIG")
     hdulist.append(config_hdu)
 
+    log.info(f"writing {filename}")
     hdulist.writeto(filename, overwrite=overwrite)
 
 
@@ -152,6 +157,7 @@ def read_map_result_from_fits(filename):
     result : dict
        Dictionary with init parameters for `MAPDeconvolverResult`
     """
+    log.info(f"Reading {filename}")
     hdulist = fits.open(filename)
 
     config_table = Table.read(hdulist["CONFIG"])
