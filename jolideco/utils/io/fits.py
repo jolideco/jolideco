@@ -6,7 +6,7 @@ from astropy.wcs import WCS
 
 log = logging.getLogger(__name__)
 
-SUFFIX_INIT = "_INIT"
+SUFFIX_INIT = "-INIT"
 
 
 def flux_component_to_image_hdu(flux_component, name):
@@ -119,13 +119,15 @@ def write_flux_components_to_fits(flux_components, filename, overwrite):
     Parameters
     ----------
     flux_components : `FluxComponents`
-        Flux component to serialize to FITS file
+        Flux components to serialize to FITS file
     filename : `Path`
         Output filename
     overwrite : bool
         Overwrite file.
     """
-    hdulist = flux_components_to_hdulist(flux_components=flux_components)
+    hdulist = fits.HDUList([fits.PrimaryHDU()])
+    hdus = flux_components_to_hdulist(flux_components=flux_components)
+    hdulist.extend(hdus)
     log.info(f"writing {filename}")
     hdulist.writeto(filename, overwrite=overwrite)
 
@@ -140,11 +142,11 @@ def read_flux_components_from_fits(filename):
 
     Returns
     -------
-    flux_component : `FluxComponent`
-        Flux component
+    flux_components : `FluxComponents`
+        Flux components
     """
     hdulist = fits.open(filename)
-    return flux_components_from_hdulist(hdu=hdulist)
+    return flux_components_from_hdulist(hdulist=hdulist)
 
 
 def write_flux_component_to_fits(flux_component, filename, overwrite):
@@ -232,6 +234,8 @@ def read_map_result_from_fits(filename):
     result : dict
        Dictionary with init parameters for `MAPDeconvolverResult`
     """
+    from jolideco.core import MAPDeconvolverResult
+
     log.info(f"Reading {filename}")
     hdulist = fits.open(filename)
 
@@ -246,9 +250,9 @@ def read_map_result_from_fits(filename):
     hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
     components_init = flux_components_from_hdulist(hdulist=hdulist)
 
-    return {
-        "config": config,
-        "components": components,
-        "components_init": components_init,
-        "trace_loss": trace_loss,
-    }
+    return MAPDeconvolverResult(
+        config=config,
+        components=components,
+        components_init=components_init,
+        trace_loss=trace_loss,
+    )

@@ -1,6 +1,5 @@
 import copy
 import logging
-from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,7 +10,12 @@ from tqdm.auto import tqdm
 
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
-from .utils.io import IO_FORMATS_MAP_RESULT_READ, IO_FORMATS_MAP_RESULT_WRITE
+from .utils.io import (
+    IO_FORMATS_MAP_RESULT_READ,
+    IO_FORMATS_MAP_RESULT_WRITE,
+    get_reader,
+    get_writer,
+)
 from .utils.misc import format_class_str
 from .utils.torch import TORCH_DEFAULT_DEVICE
 
@@ -283,14 +287,9 @@ class MAPDeconvolverResult:
         format : {"fits"}
             Format to use.
         """
-        filename = Path(filename)
-
-        if format not in IO_FORMATS_MAP_RESULT_WRITE:
-            raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_MAP_RESULT_WRITE)}"
-            )
-
-        writer = IO_FORMATS_MAP_RESULT_WRITE[format]
+        writer = get_writer(
+            filename=filename, format=format, registry=IO_FORMATS_MAP_RESULT_WRITE
+        )
         writer(result=self, filename=filename, overwrite=overwrite)
 
     @classmethod
@@ -309,13 +308,7 @@ class MAPDeconvolverResult:
         result : `~MAPDeconvolverResult`
             Result object
         """
-        filename = Path(filename)
-
-        if format not in IO_FORMATS_MAP_RESULT_READ:
-            raise ValueError(
-                f"Not a valid format '{format}', choose from {list(IO_FORMATS_MAP_RESULT_READ)}"
-            )
-
-        reader = IO_FORMATS_MAP_RESULT_READ[format]
-        kwargs = reader(filename=filename)
-        return cls(**kwargs)
+        reader = get_reader(
+            filename=filename, format=format, registry=IO_FORMATS_MAP_RESULT_READ
+        )
+        return reader(filename=filename)
