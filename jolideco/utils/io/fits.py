@@ -113,12 +113,12 @@ def flux_components_from_hdulist(hdulist):
     return flux_components
 
 
-def write_flux_components_to_fits(flux_components, filename, overwrite):
+def write_flux_components_to_fits(flux_component, filename, overwrite):
     """Write flux components to FITS file
 
     Parameters
     ----------
-    flux_components : `FluxComponents`
+    flux_component : `FluxComponents`
         Flux components to serialize to FITS file
     filename : `Path`
         Output filename
@@ -126,7 +126,7 @@ def write_flux_components_to_fits(flux_components, filename, overwrite):
         Overwrite file.
     """
     hdulist = fits.HDUList([fits.PrimaryHDU()])
-    hdus = flux_components_to_hdulist(flux_components=flux_components)
+    hdus = flux_components_to_hdulist(flux_components=flux_component)
     hdulist.extend(hdus)
     log.info(f"writing {filename}")
     hdulist.writeto(filename, overwrite=overwrite)

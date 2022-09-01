@@ -122,7 +122,7 @@ def test_flux_component_io(format, tmpdir):
         assert isinstance(component_new.prior, UniformPrior)
 
 
-@pytest.mark.parametrize("format", ["fits"])
+@pytest.mark.parametrize("format", ["fits", "asdf"])
 def test_flux_components_io(format, tmpdir):
     components = FluxComponents()
 

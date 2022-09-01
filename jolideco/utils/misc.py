@@ -8,7 +8,7 @@ MAX_WIDTH = 24
 
 def recursive_update(d, u):
     """Recursively update a dict object"""
-    for key in u.keys():
+    for key in reversed(u.keys()):
         if key in ["asdf_library", "history"]:
             continue
 

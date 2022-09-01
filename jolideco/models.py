@@ -75,7 +75,7 @@ class FluxComponent(nn.Module):
         self.frozen = frozen
         self._wcs = wcs
 
-    def to_dict(self):
+    def to_dict(self, include_data=None):
         """Convert flux component configuration to dict, with simple data types.
 
         Returns
@@ -89,6 +89,10 @@ class FluxComponent(nn.Module):
         data["upsampling_factor"] = self.upsampling_factor
         data["frozen"] = self.frozen
         data["prior"] = self.prior.to_dict()
+
+        if include_data == "numpy":
+            data["flux_upsampled"] = self.flux_upsampled_numpy
+
         return data
 
     @classmethod
@@ -337,14 +341,25 @@ class FluxComponents(nn.ModuleDict):
         """Usampled total flux"""
         return np.sum([flux for flux in self.fluxes_numpy.values()], axis=0)
 
-    def to_dict(self):
+    def to_dict(self, include_data=None):
         """Fluxes of the components (dict of `~torch.tensor`)"""
         fluxes = {}
 
         for name, component in self.items():
-            fluxes[name] = component.to_dict()
+            fluxes[name] = component.to_dict(include_data=include_data)
 
         return fluxes
+
+    @classmethod
+    def from_dict(cls, data):
+        """Fluxes of the components (dict of `~torch.tensor`)"""
+        components = []
+
+        for name, component_data in data.items():
+            component = FluxComponent.from_dict(data=component_data)
+            components.append((name, component))
+
+        return cls(components)
 
     def to_numpy(self):
         """Fluxes of the components ()"""
@@ -402,7 +417,7 @@ class FluxComponents(nn.ModuleDict):
             filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_WRITE
         )
         return writer(
-            flux_components=self, filename=filename, overwrite=overwrite, **kwargs
+            flux_component=self, filename=filename, overwrite=overwrite, **kwargs
         )
 
     def plot(self, figsize=None, **kwargs):
