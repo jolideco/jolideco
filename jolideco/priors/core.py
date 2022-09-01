@@ -4,6 +4,8 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
 
 from jolideco.utils.torch import convolve_fft_torch, cycle_spin_subpixel
+from jolideco.utils.misc import format_class_str
+
 
 __all__ = [
     "Prior",
@@ -72,6 +74,9 @@ class Prior(nn.Module):
             return cls.from_dict(data=kwargs)
 
         return cls(**kwargs)
+
+    def __str__(self):
+        return format_class_str(instance=self)
 
 
 class Priors(nn.ModuleDict):

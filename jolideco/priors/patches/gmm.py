@@ -12,6 +12,8 @@ from scipy import linalg
 
 from jolideco.utils.numpy import get_pixel_weights
 from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
+from jolideco.utils.misc import format_class_str
+
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
 
@@ -352,6 +354,9 @@ class GaussianMixtureModel(nn.Module):
         """Create from dict"""
         name, stride = data["type"], data["stride"]
         return cls.from_registry(name=name, stride=stride)
+
+    def __str__(self):
+        return format_class_str(instance=self)
 
 
 GMM_REGISTRY = {
