@@ -218,6 +218,28 @@ class FluxComponent(nn.Module):
         """"""
         pass
 
+    def plot(self, ax=None, **kwargs):
+        """Plot flux component as sky image
+
+        Parameters
+        ----------
+        ax : `~matplotlib.pyplot.Axes`
+            Plotting axes
+        **kwargs : dict
+            Keywords forwarded to `~matplotlib.pyplot.imshow`
+
+        Returns
+        -------
+        ax : `~matplotlib.pyplot.Axes`
+            Plotting axes
+        """
+        if ax is None:
+            ax = plt.subplot(projcetion=self.wcs)
+
+        flux = self.flux_upsampled_numpy
+        _ = ax.imshow(flux, origin="lower", **kwargs)
+        return ax
+
 
 class FluxComponents(nn.ModuleDict):
     """Flux components"""
@@ -340,8 +362,8 @@ class FluxComponents(nn.ModuleDict):
         axes[0].set_title("Total")
 
         for ax, name in zip(axes[1:], self.fluxes_upsampled_numpy):
-            flux = self.fluxes_upsampled_numpy[name]
-            im = ax.imshow(flux, origin="lower", **kwargs)
+            component = self[name]
+            component.plot(ax=ax, **kwargs)
             ax.set_title(name.title())
 
         add_cbar(im=im, ax=ax, fig=fig)
