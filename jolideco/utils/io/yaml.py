@@ -4,7 +4,7 @@ __all__ = ["to_yaml_str"]
 
 
 def to_yaml_str(data):
-    """_summary_
+    """Convert dict to YAML string
 
     Parameters
     ----------
