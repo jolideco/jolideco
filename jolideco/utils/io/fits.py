@@ -56,10 +56,10 @@ def flux_component_from_image_hdu(hdu):
 
     kwargs = {}
 
-    kwargs["flux_init"] = hdu.data
+    kwargs["flux"] = hdu.data
     kwargs["wcs"] = WCS(hdu.header)
 
-    return FluxComponent.from_flux_init_numpy(**kwargs)
+    return FluxComponent.from_numpy(**kwargs)
 
 
 def flux_components_to_hdulist(flux_components, name_suffix=""):

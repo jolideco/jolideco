@@ -95,7 +95,7 @@ def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     assert_allclose(npred.sum(), 1, rtol=2e-5)
 
 
-@pytest.mark.parametrize("format", ["fits", "yaml"])
+@pytest.mark.parametrize("format", ["fits", "yaml", "asdf"])
 def test_flux_component_io(format, tmpdir):
     flux_init = torch.ones((1, 1, 32, 32))
 
@@ -115,7 +115,7 @@ def test_flux_component_io(format, tmpdir):
 
     assert component.shape == component_new.shape
 
-    if format == "yaml":
+    if format in ["yaml", "asdf"]:
         assert component.upsampling_factor == component_new.upsampling_factor
         assert component.use_log_flux == component_new.use_log_flux
         assert isinstance(component_new.prior, UniformPrior)

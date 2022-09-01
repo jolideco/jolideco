@@ -1,7 +1,25 @@
+import collections.abc
+
 __all__ = ["to_str", "format_class_str"]
 
 TABSIZE = 2
 MAX_WIDTH = 24
+
+
+def recursive_update(d, u):
+    """Recursively update a dict object"""
+    for key in u.keys():
+        if key in ["asdf_library", "history"]:
+            continue
+
+        value = u[key]
+
+        if isinstance(value, collections.abc.Mapping):
+            d[key] = recursive_update(d.get(key, {}), value)
+        else:
+            d[key] = value
+
+    return d
 
 
 def to_str(data, level=1):

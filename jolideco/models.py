@@ -92,9 +92,16 @@ class FluxComponent(nn.Module):
 
     @classmethod
     def from_dict(cls, data):
-        """Create from dict"""
+        """Create flux component from dict"""
         kwargs = data.copy()
         kwargs["prior"] = Prior.from_dict(kwargs.pop("prior"))
+
+        flux = kwargs["flux_upsampled"]
+
+        if not isinstance(flux, torch.Tensor):
+            flux = torch.from_numpy(flux[np.newaxis, np.newaxis].astype(np.float32))
+
+        kwargs["flux_upsampled"] = flux
         return cls(**kwargs)
 
     def __str__(self):
@@ -114,13 +121,13 @@ class FluxComponent(nn.Module):
             return super().parameters(recurse)
 
     @classmethod
-    def from_flux_init_numpy(cls, flux_init, **kwargs):
-        """Create flux component
+    def from_numpy(cls, flux, **kwargs):
+        """Create flux component from downsampled data.
 
         Parameters
         ----------
-        flux_init : `~numpy.ndarray`
-            Flux init array
+        flux : `~numpy.ndarray`
+            Flux init array with 2 dimensions
         **kwargs : dict
             Keyword arguments passed to `FluxComponent`
 
@@ -132,16 +139,12 @@ class FluxComponent(nn.Module):
         upsampling_factor = kwargs.get("upsampling_factor", None)
 
         # convert to pytorch tensors
-        flux_init = torch.from_numpy(
-            flux_init[np.newaxis, np.newaxis].astype(np.float32)
-        )
+        flux = torch.from_numpy(flux[np.newaxis, np.newaxis].astype(np.float32))
 
         if upsampling_factor:
-            flux_init = F.interpolate(
-                flux_init, scale_factor=upsampling_factor, mode="bilinear"
-            )
+            flux = F.interpolate(flux, scale_factor=upsampling_factor, mode="bilinear")
 
-        return cls(flux_upsampled=flux_init, **kwargs)
+        return cls(flux_upsampled=flux, **kwargs)
 
     @classmethod
     def from_flux_init_datasets(cls, datasets, **kwargs):
@@ -166,7 +169,7 @@ class FluxComponent(nn.Module):
             fluxes.append(flux)
 
         flux_init = np.nanmean(fluxes, axis=0)
-        return cls.from_flux_init_numpy(flux_init=flux_init, **kwargs)
+        return cls.from_numpy(flux=flux_init, **kwargs)
 
     @property
     def shape(self):
