@@ -15,14 +15,6 @@ from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
 
 
-path = os.environ.get("JOLIDECO_GMM_LIBRARY", None)
-
-if path is None:
-    raise ValueError("Please set the $JOLIDECO_GMM_LIBRARY environment variable!")
-
-JOLIDECO_GMM_LIBRARY_PATH = Path(path)
-
-
 class GaussianMixtureModel(nn.Module):
     """Gaussian mixture model
 
@@ -268,6 +260,8 @@ class GaussianMixtureModel(nn.Module):
         """
         import scipy.io as sio
 
+        filename = str(Path(os.path.expandvars(filename)))
+
         if format == "epll-matlab":
             gmm_dict = sio.loadmat(filename)
             gmm_data = gmm_dict["GS"]
@@ -364,15 +358,15 @@ class GaussianMixtureModel(nn.Module):
 
 GMM_REGISTRY = {
     "zoran-weiss": {
-        "filename": JOLIDECO_GMM_LIBRARY_PATH / "GSModel_8x8_200_2M_noDC_zeromean.mat",
+        "filename": "$JOLIDECO_GMM_LIBRARY/GSModel_8x8_200_2M_noDC_zeromean.mat",
         "format": "epll-matlab",
     },
     "gleam-v0.1": {
-        "filename": JOLIDECO_GMM_LIBRARY_PATH / "patch-priors-gleam.fits",
+        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-gleam.fits",
         "format": "table",
     },
     "gleam-v0.2": {
-        "filename": JOLIDECO_GMM_LIBRARY_PATH / "patch-priors-gleam-new.fits",
+        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-gleam-new.fits",
         "format": "table",
     },
 }
