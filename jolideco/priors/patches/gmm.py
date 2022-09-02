@@ -3,12 +3,10 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
-import scipy.io as sio
 import torch
 import torch.nn as nn
 from astropy.table import Table
 from astropy.utils import lazyproperty
-from scipy import linalg
 
 from jolideco.utils.misc import format_class_str
 from jolideco.utils.numpy import get_pixel_weights
@@ -82,6 +80,8 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def eigen_images(self):
         """Eigen images"""
+        from scipy import linalg
+
         eigen_images = []
 
         for idx in range(self.n_components):
@@ -106,6 +106,8 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def precisions_cholesky(self):
         """Cholesky decomposition of the precision matrix"""
+        from scipy import linalg
+
         shape = (self.n_components, self.n_features, self.n_features)
         precisions_chol = np.empty(shape)
 
@@ -264,6 +266,8 @@ class GaussianMixtureModel(nn.Module):
         gmm : `GaussianMixtureModel`
             Gaussian mixture model.
         """
+        import scipy.io as sio
+
         if format == "epll-matlab":
             gmm_dict = sio.loadmat(filename)
             gmm_data = gmm_dict["GS"]

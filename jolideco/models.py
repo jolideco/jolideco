@@ -111,7 +111,18 @@ class FluxComponent(nn.Module):
 
     @classmethod
     def from_dict(cls, data):
-        """Create flux component from dict"""
+        """Create flux component from dict
+
+        Parameters
+        ----------
+        data : dict
+            Parameter dict.
+
+        Returns
+        -------
+        flux_component : `FluxComponent`
+            Flux component
+        """
         kwargs = data.copy()
         kwargs["prior"] = Prior.from_dict(kwargs.pop("prior"))
 
@@ -386,7 +397,18 @@ class FluxComponents(nn.ModuleDict):
 
     @classmethod
     def from_dict(cls, data):
-        """Fluxes of the components (dict of `~torch.tensor`)"""
+        """Create flux components from dict
+
+        Parameters
+        ----------
+        data : dict
+            Parameter dict.
+
+        Returns
+        -------
+        flux_components : `FluxComponents`
+            Flux components
+        """
         components = []
 
         for name, component_data in data.items():
@@ -396,7 +418,7 @@ class FluxComponents(nn.ModuleDict):
         return cls(components)
 
     def to_numpy(self):
-        """Fluxes of the components ()"""
+        """Fluxes of the components (dict of `~numpy.ndarray`)"""
         fluxes = {}
 
         for name, component in self.items():

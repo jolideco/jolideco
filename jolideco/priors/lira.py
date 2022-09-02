@@ -11,6 +11,8 @@ class LIRAPrior(Prior):
 
     Parameters
     ----------
+    alphas : list of float
+        Alpha values
     """
 
     def __init__(self, alphas, cycle_spin=True, random_state=None, generator=None):

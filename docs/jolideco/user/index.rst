@@ -6,13 +6,17 @@ This is how to use Jolideco:
 
 .. code::
 
+    import numpy as np
     from jolideco import MAPDeconvolver
+    from jolideco.models import FluxComponent
     from jolideco.data import point_source_gauss_psf
 
     data = point_source_gauss_psf()
-    data["flux_init"] = data["flux"]
+    component = FluxComponent.from_numpy(
+        flux=np.ones((32, 32))
+    )
     deconvolve = MAPDeconvolver(n_epochs=1_000)
-    result = deconvolve.run(data=data)
+    result = deconvolve.run(data=data, components=component)
 
 The ``data`` object is a simple Python ``dict`` containing the following quantities:
 

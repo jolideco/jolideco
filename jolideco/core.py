@@ -23,6 +23,8 @@ logging.basicConfig(level=logging.INFO)
 
 log = logging.getLogger(__name__)
 
+__all__ = ["MAPDeconvolver", "MAPDeconvolverResult"]
+
 
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver

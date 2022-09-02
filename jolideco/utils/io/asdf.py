@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import asdf
-
 from jolideco.utils.misc import recursive_update
 
 
@@ -19,6 +17,8 @@ def write_flux_component_to_asdf(flux_component, filename, overwrite, **kwargs):
     **kwargs : dict
         Keyword arguments passed to `~asdf.AsdfFile.write_to`
     """
+    import asdf
+
     data = flux_component.to_dict(include_data="numpy")
 
     # Create the ASDF file object from our data tree
@@ -46,6 +46,8 @@ def read_flux_component_from_asdf(filename):
     flux_component : `FluxComponent`
         Flux component
     """
+    import asdf
+
     from jolideco.models import FluxComponent
 
     path = Path(filename)
@@ -87,6 +89,8 @@ def read_flux_components_from_asdf(filename):
     flux_components : `FluxComponents`
         Flux components
     """
+    import asdf
+
     from jolideco.models import FluxComponents
 
     path = Path(filename)

@@ -6,6 +6,8 @@ from astropy.utils import lazyproperty
 
 from .models import NPredModels
 
+__all__ = ["PoissonLoss", "PriorLoss", "TotalLoss"]
+
 
 class PoissonLoss:
     """Poisson loss functions
