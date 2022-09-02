@@ -145,8 +145,8 @@ def read_flux_components_from_fits(filename):
     flux_components : `FluxComponents`
         Flux components
     """
-    hdulist = fits.open(filename)
-    return flux_components_from_hdulist(hdulist=hdulist)
+    with fits.open(filename) as hdulist:
+        return flux_components_from_hdulist(hdulist=hdulist)
 
 
 def write_flux_component_to_fits(flux_component, filename, overwrite):
@@ -185,8 +185,8 @@ def read_flux_component_from_fits(filename, hdu_name=0):
     flux_component : `FluxComponent`
         Flux component
     """
-    hdulist = fits.open(filename)
-    return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
+    with fits.open(filename) as hdulist:
+        return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
 
 
 def write_map_result_to_fits(result, filename, overwrite):
@@ -237,18 +237,18 @@ def read_map_result_from_fits(filename):
     from jolideco.core import MAPDeconvolverResult
 
     log.info(f"Reading {filename}")
-    hdulist = fits.open(filename)
 
-    config_table = Table.read(hdulist["CONFIG"])
-    config = dict(config_table[0])
+    with fits.open(filename) as hdulist:
+        config_table = Table.read(hdulist["CONFIG"])
+        config = dict(config_table[0])
 
-    trace_loss = Table.read(hdulist["TRACE_LOSS"])
+        trace_loss = Table.read(hdulist["TRACE_LOSS"])
 
-    hdulist = [hdu for hdu in hdulist if SUFFIX_INIT not in hdu.name]
-    components = flux_components_from_hdulist(hdulist=hdulist)
+        hdulist = [hdu for hdu in hdulist if SUFFIX_INIT not in hdu.name]
+        components = flux_components_from_hdulist(hdulist=hdulist)
 
-    hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
-    components_init = flux_components_from_hdulist(hdulist=hdulist)
+        hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
+        components_init = flux_components_from_hdulist(hdulist=hdulist)
 
     return MAPDeconvolverResult(
         config=config,

@@ -19,7 +19,7 @@ from .utils.io import (
 )
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
-from .utils.torch import convolve_fft_torch
+from .utils.torch import convolve_fft_torch, transpose
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 
@@ -589,8 +589,9 @@ class NPredModel(nn.Module):
             )
 
         if self.rmf is not None:
-            # TODO: simplify if possible
-            npred = torch.matmul(npred[0].T, self.rmf).T[None]
+            npred_T = transpose(npred[0])
+            npred = torch.matmul(npred_T, self.rmf)
+            npred = transpose(npred)[None]
 
         return npred
 

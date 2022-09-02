@@ -14,6 +14,11 @@ __all__ = [
 TORCH_DEFAULT_DEVICE = "cpu"
 
 
+def transpose(x):
+    """Transpose tensor"""
+    return x.permute(*torch.arange(x.ndim - 1, -1, -1))
+
+
 def grid_weights(x, y, x0, y0):
     """Compute 4-pixel weights such that centroid is preserved."""
     dx = torch.abs(x - x0)
