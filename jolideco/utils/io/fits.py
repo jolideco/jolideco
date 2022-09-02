@@ -4,8 +4,6 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
-from .yaml import from_yaml_str, to_yaml_str
-
 log = logging.getLogger(__name__)
 
 SUFFIX_INIT = "-INIT"
