@@ -4,6 +4,8 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
+from .yaml import from_yaml_str, to_yaml_str
+
 log = logging.getLogger(__name__)
 
 SUFFIX_INIT = "-INIT"
@@ -32,6 +34,8 @@ def flux_component_to_image_hdu(flux_component, name):
     else:
         header = fits.Header()
 
+    header["UPSAMPLE"] = flux_component.upsampling_factor
+
     return fits.ImageHDU(
         header=header,
         data=flux_component.flux_upsampled_numpy,
@@ -54,11 +58,11 @@ def flux_component_from_image_hdu(hdu):
     """
     from jolideco.models import FluxComponent
 
-    kwargs = {}
-    kwargs["flux"] = hdu.data
-    kwargs["wcs"] = WCS(hdu.header)
-
-    return FluxComponent.from_numpy(**kwargs)
+    data = {}
+    data["flux_upsampled"] = hdu.data
+    data["wcs"] = WCS(hdu.header)
+    data["upsampling_factor"] = hdu.header.get("UPSAMPLE", 1)
+    return FluxComponent.from_dict(data=data)
 
 
 def flux_components_to_hdulist(flux_components, name_suffix=""):

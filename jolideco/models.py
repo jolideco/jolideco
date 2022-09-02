@@ -124,7 +124,10 @@ class FluxComponent(nn.Module):
             Flux component
         """
         kwargs = data.copy()
-        kwargs["prior"] = Prior.from_dict(kwargs.pop("prior"))
+        prior_data = kwargs.pop("prior", None)
+
+        if prior_data:
+            kwargs["prior"] = Prior.from_dict(data=prior_data)
 
         value = kwargs["flux_upsampled"]
 
@@ -133,6 +136,8 @@ class FluxComponent(nn.Module):
             flux = cls.read(filename).flux_upsampled
         elif not isinstance(value, torch.Tensor):
             flux = torch.from_numpy(value[np.newaxis, np.newaxis].astype(np.float32))
+        else:
+            flux = value
 
         kwargs["flux_upsampled"] = flux
         return cls(**kwargs)

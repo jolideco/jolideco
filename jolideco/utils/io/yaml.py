@@ -26,6 +26,24 @@ def to_yaml_str(data):
     return yaml.dump_to_string(data)
 
 
+def from_yaml_str(yaml_str):
+    """Load Ydict from YAML string
+
+    Parameters
+    ----------
+    yaml_str : str
+        YAML string
+
+    Returns
+    -------
+    data : dict
+        Data dictionary
+    """
+    yaml = YAML()
+    yaml.allow_duplicate_keys = True
+    return yaml.load(yaml_str)
+
+
 def write_yaml(filename, data, overwrite):
     """Write dict to YAML file
 
@@ -65,12 +83,9 @@ def load_yaml(filename):
     """
     path = Path(filename)
 
-    yaml = YAML()
-    yaml.allow_duplicate_keys = True
-
     with path.open("r") as f:
         log.info(f"Reading {path}")
-        data = yaml.load(f)
+        data = from_yaml_str(f.read())
 
     return data
 
