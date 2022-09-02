@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -20,6 +21,8 @@ from .utils.io import (
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
 from .utils.torch import convolve_fft_torch, transpose
+
+log = logging.getLogger(__name__)
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
 
@@ -44,6 +47,9 @@ class FluxComponent(nn.Module):
     wcs : `~astropy.wcs.WCS`
         World coordinate transform object
     """
+
+    _registry_read = IO_FORMATS_FLUX_COMPONENT_READ
+    _registry_write = IO_FORMATS_FLUX_COMPONENT_WRITE
 
     def __init__(
         self,
@@ -241,7 +247,7 @@ class FluxComponent(nn.Module):
         ----------
         filename : str or `Path`
             Output filename
-        format : {"fits"}
+        format : {"fits", "yaml", "asdf"}
             Format to use.
 
         Returns
@@ -250,7 +256,7 @@ class FluxComponent(nn.Module):
             Flux component
         """
         reader = get_reader(
-            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENT_READ
+            filename=filename, format=format, registry=cls._registry_read
         )
         return reader(filename)
 
@@ -263,12 +269,13 @@ class FluxComponent(nn.Module):
             Output filename
         overwrite : bool
             Overwrite file.
-        format : {"fits"}
+        format : {"fits", "yaml", "asdf"}
             Format to use.
         """
         writer = get_writer(
-            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENT_WRITE
+            filename=filename, format=format, registry=self._registry_write
         )
+
         return writer(
             flux_component=self, filename=filename, overwrite=overwrite, **kwargs
         )
@@ -298,6 +305,9 @@ class FluxComponent(nn.Module):
 
 class FluxComponents(nn.ModuleDict):
     """Flux components"""
+
+    _registry_read = IO_FORMATS_FLUX_COMPONENTS_READ
+    _registry_write = IO_FORMATS_FLUX_COMPONENTS_WRITE
 
     @property
     def priors(self):
@@ -393,7 +403,7 @@ class FluxComponents(nn.ModuleDict):
         ----------
         filename : str or `Path`
             Output filename
-        format : {"fits"}
+        format : {"fits", "yaml", "asdf"}
             Format to use.
 
         Returns
@@ -402,7 +412,7 @@ class FluxComponents(nn.ModuleDict):
             Flux components
         """
         reader = get_reader(
-            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_READ
+            filename=filename, format=format, registry=cls._registry_read
         )
         return reader(filename=filename)
 
@@ -415,11 +425,11 @@ class FluxComponents(nn.ModuleDict):
             Output filename
         overwrite : bool
             Overwrite file.
-        format : {"fits"}
+        format : {"fits", "yaml", "asdf"}
             Format to use.
         """
         writer = get_writer(
-            filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_WRITE
+            filename=filename, format=format, registry=self._registry_write
         )
         return writer(
             flux_components=self, filename=filename, overwrite=overwrite, **kwargs
