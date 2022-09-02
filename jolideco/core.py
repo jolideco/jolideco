@@ -52,7 +52,7 @@ class MAPDeconvolver:
 
     def __init__(
         self,
-        n_epochs,
+        n_epochs=1_000,
         beta=1,
         learning_rate=0.1,
         compute_error=False,

@@ -5,12 +5,12 @@ import asdf
 from jolideco.utils.misc import recursive_update
 
 
-def write_flux_components_to_asdf(flux_component, filename, overwrite, **kwargs):
+def write_flux_component_to_asdf(flux_component, filename, overwrite, **kwargs):
     """Write flux components to ASDF file
 
     Parameters
     ----------
-    flux_component : `FluxComponent` or `FluxComponents`
+    flux_component : `FluxComponent`
         Flux component to serialize to FITS file
     filename : `Path`
         Output filename
@@ -33,7 +33,7 @@ def write_flux_components_to_asdf(flux_component, filename, overwrite, **kwargs)
     af.write_to(path, **kwargs)
 
 
-def read_flux_components_from_asdf(filename):
+def read_flux_component_from_asdf(filename):
     """Read flux component from ASDF file
 
     Parameters
@@ -46,14 +46,51 @@ def read_flux_components_from_asdf(filename):
     flux_component : `FluxComponent`
         Flux component
     """
-    from jolideco.models import FluxComponent, FluxComponents
+    from jolideco.models import FluxComponent
 
     path = Path(filename)
 
     with asdf.open(path, copy_arrays=True) as af:
         data = recursive_update({}, af)
-        af.info()
-        if "use_log_flux" in data:
-            return FluxComponent.from_dict(data=data)
-        else:
-            return FluxComponents.from_dict(data=data)
+        return FluxComponent.from_dict(data=data)
+
+
+def write_flux_components_to_asdf(flux_components, filename, overwrite, **kwargs):
+    """Write flux components to ASDF file
+
+    Parameters
+    ----------
+    flux_components : `FluxComponents`
+        Flux components to serialize to FITS file
+    filename : `Path`
+        Output filename
+    overwrite : bool
+        Overwrite file.
+    **kwargs : dict
+        Keyword arguments passed to `~asdf.AsdfFile.write_to`
+    """
+    write_flux_component_to_asdf(
+        flux_component=flux_components, filename=filename, overwrite=overwrite, **kwargs
+    )
+
+
+def read_flux_components_from_asdf(filename):
+    """Read flux components from ASDF file
+
+    Parameters
+    ----------
+    filename : `Path`
+        Output filename
+
+    Returns
+    -------
+    flux_components : `FluxComponents`
+        Flux components
+    """
+    from jolideco.models import FluxComponents
+
+    path = Path(filename)
+
+    with asdf.open(path, copy_arrays=True) as af:
+        data = recursive_update({}, af)
+        return FluxComponents.from_dict(data=data)

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -101,10 +103,13 @@ class FluxComponent(nn.Module):
         kwargs = data.copy()
         kwargs["prior"] = Prior.from_dict(kwargs.pop("prior"))
 
-        flux = kwargs["flux_upsampled"]
+        value = kwargs["flux_upsampled"]
 
-        if not isinstance(flux, torch.Tensor):
-            flux = torch.from_numpy(flux[np.newaxis, np.newaxis].astype(np.float32))
+        if isinstance(value, str):
+            filename = Path(value)
+            flux = cls.read(filename).flux_upsampled
+        elif not isinstance(value, torch.Tensor):
+            flux = torch.from_numpy(value[np.newaxis, np.newaxis].astype(np.float32))
 
         kwargs["flux_upsampled"] = flux
         return cls(**kwargs)
@@ -417,7 +422,7 @@ class FluxComponents(nn.ModuleDict):
             filename=filename, format=format, registry=IO_FORMATS_FLUX_COMPONENTS_WRITE
         )
         return writer(
-            flux_component=self, filename=filename, overwrite=overwrite, **kwargs
+            flux_components=self, filename=filename, overwrite=overwrite, **kwargs
         )
 
     def plot(self, figsize=None, **kwargs):
