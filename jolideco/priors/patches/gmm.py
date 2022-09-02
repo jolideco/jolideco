@@ -320,7 +320,7 @@ class GaussianMixtureModel(nn.Module):
         term_log = np.log(other.covariance_det / self.covariance_det)
         return 0.5 * (term_log - k + term_mean + term_trace)
 
-    def __eq__(self, other):
+    def is_equal(self, other):
         # TODO: improve check here?
         if not self.covariances.shape == other.covariances.shape:
             return False
@@ -339,7 +339,7 @@ class GaussianMixtureModel(nn.Module):
 
         for name in GMM_REGISTRY:
             gmm = GaussianMixtureModel.from_registry(name=name)
-            if gmm == self:
+            if gmm.is_equal(self):
                 break
 
         data["type"] = name
