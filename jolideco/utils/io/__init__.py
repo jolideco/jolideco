@@ -30,6 +30,25 @@ __all__ = [
 ]
 
 
+class document_io_formats:
+    """Document IO formats decorator
+
+    Requires the {formats} placeholder to be define in the decorated function.
+
+    Attributes
+    ----------
+    registry : dict
+        Registry dictionary
+    """
+
+    def __init__(self, registry):
+        self.registry = set(registry)
+
+    def __call__(self, func):
+        func.__doc__ = func.__doc__.format(formats=self.registry)
+        return func
+
+
 def guess_format_from_filename(filename):
     """Guess I/O format from filename
 

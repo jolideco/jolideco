@@ -15,6 +15,7 @@ from .utils.io import (
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     IO_FORMATS_FLUX_COMPONENTS_READ,
     IO_FORMATS_FLUX_COMPONENTS_WRITE,
+    document_io_formats,
     get_reader,
     get_writer,
 )
@@ -24,7 +25,7 @@ from .utils.torch import convolve_fft_torch, transpose
 
 log = logging.getLogger(__name__)
 
-__all__ = ["FluxComponent", "FluxComponents", "NPredModel"]
+__all__ = ["FluxComponent", "FluxComponents", "NPredModel", "NPredModels"]
 
 
 class FluxComponent(nn.Module):
@@ -85,6 +86,11 @@ class FluxComponent(nn.Module):
 
     def to_dict(self, include_data=None):
         """Convert flux component configuration to dict, with simple data types.
+
+        Parameters
+        ----------
+        include_data : None or {"numpy"}
+            Optionally include data array in the given format
 
         Returns
         -------
@@ -240,14 +246,15 @@ class FluxComponent(nn.Module):
         return self.flux_upsampled_error.detach().numpy()[0, 0]
 
     @classmethod
+    @document_io_formats(registry=_registry_read)
     def read(cls, filename, format=None):
-        """Write result fo file
+        """Read flux component from file
 
         Parameters
         ----------
         filename : str or `Path`
             Output filename
-        format : {"fits", "yaml", "asdf"}
+        format : {formats}
             Format to use.
 
         Returns
@@ -260,6 +267,7 @@ class FluxComponent(nn.Module):
         )
         return reader(filename)
 
+    @document_io_formats(registry=_registry_write)
     def write(self, filename, format=None, overwrite=False, **kwargs):
         """Write flux component fo file
 
@@ -269,7 +277,7 @@ class FluxComponent(nn.Module):
             Output filename
         overwrite : bool
             Overwrite file.
-        format : {"fits", "yaml", "asdf"}
+        format : {formats}
             Format to use.
         """
         writer = get_writer(
@@ -357,7 +365,18 @@ class FluxComponents(nn.ModuleDict):
         return np.sum([flux for flux in self.fluxes_numpy.values()], axis=0)
 
     def to_dict(self, include_data=None):
-        """Fluxes of the components (dict of `~torch.tensor`)"""
+        """Convert flux component configuration to dict, with simple data types.
+
+        Parameters
+        ----------
+        include_data : None or {"numpy"}
+            Optionally include data array in the given format
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
         fluxes = {}
 
         for name, component in self.items():
@@ -396,14 +415,15 @@ class FluxComponents(nn.ModuleDict):
             self[name]._flux_upsampled_error = flux_error
 
     @classmethod
+    @document_io_formats(registry=_registry_read)
     def read(cls, filename, format=None):
-        """Read flux components from fo file
+        """Read flux components from file
 
         Parameters
         ----------
         filename : str or `Path`
             Output filename
-        format : {"fits", "yaml", "asdf"}
+        format : {formats}
             Format to use.
 
         Returns
@@ -416,8 +436,9 @@ class FluxComponents(nn.ModuleDict):
         )
         return reader(filename=filename)
 
+    @document_io_formats(registry=_registry_write)
     def write(self, filename, overwrite=False, format=None, **kwargs):
-        """Write flux components fo file
+        """Write flux components to file
 
         Parameters
         ----------
@@ -425,7 +446,7 @@ class FluxComponents(nn.ModuleDict):
             Output filename
         overwrite : bool
             Overwrite file.
-        format : {"fits", "yaml", "asdf"}
+        format : {formats}
             Format to use.
         """
         writer = get_writer(
