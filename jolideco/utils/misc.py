@@ -1,9 +1,34 @@
-import collections.abc
+from collections import defaultdict
+from collections.abc import Mapping
 
 __all__ = ["to_str", "format_class_str"]
 
 TABSIZE = 2
 MAX_WIDTH = 24
+
+
+def flatten_dict(d, parent_key="", sep="."):
+    """Flatten dictionary"""
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, Mapping):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+
+def unflatten_dict(d, sep="."):
+    """Unflatten dictionary"""
+    ret = defaultdict(dict)
+    for k, v in d.items():
+        k1, delim, k2 = k.partition(sep)
+        if delim:
+            ret[k1].update({k2: v})
+        else:
+            ret[k1] = v
+    return ret
 
 
 def recursive_update(d, u):
@@ -14,7 +39,7 @@ def recursive_update(d, u):
 
         value = u[key]
 
-        if isinstance(value, collections.abc.Mapping):
+        if isinstance(value, Mapping):
             d[key] = recursive_update(d.get(key, {}), value)
         else:
             d[key] = value

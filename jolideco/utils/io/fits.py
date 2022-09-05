@@ -4,9 +4,33 @@ from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
 
+from jolideco.utils.misc import flatten_dict, unflatten_dict
+
 log = logging.getLogger(__name__)
 
 SUFFIX_INIT = "-INIT"
+META_SEP = "."
+
+# TODO: this incomplete, extend as needed
+FITS_META = {
+    "use_log_flux": "LOG_FLUX",
+    "upsampling_factor": "UPSAMPLE",
+    "frozen": "FROZEN",
+    "prior.type": "PTYPE",
+    "prior.stride": "PSTRIDE",
+    "prior.cycle_spin": "PSPIN",
+    "prior.cycle_spin_subpix": "PSUBSPIN",
+    "prior.jitter": "PJITTER",
+    "prior.alpha": "PALPHA",
+    "prior.beta": "PBETA",
+    "prior.gmm.type": "PGMMTYPE",
+    "prior.gmm.stride": "PGMMSTRI",
+    "prior.norm.type": "PNORMTYP",
+    "prior.norm.max_value": "PNORMMAX",
+}
+
+
+FITS_META_INVERSE = {value: key for key, value in FITS_META.items()}
 
 
 def flux_component_to_image_hdu(flux_component, name):
@@ -32,7 +56,11 @@ def flux_component_to_image_hdu(flux_component, name):
     else:
         header = fits.Header()
 
-    header["UPSAMPLE"] = flux_component.upsampling_factor
+    data = flatten_dict(flux_component.to_dict(), sep=META_SEP)
+
+    for key, value in data.items():
+        fits_key = FITS_META[key]
+        header[fits_key] = value
 
     return fits.ImageHDU(
         header=header,
@@ -57,9 +85,15 @@ def flux_component_from_image_hdu(hdu):
     from jolideco.models import FluxComponent
 
     data = {}
-    data["flux_upsampled"] = hdu.data
     data["wcs"] = WCS(hdu.header)
-    data["upsampling_factor"] = hdu.header.get("UPSAMPLE", 1)
+    data["flux_upsampled"] = hdu.data
+
+    for fits_key, key in FITS_META_INVERSE.items():
+        value = hdu.header.get(fits_key)
+        if value:
+            data[key] = value
+
+    data = unflatten_dict(data, sep=META_SEP)
     return FluxComponent.from_dict(data=data)
 
 
