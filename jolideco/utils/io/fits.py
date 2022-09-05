@@ -90,8 +90,8 @@ def flux_component_from_image_hdu(hdu):
     data["flux_upsampled"] = hdu.data
 
     for fits_key, key in FITS_META_INVERSE.items():
-        value = hdu.header.get(fits_key)
-        if value:
+        value = hdu.header.get(fits_key, None)
+        if value is not None:
             data[key] = value
 
     data = unflatten_dict(data, sep=META_SEP)

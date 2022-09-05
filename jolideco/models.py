@@ -75,7 +75,7 @@ class FluxComponent(nn.Module):
         self._flux_upsampled = nn.Parameter(flux_upsampled)
         self._flux_upsampled_error = flux_upsampled_error
         self._use_log_flux = use_log_flux
-        self.upsampling_factor = upsampling_factor
+        self.upsampling_factor = int(upsampling_factor)
 
         if prior is None:
             prior = UniformPrior()
@@ -100,7 +100,7 @@ class FluxComponent(nn.Module):
         # TODO: add all parameters, flux_upsampled could be filename
         data = {}
         data["use_log_flux"] = self.use_log_flux
-        data["upsampling_factor"] = self.upsampling_factor
+        data["upsampling_factor"] = int(self.upsampling_factor)
         data["frozen"] = self.frozen
         data["prior"] = self.prior.to_dict()
 

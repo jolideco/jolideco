@@ -1,4 +1,3 @@
-from collections import defaultdict
 from collections.abc import Mapping
 
 __all__ = ["to_str", "format_class_str"]
@@ -10,7 +9,10 @@ MAX_WIDTH = 24
 def flatten_dict(d, parent_key="", sep="."):
     """Flatten dictionary
 
-    Taken from: https://www.freecodecamp.org/news/how-to-flatten-a-dictionary-in-python-in-4-different-ways/
+    Taken from:
+
+    https://www.freecodecamp.org/news/how-to-flatten-a-dictionary-in-python-in-4-different-ways/
+
     """
     items = []
     for k, v in d.items():

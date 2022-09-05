@@ -6,7 +6,6 @@ from numpy.testing import assert_allclose
 
 from jolideco.models import FluxComponent, FluxComponents, NPredModel
 from jolideco.priors import PRIOR_REGISTRY, UniformPrior
-from jolideco.priors.core import InverseGammaPrior
 
 
 @pytest.fixture
@@ -96,16 +95,18 @@ def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     assert_allclose(npred.sum(), 1, rtol=2e-5)
 
 
+@pytest.mark.parametrize("prior_class", PRIOR_REGISTRY.values())
 @pytest.mark.parametrize("format", ["fits", "yaml", "asdf"])
-def test_flux_component_io(format, tmpdir):
+def test_flux_component_io(prior_class, format, tmpdir):
     flux_init = torch.ones((1, 1, 32, 32))
 
+    prior = prior_class()
     component = FluxComponent(
         flux_upsampled=flux_init,
         upsampling_factor=2,
         use_log_flux=False,
-        frozen=False,
-        prior=UniformPrior(),
+        frozen=True,
+        prior=prior,
     )
 
     filename = tmpdir / f"test.{format}"
@@ -115,11 +116,9 @@ def test_flux_component_io(format, tmpdir):
     component_new = FluxComponent.read(filename=filename, format=format)
 
     assert component.shape == component_new.shape
-
-    if format in ["yaml", "asdf"]:
-        assert component.upsampling_factor == component_new.upsampling_factor
-        assert component.use_log_flux == component_new.use_log_flux
-        assert isinstance(component_new.prior, UniformPrior)
+    assert component.upsampling_factor == component_new.upsampling_factor
+    assert component.use_log_flux == component_new.use_log_flux
+    assert isinstance(component_new.prior, prior_class)
 
 
 @pytest.mark.parametrize("prior_class", PRIOR_REGISTRY.values())
