@@ -19,6 +19,8 @@ jobs:
   ci_tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    env:
+      JOLIDECO_GMM_LIBRARY: ./jolideco-comparison-data/patch-priors
     strategy:
       matrix:
         include:
@@ -64,9 +66,6 @@ jobs:
         token: ${{ secrets.JOLIDECO_DATA_REPO }} # `GH_PAT` is a secret that contains your PAT
         fetch-depth: 0
         path: jolideco-comparison-data
-    - name: Set data env variable
-      run: |
-        export JOLIDECO_GMM_LIBRARY=./jolideco-comparison-data/patch-priors
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
