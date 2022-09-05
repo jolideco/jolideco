@@ -43,10 +43,6 @@ class GaussianMixtureModel(nn.Module):
         self.covariances = covariances
         self.weights = weights
         self.device = device
-
-        if stride is None:
-            stride = self.patch_shape[0] // 2
-
         self.stride = stride
 
     @lazyproperty
@@ -177,12 +173,12 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def pixel_weights(self):
         """Pixel weights"""
-        weights = np.ones(self.patch_shape)
-
         if self.stride is None:
-            return weights.reshape((1, -1))
-
-        weights = get_pixel_weights(patch_shape=self.patch_shape, stride=self.stride)
+            weights = np.ones(self.patch_shape)
+        else:
+            weights = get_pixel_weights(
+                patch_shape=self.patch_shape, stride=self.stride
+            )
         return weights.reshape((1, -1))
 
     def estimate_log_prob_torch(self, x):
@@ -219,7 +215,7 @@ class GaussianMixtureModel(nn.Module):
         )
 
     @classmethod
-    def from_registry(cls, name, stride=None):
+    def from_registry(cls, name, **kwargs):
         """Create GMM from registry
 
         Parameters
@@ -241,8 +237,8 @@ class GaussianMixtureModel(nn.Module):
                 f"Not a supported GMM {name}, choose from {available_names}"
             )
 
-        kwargs = GMM_REGISTRY[name]
-        return cls.read(stride=stride, **kwargs)
+        kwargs.update(GMM_REGISTRY[name])
+        return cls.read(**kwargs)
 
     @classmethod
     def read(cls, filename, format="epll-matlab", **kwargs):
@@ -288,6 +284,8 @@ class GaussianMixtureModel(nn.Module):
         else:
             raise ValueError(f"Not a supported format {format}")
 
+        npix = int((means.shape[-1]) ** 0.5)
+        kwargs.setdefault("stride", npix // 2)
         return cls(means=means, covariances=covariances, weights=weights, **kwargs)
 
     @lazyproperty

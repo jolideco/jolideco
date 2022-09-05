@@ -58,6 +58,8 @@ class GMMPatchPrior(Prior):
         if gmm is None:
             gmm = GaussianMixtureModel.from_registry(name="zoran-weiss")
 
+        print(gmm)
+
         self.gmm = gmm
         self.stride = gmm.stride
         self.cycle_spin = cycle_spin
