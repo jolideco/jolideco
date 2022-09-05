@@ -1,10 +1,11 @@
 import numpy as np
+import pytest
 import torch
 from numpy.testing import assert_allclose
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import _compute_precision_cholesky
 
-from jolideco.priors.patches import GaussianMixtureModel
+from jolideco.priors.patches import GMM_REGISTRY, GaussianMixtureModel
 
 
 def test_gmm_torch_basic():
@@ -30,3 +31,14 @@ def test_gmm_torch_basic():
     result = gmm_torch.estimate_log_prob_torch(x=torch.from_numpy(x))
     result = result.detach().numpy()
     assert_allclose(result_ref, result)
+
+
+@pytest.mark.parametrize("name", GMM_REGISTRY)
+def test_gmm_registry(name):
+    gmm = GaussianMixtureModel.from_registry(name=name)
+
+    x = torch.ones((2, 64))
+
+    values = gmm.estimate_log_prob_torch(x=x)
+
+    assert values.shape == (2, gmm.n_components)
