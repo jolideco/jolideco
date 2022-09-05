@@ -5,7 +5,7 @@ from astropy.convolution import Gaussian2DKernel
 from numpy.testing import assert_allclose
 
 from jolideco.models import FluxComponent, FluxComponents, NPredModel
-from jolideco.priors import UniformPrior
+from jolideco.priors import PRIOR_REGISTRY, UniformPrior
 from jolideco.priors.core import InverseGammaPrior
 
 
@@ -122,8 +122,9 @@ def test_flux_component_io(format, tmpdir):
         assert isinstance(component_new.prior, UniformPrior)
 
 
+@pytest.mark.parametrize("prior_class", PRIOR_REGISTRY.values())
 @pytest.mark.parametrize("format", ["fits", "asdf", "yaml"])
-def test_flux_components_io(format, tmpdir):
+def test_flux_components_io(prior_class, format, tmpdir):
     components = FluxComponents()
 
     flux_init = torch.ones((1, 1, 32, 32))
@@ -136,12 +137,13 @@ def test_flux_components_io(format, tmpdir):
         prior=UniformPrior(),
     )
 
+    prior = prior_class()
     components["flux-point"] = FluxComponent(
         flux_upsampled=flux_init,
         upsampling_factor=2,
         use_log_flux=False,
         frozen=False,
-        prior=InverseGammaPrior(alpha=3),
+        prior=prior,
     )
 
     filename = tmpdir / f"test.{format}"

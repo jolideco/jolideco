@@ -170,7 +170,7 @@ class InverseGammaPrior(Prior):
 
     """
 
-    def __init__(self, alpha, beta=3 / 2, cycle_spin_subpix=False, generator=None):
+    def __init__(self, alpha=10, beta=3 / 2, cycle_spin_subpix=False, generator=None):
         super().__init__()
         self.alpha = torch.tensor([alpha])
         self.beta = torch.tensor([beta])
@@ -274,7 +274,7 @@ class ExponentialPrior(Prior):
 
     """
 
-    def __init__(self, alpha, cycle_spin_subpix=False, generator=None):
+    def __init__(self, alpha=10, cycle_spin_subpix=False, generator=None):
         super().__init__()
         self.alpha = torch.tensor([alpha])
 
@@ -370,6 +370,7 @@ class SmoothnessPrior(Prior):
 
     def __init__(self, width=2):
         super().__init__()
+        self.width = width
         kernel = Gaussian2DKernel(width)
         self.kernel = torch.from_numpy(kernel.array[None, None])
 
@@ -378,5 +379,13 @@ class SmoothnessPrior(Prior):
         return -torch.sum(flux * smooth)
 
     def to_dict(self):
-        """To dict"""
-        raise NotImplementedError
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = super().to_dict()
+        data["width"] = float(self.width)
+        return data

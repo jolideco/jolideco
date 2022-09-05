@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 SUFFIX_INIT = "-INIT"
 META_SEP = "."
 
-# TODO: this incomplete, extend as needed
+# TODO: this is incomplete, extend as needed...
 FITS_META = {
     "use_log_flux": "LOG_FLUX",
     "upsampling_factor": "UPSAMPLE",
@@ -23,6 +23,7 @@ FITS_META = {
     "prior.jitter": "PJITTER",
     "prior.alpha": "PALPHA",
     "prior.beta": "PBETA",
+    "prior.width": "PWIDTH",
     "prior.gmm.type": "PGMMTYPE",
     "prior.gmm.stride": "PGMMSTRI",
     "prior.norm.type": "PNORMTYP",

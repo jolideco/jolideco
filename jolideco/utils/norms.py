@@ -17,10 +17,6 @@ __all__ = [
 class ImageNorm(abc.ABC):
     """Image normalisation"""
 
-    def __init__(self, vmin, vmax):
-        self.vmin = vmin
-        self.vmax = vmax
-
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
 
@@ -138,7 +134,8 @@ class MaxImageNorm(ImageNorm):
 
     def to_dict(self):
         """To dict"""
-        raise NotImplementedError
+        data = super().to_dict()
+        return data
 
 
 class FixedMaxImageNorm(ImageNorm):

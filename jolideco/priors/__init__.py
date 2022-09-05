@@ -11,13 +11,14 @@ from .patches import GaussianMixtureModel, GMMPatchPrior, MultiScalePrior
 
 PRIOR_REGISTRY = {
     "uniform": UniformPrior,
-    "image": ImagePrior,
     "gmm-patches": GMMPatchPrior,
-    "multiscale-prior": MultiScalePrior,
     "smooth": SmoothnessPrior,
-    "lira": LIRAPrior,
     "inverse-gamma": InverseGammaPrior,
-    "exponetial": ExponentialPrior,
+    "exponential": ExponentialPrior,
+    # TODO: those are currently not fully supported, implement if needed...
+    #    "image": ImagePrior,
+    #    "multiscale-prior": MultiScalePrior,
+    #    "lira": LIRAPrior,
 }
 
 __all__ = [

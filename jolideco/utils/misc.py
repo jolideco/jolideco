@@ -8,7 +8,10 @@ MAX_WIDTH = 24
 
 
 def flatten_dict(d, parent_key="", sep="."):
-    """Flatten dictionary"""
+    """Flatten dictionary
+
+    Taken from: https://www.freecodecamp.org/news/how-to-flatten-a-dictionary-in-python-in-4-different-ways/
+    """
     items = []
     for k, v in d.items():
         new_key = parent_key + sep + k if parent_key else k
@@ -20,15 +23,20 @@ def flatten_dict(d, parent_key="", sep="."):
 
 
 def unflatten_dict(d, sep="."):
-    """Unflatten dictionary"""
-    ret = defaultdict(dict)
-    for k, v in d.items():
-        k1, delim, k2 = k.partition(sep)
-        if delim:
-            ret[k1].update({k2: v})
-        else:
-            ret[k1] = v
-    return ret
+    """Unflatten dictionary"
+
+    Taken from https://stackoverflow.com/a/6037657/19802442
+    """
+    result = dict()
+    for key, value in d.items():
+        parts = key.split(".")
+        d = result
+        for part in parts[:-1]:
+            if part not in d:
+                d[part] = dict()
+            d = d[part]
+        d[parts[-1]] = value
+    return result
 
 
 def recursive_update(d, u):

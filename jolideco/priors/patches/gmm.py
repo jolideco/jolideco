@@ -43,6 +43,10 @@ class GaussianMixtureModel(nn.Module):
         self.covariances = covariances
         self.weights = weights
         self.device = device
+
+        if stride is None:
+            stride = self.patch_shape[0] // 2
+
         self.stride = stride
 
     @lazyproperty
