@@ -37,10 +37,10 @@ jobs:
             python: 3.8
             toxenv: py38-test-alldeps
 
-          - name: Windows - Python 3.8 with all optional dependencies
-            os: windows-latest
-            python: 3.8
-            toxenv: py38-test-alldeps
+          # - name: Windows - Python 3.8 with all optional dependencies
+          #   os: windows-latest
+          #   python: 3.8
+          #   toxenv: py38-test-alldeps
 
           # - name: Python 3.8 with latest dev versions of key dependencies
           #   os: ubuntu-latest
