@@ -54,7 +54,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
       with:
         fetch-depth: 0
     - name: Checkout private tools
@@ -63,6 +63,7 @@ jobs:
         repository: adonath/jolideco-comparison-data
         token: ${{ secrets.JOLIDECO_DATA_REPO }} # `GH_PAT` is a secret that contains your PAT
         fetch-depth: 0
+        path: jolideco-comparison-data
     - name: Set data env variable
       run: |
         export JOLIDECO_GMM_LIBRARY=./jolideco-comparison-data/patch-priors
