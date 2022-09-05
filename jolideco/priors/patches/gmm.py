@@ -350,7 +350,18 @@ class GaussianMixtureModel(nn.Module):
 
     @classmethod
     def from_dict(cls, data):
-        """Create from dict"""
+        """Create from dict
+
+        Parameters
+        ----------
+        data : dict
+            Data dictionary
+
+        Returns
+        -------
+        gmm : `~GaussianMixtureModel`
+            Gaussian mixture model
+        """
         name, stride = data["type"], data["stride"]
         return cls.from_registry(name=name, stride=stride)
 
