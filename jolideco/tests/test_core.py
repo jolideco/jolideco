@@ -74,11 +74,12 @@ def test_map_deconvolver_result(deconvolver_result):
     assert_allclose(trace_loss["dataset-2"], 1.878308, rtol=1e-3)
 
 
-def test_map_deconvolver_result_io(deconvolver_result, tmpdir):
+@pytest.mark.parametrize("format", ["fits", "asdf"])
+def test_map_deconvolver_result_io(format, deconvolver_result, tmpdir):
     filename = tmpdir / "result.fits"
-    deconvolver_result.write(filename)
+    deconvolver_result.write(filename, format=format)
 
-    result = MAPDeconvolverResult.read(filename=filename)
+    result = MAPDeconvolverResult.read(filename=filename, format=format)
 
     assert result.config["n_epochs"] == 100
     assert_allclose(result.flux_total[12, 12], 1.858458, rtol=1e-3)

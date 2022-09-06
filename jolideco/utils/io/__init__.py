@@ -3,8 +3,10 @@ from pathlib import Path
 from .asdf import (
     read_flux_component_from_asdf,
     read_flux_components_from_asdf,
+    read_map_result_from_asdf,
     write_flux_component_to_asdf,
     write_flux_components_to_asdf,
+    write_map_result_to_asdf,
 )
 from .fits import (
     read_flux_component_from_fits,
@@ -134,8 +136,15 @@ def get_reader(filename, format, registry):
     return registry[format]
 
 
-IO_FORMATS_MAP_RESULT_READ = {"fits": read_map_result_from_fits}
-IO_FORMATS_MAP_RESULT_WRITE = {"fits": write_map_result_to_fits}
+IO_FORMATS_MAP_RESULT_READ = {
+    "fits": read_map_result_from_fits,
+    "asdf": read_map_result_from_asdf,
+}
+
+IO_FORMATS_MAP_RESULT_WRITE = {
+    "fits": write_map_result_to_fits,
+    "asdf": write_map_result_to_asdf,
+}
 
 
 IO_FORMATS_FLUX_COMPONENT_READ = {
@@ -149,6 +158,7 @@ IO_FORMATS_FLUX_COMPONENT_WRITE = {
     "fits": write_flux_component_to_fits,
     "asdf": write_flux_component_to_asdf,
 }
+
 
 IO_FORMATS_FLUX_COMPONENTS_READ = {
     "fits": read_flux_components_from_fits,
