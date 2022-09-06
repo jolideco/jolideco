@@ -107,6 +107,11 @@ release = package.__version__
 
 html_theme = "pydata_sphinx_theme"
 
+html_static_path = ['_static']
+
+html_css_files = [
+    'css/custom.css',
+]
 
 # Custom sidebar templates, maps document names to template names.
 #html_sidebars = {}
