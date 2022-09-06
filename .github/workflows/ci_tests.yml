@@ -20,7 +20,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     env:
-      JOLIDECO_GMM_LIBRARY: ./jolideco-comparison-data/patch-priors
+      JOLIDECO_GMM_LIBRARY: ${{ matrix.gmm_path}}
     strategy:
       matrix:
         include:
@@ -28,21 +28,22 @@ jobs:
             os: ubuntu-latest
             python: 3.x
             toxenv: codestyle
-
+        
           - name: Python 3.8 with all optional dependencies and coverage checking
             os: ubuntu-latest
             python: 3.8
             toxenv: py38-test-alldeps-cov
+            gmm_path: /home/runner/work/jolideco/jolideco/jolideco-comparison-data/patch-priors
 
           - name: macOS - Python 3.8 with all optional dependencies
             os: macos-latest
             python: 3.8
             toxenv: py38-test-alldeps
 
-          # - name: Windows - Python 3.8 with all optional dependencies
-          #   os: windows-latest
-          #   python: 3.8
-          #   toxenv: py38-test-alldeps
+          - name: Windows - Python 3.8 with all optional dependencies
+            os: windows-latest
+            python: 3.8
+            toxenv: py38-test-alldeps
 
           # - name: Python 3.8 with latest dev versions of key dependencies
           #   os: ubuntu-latest
@@ -72,8 +73,7 @@ jobs:
         python-version: ${{ matrix.python }}
     - name: Install base dependencies
       run: |
-        ls -lh jolideco-comparison-data
-        ls -lh $JOLIDECO_GMM_LIBRARY
+        pwd
         python -m pip install --upgrade pip
         python -m pip install tox codecov
     - name: Test with tox
