@@ -45,6 +45,7 @@ jobs:
             os: windows-latest
             python: 3.8
             toxenv: py38-test-alldeps
+            gmm_path: D:\a\jolideco\jolideco\jolideco-comparison-data\patch-priors
 
           # - name: Python 3.8 with latest dev versions of key dependencies
           #   os: ubuntu-latest
