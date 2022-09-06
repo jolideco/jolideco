@@ -39,6 +39,7 @@ jobs:
             os: macos-latest
             python: 3.8
             toxenv: py38-test-alldeps
+            gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-comparison-data/patch-priors
 
           - name: Windows - Python 3.8 with all optional dependencies
             os: windows-latest
