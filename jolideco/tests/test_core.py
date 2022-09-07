@@ -5,8 +5,9 @@ from numpy.testing import assert_allclose
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponent, FluxComponents
-from jolideco.priors import InverseGammaPrior, UniformPrior
+from jolideco.priors import GMMPatchPrior, InverseGammaPrior, UniformPrior
 from jolideco.priors.core import ExponentialPrior
+from jolideco.utils.testing import requires_gpu
 
 
 @pytest.fixture(scope="session")
@@ -161,6 +162,37 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     components = FluxComponents()
     components["flux-1"] = FluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=ExponentialPrior(alpha=1)
+    )
+
+    result = deco.run(
+        datasets=datasets_disk[:2],
+        components=components,
+        datasets_validation=datasets_disk[2:],
+    )
+
+    assert result.flux_upsampled_total.shape == (32, 32)
+    assert_allclose(result.flux_total[12, 12], 1.3698, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.320872, rtol=1e-3)
+
+    trace_loss = result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 4.141166, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.846206, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], -0.4010013, rtol=1e-3)
+    assert_allclose(trace_loss["datasets-validation-total"], 1.881669, rtol=1e-3)
+
+
+@requires_gpu()
+def test_map_deconvolver_gpu():
+    deco = MAPDeconvolver(
+        n_epochs=100, learning_rate=0.1, stop_early_n_average=10, device="gpu"
+    )
+
+    random_state = np.random.RandomState(642020)
+    flux_init = random_state.gamma(20, size=(32, 32))
+
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_numpy(
+        flux=flux_init, upsampling_factor=1, prior=GMMPatchPrior()
     )
 
     result = deco.run(
