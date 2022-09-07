@@ -183,9 +183,7 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
 
 @requires_gpu()
 def test_map_deconvolver_gpu():
-    deco = MAPDeconvolver(
-        n_epochs=100, learning_rate=0.1, stop_early_n_average=10, device="gpu"
-    )
+    deco = MAPDeconvolver(n_epochs=100, learning_rate=0.1, device="cuda")
 
     random_state = np.random.RandomState(642020)
     flux_init = random_state.gamma(20, size=(32, 32))

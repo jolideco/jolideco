@@ -5,6 +5,7 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 
 from .models import NPredModels
+from .utils.torch import TORCH_DEFAULT_DEVICE
 
 __all__ = ["PoissonLoss", "PriorLoss", "TotalLoss"]
 
@@ -56,7 +57,7 @@ class PoissonLoss:
             yield data
 
     @classmethod
-    def from_datasets(cls, datasets, components):
+    def from_datasets(cls, datasets, components, device=TORCH_DEFAULT_DEVICE):
         """Create loss function from datasets
 
         Parameters
@@ -77,9 +78,11 @@ class PoissonLoss:
             npred_models = NPredModels.from_dataset_numpy(
                 dataset=dataset, components=components
             )
-            npred_models_all.append(npred_models)
+            npred_models_all.append(npred_models.to(device))
 
-            counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis])
+            counts = torch.from_numpy(dataset["counts"][np.newaxis, np.newaxis]).to(
+                device
+            )
             counts_all.append(counts)
 
         return cls(counts_all=counts_all, npred_models_all=npred_models_all)

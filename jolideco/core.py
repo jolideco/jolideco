@@ -114,8 +114,9 @@ class MAPDeconvolver:
             components = {self._default_flux_component: components}
 
         components = FluxComponents(components)
-
         components_init = copy.deepcopy(components)
+
+        components = components.to(self.device)
 
         parameters = components.parameters()
 
