@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-from ruamel.yaml import YAML
-
 log = logging.getLogger(__name__)
 
 __all__ = ["to_yaml_str"]
@@ -21,6 +19,8 @@ def to_yaml_str(data):
     yaml_str : str
         YAML string
     """
+    from ruamel.yaml import YAML
+
     yaml = YAML(typ=["rt", "string"])
     yaml.default_flow_style = False
     return yaml.dump_to_string(data)
@@ -39,6 +39,8 @@ def from_yaml_str(yaml_str):
     data : dict
         Data dictionary
     """
+    from ruamel.yaml import YAML
+
     yaml = YAML()
     yaml.allow_duplicate_keys = True
     return yaml.load(yaml_str)
