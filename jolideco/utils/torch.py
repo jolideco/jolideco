@@ -48,8 +48,8 @@ def cycle_spin(image, patch_shape, generator):
     """
     x_max, y_max = patch_shape
     x_width, y_width = x_max // 4, y_max // 4
-    shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator)
-    shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator)
+    shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator, device=image.device)
+    shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator, device=image.device)
     shifts = (int(shift_x), int(shift_y))
 
     dims = (image.ndim - 2, image.ndim - 1)
@@ -71,9 +71,10 @@ def cycle_spin_subpixel(image, generator):
     image: `~pytorch.Tensor`
         Shifted tensor
     """
-    y, x = torch.meshgrid(torch.arange(-1, 2), torch.arange(-1, 2), indexing="ij")
-    x_0 = torch.rand(1, generator=generator) - 0.5
-    y_0 = torch.rand(1, generator=generator) - 0.5
+    grid = torch.arange(-1, 2, device=image.device)
+    y, x = torch.meshgrid(grid, grid, indexing="ij")
+    x_0 = torch.rand(1, generator=generator, device=image.device) - 0.5
+    y_0 = torch.rand(1, generator=generator, device=image.device) - 0.5
     kernel = grid_weights(x, y, x_0, y_0)
     kernel = kernel.reshape((1, 1, 3, 3))
     return F.conv2d(image, kernel, padding="same")

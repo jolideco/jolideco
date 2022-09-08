@@ -126,7 +126,7 @@ class MAPDeconvolver:
         )
 
         poisson_loss = PoissonLoss.from_datasets(
-            datasets=datasets, components=components
+            datasets=datasets, components=components, device=self.device
         )
 
         if datasets_validation:
