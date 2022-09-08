@@ -103,8 +103,9 @@ class ASinhImageNorm(ImageNorm):
     """Inverse hyperbolic sine image norm"""
 
     def __init__(self, alpha, beta):
-        self.alpha = torch.Tensor([alpha])
-        self.beta = torch.Tensor([beta])
+        super().__init__()
+        self.register_buffer("alpha", torch.Tensor([alpha]))
+        self.register_buffer("beta", torch.Tensor([beta]))
 
     def __call__(self, image):
         top = torch.asinh(image / self.alpha)
@@ -142,7 +143,8 @@ class FixedMaxImageNorm(ImageNorm):
     """Fixed max image normalisation"""
 
     def __init__(self, max_value):
-        self.max_value = max_value
+        super().__init__()
+        self.register_buffer("max_value", torch.Tensor([max_value]))
 
     def __call__(self, image):
         return torch.clip(image / self.max_value, min=0, max=1)
@@ -162,6 +164,7 @@ class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
 
     def __init__(self, alpha=1):
+        super().__init__()
         self.alpha = torch.Tensor([alpha])
 
     def __call__(self, image):
@@ -178,7 +181,8 @@ class ATanImageNorm(ImageNorm):
     """ATan image normalisation"""
 
     def __init__(self, alpha=1):
-        self.alpha = torch.Tensor([alpha])
+        super().__init__()
+        self.register_buffer("alpha", torch.Tensor([alpha]))
 
     def __call__(self, image):
         return 2 * torch.atan(image / self.alpha) / torch.pi
@@ -198,6 +202,7 @@ class InverseCDFImageNorm(ImageNorm):
     """Inverse CDF image normalisation"""
 
     def __init__(self, x, cdf):
+        super().__init__()
         if not x.shape == cdf.shape:
             raise ValueError(
                 f"'x' and 'cdf' must have same shape, got {x.shape} and {cdf.shape}"
