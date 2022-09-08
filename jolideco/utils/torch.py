@@ -48,8 +48,12 @@ def cycle_spin(image, patch_shape, generator):
     """
     x_max, y_max = patch_shape
     x_width, y_width = x_max // 4, y_max // 4
-    shift_x = torch.randint(-x_width, x_width + 1, (1,), generator=generator, device=image.device)
-    shift_y = torch.randint(-y_width, y_width + 1, (1,), generator=generator, device=image.device)
+    shift_x = torch.randint(
+        -x_width, x_width + 1, (1,), generator=generator, device=image.device
+    )
+    shift_y = torch.randint(
+        -y_width, y_width + 1, (1,), generator=generator, device=image.device
+    )
     shifts = (int(shift_x), int(shift_y))
 
     dims = (image.ndim - 2, image.ndim - 1)

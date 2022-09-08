@@ -672,7 +672,7 @@ class NPredModels(nn.ModuleDict):
         """
         values = list(self.values())
 
-        npred_total = torch.zeros(values[0].shape)
+        npred_total = torch.zeros(values[0].shape, device=fluxes[0].device)
 
         for npred_model, flux in zip(values, fluxes):
             npred = npred_model(flux=flux)

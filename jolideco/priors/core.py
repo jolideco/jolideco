@@ -4,7 +4,11 @@ from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
 
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.torch import convolve_fft_torch, cycle_spin_subpixel
+from jolideco.utils.torch import (
+    TORCH_DEFAULT_DEVICE,
+    convolve_fft_torch,
+    cycle_spin_subpixel,
+)
 
 __all__ = [
     "Prior",
@@ -28,14 +32,16 @@ class Prior(nn.Module):
 
         if generator:
             state["generator"] = generator.get_state()
+            state["generator-device"] = generator.device
 
         return state
 
     def __setstate__(self, state):
         generator_state = state.pop("generator", None)
+        generator_device = state.pop("generator-device", TORCH_DEFAULT_DEVICE)
 
         if generator_state is not None:
-            generator = torch.Generator()
+            generator = torch.Generator(device=generator_device)
             generator.set_state(generator_state)
             state["generator"] = generator
 
@@ -178,7 +184,7 @@ class InverseGammaPrior(Prior):
         self.cycle_spin_subpix = cycle_spin_subpix
 
         if generator is None:
-            generator = torch.Generator()
+            generator = torch.Generator(TORCH_DEFAULT_DEVICE)
 
         self.generator = generator
 
@@ -281,7 +287,7 @@ class ExponentialPrior(Prior):
         self.cycle_spin_subpix = cycle_spin_subpix
 
         if generator is None:
-            generator = torch.Generator()
+            generator = torch.Generator(TORCH_DEFAULT_DEVICE)
 
         self.generator = generator
 

@@ -10,6 +10,7 @@ from jolideco.priors.patches.gmm import GaussianMixtureModel
 from jolideco.utils.norms import ImageNorm, MaxImageNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
+    TORCH_DEFAULT_DEVICE,
     convolve_fft_torch,
     cycle_spin,
     cycle_spin_subpixel,
@@ -67,7 +68,7 @@ class GMMPatchPrior(Prior):
         self.cycle_spin = cycle_spin
 
         if generator is None:
-            generator = torch.Generator()
+            generator = torch.Generator(TORCH_DEFAULT_DEVICE)
 
         self.generator = generator
 
