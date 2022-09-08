@@ -181,6 +181,32 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     assert_allclose(trace_loss["datasets-validation-total"], 1.881669, rtol=1e-3)
 
 
+def test_map_deconvolver_gmm(datasets_disk):
+    deco = MAPDeconvolver(n_epochs=10, learning_rate=0.1)
+
+    random_state = np.random.RandomState(642020)
+    flux_init = random_state.gamma(20, size=(32, 32))
+
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_numpy(
+        flux=flux_init, upsampling_factor=2, prior=GMMPatchPrior()
+    )
+
+    result = deco.run(
+        datasets=datasets_disk,
+        components=components,
+    )
+
+    assert result.flux_upsampled_total.shape == (64, 64)
+    assert_allclose(result.flux_total[12, 12], 11.981349, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 10.000738, rtol=1e-3)
+
+    trace_loss = result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 19.691189, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 7.064192, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
+    
+
 @requires_gpu()
 def test_map_deconvolver_gpu():
     deco = MAPDeconvolver(n_epochs=100, learning_rate=0.1, device="cuda")
