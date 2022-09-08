@@ -28,7 +28,7 @@ def test_gmm_torch_basic():
 
     assert gmm_torch.patch_shape == (3, 3)
     result_ref = gmm._estimate_log_prob(X=x)
-    result = gmm_torch.estimate_log_prob_torch(x=torch.from_numpy(x))
+    result = gmm_torch.estimate_log_prob(x=torch.from_numpy(x))
     result = result.detach().numpy()
     assert_allclose(result_ref, result)
 
@@ -39,6 +39,8 @@ def test_gmm_registry(name):
 
     x = torch.ones((2, 64))
 
-    values = gmm.estimate_log_prob_torch(x=x)
+    values = gmm.estimate_log_prob(x=x)
 
     assert values.shape == (2, gmm.n_components)
+    assert name in str(gmm)
+    

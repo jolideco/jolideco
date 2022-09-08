@@ -10,7 +10,6 @@ from astropy.utils import lazyproperty
 
 from jolideco.utils.misc import format_class_str
 from jolideco.utils.numpy import get_pixel_weights
-from jolideco.utils.torch import TORCH_DEFAULT_DEVICE
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
 
@@ -26,46 +25,43 @@ class GaussianMixtureModel(nn.Module):
         Covariances
     weights : `~numpy.ndarray`
         Weights
-    device : `~pytorch.Device`
-        Pytorch device
     stride : int
         Stride of the patch. Will be used to compute a correction factor for overlapping patches.
         Overlapping pixels are down-weighted in the log-likelihood computation.
     """
 
     def __init__(
-        self, means, covariances, weights, device=TORCH_DEFAULT_DEVICE, stride=None
+        self, means, covariances, weights, stride=None
     ):
         super().__init__()
 
-        self.means = means
-        self.covariances = covariances
-        self.weights = weights
-        self.device = device
+        self.means_numpy = means
+        self.covariances_numpy = covariances
+        self.weights_numpy = weights
         self.stride = stride
 
     @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
-        shape_mean = self.means.shape
+        shape_mean = self.means_numpy.shape
         npix = int((shape_mean[-1]) ** 0.5)
         return npix, npix
 
     @lazyproperty
-    def means_torch(self):
+    def means(self):
         """Number of features"""
-        return torch.from_numpy(self.means.astype(np.float32)).to(self.device)
+        return torch.from_numpy(self.means_numpy.astype(np.float32))
 
     @lazyproperty
     def n_features(self):
         """Number of features"""
-        _, n_features, _ = self.covariances.shape
+        _, n_features, _ = self.covariances_numpy.shape
         return n_features
 
     @lazyproperty
     def n_components(self):
         """Number of features"""
-        n_components, _, _ = self.covariances.shape
+        n_components, _, _ = self.covariances_numpy.shape
         return n_components
 
     @lazyproperty
@@ -76,7 +72,7 @@ class GaussianMixtureModel(nn.Module):
         eigen_images = []
 
         for idx in range(self.n_components):
-            w, v = linalg.eigh(self.covariances[idx])
+            w, v = linalg.eigh(self.covariances_numpy[idx])
             data = (v @ w).reshape(self.patch_shape)
             eigen_images.append(data)
 
@@ -95,14 +91,14 @@ class GaussianMixtureModel(nn.Module):
             ax.set_title(f"{idx}")
 
     @lazyproperty
-    def precisions_cholesky(self):
+    def precisions_cholesky_numpy(self):
         """Cholesky decomposition of the precision matrix"""
         from scipy import linalg
 
         shape = (self.n_components, self.n_features, self.n_features)
         precisions_chol = np.empty(shape)
 
-        for k, covariance in enumerate(self.covariances):
+        for k, covariance in enumerate(self.covariances_numpy):
             try:
                 cov_chol = linalg.cholesky(covariance, lower=True)
             except linalg.LinAlgError:
@@ -115,18 +111,16 @@ class GaussianMixtureModel(nn.Module):
         return precisions_chol
 
     @lazyproperty
-    def precisions_cholesky_torch(self):
-        """Precisison matrix pytoch"""
-        return torch.from_numpy(self.precisions_cholesky.astype(np.float32)).to(
-            self.device
-        )
+    def precisions_cholesky(self):
+        """Precisison matrix pytorch"""
+        return torch.from_numpy(self.precisions_cholesky_numpy.astype(np.float32))
 
     @lazyproperty
     def means_precisions_cholesky_torch(self):
         """Precision matrices pytorch"""
         means_precisions = []
 
-        iterate = zip(self.means_torch, self.precisions_cholesky_torch)
+        iterate = zip(self.means, self.precisions_cholesky)
 
         for mu, prec_chol in iterate:
             y = torch.matmul(mu, prec_chol)
@@ -135,42 +129,40 @@ class GaussianMixtureModel(nn.Module):
         return means_precisions
 
     @lazyproperty
-    def log_det_cholesky(self):
+    def log_det_cholesky_numpy(self):
         """Compute the log-det of the cholesky decomposition of matrices"""
-        reshaped = self.precisions_cholesky.reshape(self.n_components, -1)
+        reshaped = self.precisions_cholesky_numpy.reshape(self.n_components, -1)
         reshaped = reshaped[:, :: self.n_features + 1]
         return np.sum(np.log(reshaped), axis=1)
 
     @lazyproperty
-    def log_det_cholesky_torch(self):
+    def log_det_cholesky(self):
         """Precision matrices pytorch"""
-        return torch.from_numpy(self.log_det_cholesky.astype(np.float32)).to(
-            self.device
-        )
+        return torch.from_numpy(self.log_det_cholesky_numpy.astype(np.float32))
 
-    def estimate_log_prob(self, x):
+    def estimate_log_prob_numpy(self, x):
         """Compute log likelihood for given feature vector"""
         n_samples, n_features = x.shape
 
         log_prob = np.empty((n_samples, self.n_components))
 
-        for k, (mu, prec_chol) in enumerate(zip(self.means, self.precisions_cholesky)):
+        for k, (mu, prec_chol) in enumerate(zip(self.means_numpy, self.precisions_cholesky_numpy)):
             y = np.dot(x, prec_chol) - np.dot(mu, prec_chol)
-            log_prob[:, k] = np.sum(np.square(y) * self.pixel_weights, axis=1)
+            log_prob[:, k] = np.sum(np.square(y) * self.pixel_weights_numpy, axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
         return (
-            -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky
+            -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky_numpy
         )
 
     @lazyproperty
-    def pixel_weights_torch(self):
+    def pixel_weights(self):
         """Pixel weights"""
-        return torch.from_numpy(self.pixel_weights)
+        return torch.from_numpy(self.pixel_weights_numpy)
 
     @lazyproperty
-    def pixel_weights(self):
+    def pixel_weights_numpy(self):
         """Pixel weights"""
         if self.stride is None:
             weights = np.ones(self.patch_shape)
@@ -180,28 +172,28 @@ class GaussianMixtureModel(nn.Module):
             )
         return weights.reshape((1, -1))
 
-    def estimate_log_prob_torch(self, x):
+    def estimate_log_prob(self, x):
         """Compute log likelihood for given feature vector"""
         n_samples, n_features = x.shape
 
-        log_prob = torch.empty((n_samples, self.n_components)).to(self.device)
+        log_prob = torch.empty((n_samples, self.n_components))
 
         iterate = zip(
-            self.means_precisions_cholesky_torch, self.precisions_cholesky_torch
+            self.means_precisions_cholesky_torch, self.precisions_cholesky
         )
 
         for k, (mu_prec, prec_chol) in enumerate(iterate):
             y = torch.matmul(x, prec_chol) - mu_prec
             log_prob[:, k] = torch.sum(
-                torch.square(y) * self.pixel_weights_torch, axis=1
+                torch.square(y) * self.pixel_weights, axis=1
             )
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
-        two_pi = torch.tensor(2 * np.pi).to(self.device)
+        two_pi = torch.tensor(2 * np.pi)
         return (
             -0.5 * (n_features * torch.log(two_pi) + log_prob)
-            + self.log_det_cholesky_torch
+            + self.log_det_cholesky
         )
 
     @classmethod
@@ -290,7 +282,7 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def covariance_det(self):
         """Covariance determinant"""
-        covar = self.covariances[0]
+        covar = self.covariances_numpy[0]
         return np.linalg.det(covar)
 
     def kl_divergence(self, other):
@@ -313,20 +305,20 @@ class GaussianMixtureModel(nn.Module):
                 "KL divergence can onlyy be computed for single component GMM"
             )
 
-        k = self.means.shape[1]
+        k = self.means_numpy.shape[1]
 
-        diff = self.means[0] - other.means[0]
+        diff = self.means_numpy[0] - other.means[0]
         term_mean = diff.T @ other.precisons_cholesky[0] @ diff
-        term_trace = np.trace(other.precisions_cholesky[0] * self.covariances[0])
+        term_trace = np.trace(other.precisions_cholesky[0] * self.covariances_numpy[0])
         term_log = np.log(other.covariance_det / self.covariance_det)
         return 0.5 * (term_log - k + term_mean + term_trace)
 
     def is_equal(self, other):
         # TODO: improve check here?
-        if not self.covariances.shape == other.covariances.shape:
+        if not self.covariances_numpy.shape == other.covariances_numpy.shape:
             return False
         else:
-            return np.allclose(self.covariances, other.covariances)
+            return np.allclose(self.covariances_numpy, other.covariances_numpy)
 
     def symmetric_kl_divergence(self, other):
         """Symmetric KL divergence"""

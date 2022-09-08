@@ -160,7 +160,7 @@ class GMMPatchPrior(Prior):
     @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
-        shape_mean = self.gmm.means.shape
+        shape_mean = self.gmm.means_numpy.shape
         npix = int(sqrt(shape_mean[-1]))
         return npix, npix
 
@@ -192,7 +192,7 @@ class GMMPatchPrior(Prior):
 
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
-        loglike = self.gmm.estimate_log_prob_torch(patches)
+        loglike = self.gmm.estimate_log_prob(patches)
         return loglike, mean, shifts
 
     @lazyproperty
