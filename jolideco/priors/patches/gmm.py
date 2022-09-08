@@ -19,11 +19,11 @@ class GaussianMixtureModel(nn.Module):
 
     Attributes
     ----------
-    means : `~numpy.ndarray`
+    means : `~torch.Tensor`
         Means
-    covariances : `~numpy.ndarray`
+    covariances : `~torch.Tensor`
         Covariances
-    weights : `~numpy.ndarray`
+    weights : `~torch.Tensor`
         Weights
     stride : int
         Stride of the patch. Will be used to compute a correction factor for overlapping patches.
@@ -32,34 +32,71 @@ class GaussianMixtureModel(nn.Module):
 
     def __init__(self, means, covariances, weights, stride=None):
         super().__init__()
-
-        self.means_numpy = means
-        self.covariances_numpy = covariances
-        self.weights_numpy = weights
+        self.register_buffer("means", means)
+        self.register_buffer("covariances", covariances)
+        self.register_buffer("weights", weights)
         self.stride = stride
+
+    @lazyproperty
+    def means_numpy(self):
+        """Means (~numpy.ndarray)"""
+        return self.means.detach().cpu().numpy()
+
+    @lazyproperty
+    def covariances_numpy(self):
+        """Covariances (~numpy.ndarray)"""
+        return self.covariances.detach().cpu().numpy()
+
+    @lazyproperty
+    def weights_numpy(self):
+        """Weights (~numpy.ndarray)"""
+        return self.weights.detach().cpu().numpy()
+
+    @classmethod
+    def from_numpy(cls, means, covariances, weights, stride=None):
+        """Gaussian mixture model
+
+        Parameters
+        ----------
+        means : `~numpy.ndarray`
+            Means
+        covariances : `~numpy.ndarray`
+            Covariances
+        weights : `~numpy.ndarray`
+            Weights
+        stride : int
+            Stride of the patch. Will be used to compute a correction factor for overlapping patches.
+            Overlapping pixels are down-weighted in the log-likelihood computation.
+
+        Returns
+        -------
+        gmm : `GaussianMixtureModel`
+            Gaussian mixture model.
+        """
+        return cls(
+            means=torch.from_numpy(means.astype(np.float64)),
+            covariances=torch.from_numpy(covariances.astype(np.float64)),
+            weights=torch.from_numpy(weights.astype(np.float64)),
+            stride=stride,
+        )
 
     @lazyproperty
     def patch_shape(self):
         """Patch shape (tuple)"""
-        shape_mean = self.means_numpy.shape
+        shape_mean = self.means.shape
         npix = int((shape_mean[-1]) ** 0.5)
         return npix, npix
 
     @lazyproperty
-    def means(self):
-        """Number of features"""
-        return torch.from_numpy(self.means_numpy.astype(np.float32))
-
-    @lazyproperty
     def n_features(self):
         """Number of features"""
-        _, n_features, _ = self.covariances_numpy.shape
+        _, n_features, _ = self.covariances.shape
         return n_features
 
     @lazyproperty
     def n_components(self):
         """Number of features"""
-        n_components, _, _ = self.covariances_numpy.shape
+        n_components, _, _ = self.covariances.shape
         return n_components
 
     @lazyproperty
@@ -118,7 +155,7 @@ class GaussianMixtureModel(nn.Module):
         """Precision matrices pytorch"""
         means_precisions = []
 
-        iterate = zip(self.means, self.precisions_cholesky)
+        iterate = zip(self.means.to(torch.float32), self.precisions_cholesky)
 
         for mu, prec_chol in iterate:
             y = torch.matmul(mu, prec_chol)
@@ -195,7 +232,7 @@ class GaussianMixtureModel(nn.Module):
     @classmethod
     def from_sklearn_gmm(cls, gmm):
         """Create from sklearn GMM"""
-        return cls(
+        return cls.from_numpy(
             means=gmm.means_,
             covariances=gmm.covariances_,
             weights=gmm.weights_,
@@ -273,7 +310,9 @@ class GaussianMixtureModel(nn.Module):
 
         npix = int((means.shape[-1]) ** 0.5)
         kwargs.setdefault("stride", npix // 2)
-        return cls(means=means, covariances=covariances, weights=weights, **kwargs)
+        return cls.from_numpy(
+            means=means, covariances=covariances, weights=weights, **kwargs
+        )
 
     @lazyproperty
     def covariance_det(self):
@@ -311,7 +350,7 @@ class GaussianMixtureModel(nn.Module):
 
     def is_equal(self, other):
         # TODO: improve check here?
-        if not self.covariances_numpy.shape == other.covariances_numpy.shape:
+        if not self.covariances.shape == other.covariances.shape:
             return False
         else:
             return np.allclose(self.covariances_numpy, other.covariances_numpy)
