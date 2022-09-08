@@ -17,6 +17,7 @@ dependencies:
   - python=3.9
   - pip
   - asdf
+  - asdf-astropy
   - astropy
   - pytorch
   - scikit-learn
@@ -24,6 +25,7 @@ dependencies:
   - numpy
   - matplotlib
   - tox
+  - tqdm
   - pytest
   - pytest-astropy
   - pytest-cov
@@ -35,6 +37,7 @@ dependencies:
   - flake8
   - isort
   - ruamel.yaml
+  - ruamel.yaml.string
   - sphinx
   - sphinx-astropy
   - sphinx-click
