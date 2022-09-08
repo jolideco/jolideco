@@ -552,10 +552,10 @@ class NPredModel(nn.Module):
         self, background, exposure, psf=None, rmf=None, upsampling_factor=None
     ):
         super().__init__()
-        self.background = background
-        self.exposure = exposure
-        self.psf = psf
-        self.rmf = rmf
+        self.register_buffer("background", background)
+        self.register_buffer("exposure", exposure)
+        self.register_buffer("psf", psf)
+        self.register_buffer("rmf", rmf)
         self.upsampling_factor = upsampling_factor
 
     @property

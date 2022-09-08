@@ -38,7 +38,6 @@ class GaussianMixtureModel(nn.Module):
     ):
         super().__init__()
 
-        # TODO: assert shapes
         self.means = means
         self.covariances = covariances
         self.weights = weights

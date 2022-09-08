@@ -14,7 +14,7 @@ __all__ = [
 ]
 
 
-class ImageNorm(abc.ABC):
+class ImageNorm(torch.nn.Module):
     """Image normalisation"""
 
     def to_dict(self):
