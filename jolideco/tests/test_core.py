@@ -205,7 +205,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(trace_loss["total"], 19.691189, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 7.064192, rtol=1e-3)
     assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
-    
+
 
 @requires_gpu()
 def test_map_deconvolver_gpu():

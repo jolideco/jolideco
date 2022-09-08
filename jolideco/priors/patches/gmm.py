@@ -30,9 +30,7 @@ class GaussianMixtureModel(nn.Module):
         Overlapping pixels are down-weighted in the log-likelihood computation.
     """
 
-    def __init__(
-        self, means, covariances, weights, stride=None
-    ):
+    def __init__(self, means, covariances, weights, stride=None):
         super().__init__()
 
         self.means_numpy = means
@@ -116,7 +114,7 @@ class GaussianMixtureModel(nn.Module):
         return torch.from_numpy(self.precisions_cholesky_numpy.astype(np.float32))
 
     @lazyproperty
-    def means_precisions_cholesky_torch(self):
+    def means_precisions_cholesky(self):
         """Precision matrices pytorch"""
         means_precisions = []
 
@@ -146,14 +144,17 @@ class GaussianMixtureModel(nn.Module):
 
         log_prob = np.empty((n_samples, self.n_components))
 
-        for k, (mu, prec_chol) in enumerate(zip(self.means_numpy, self.precisions_cholesky_numpy)):
+        for k, (mu, prec_chol) in enumerate(
+            zip(self.means_numpy, self.precisions_cholesky_numpy)
+        ):
             y = np.dot(x, prec_chol) - np.dot(mu, prec_chol)
             log_prob[:, k] = np.sum(np.square(y) * self.pixel_weights_numpy, axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
         return (
-            -0.5 * (n_features * np.log(2 * np.pi) + log_prob) + self.log_det_cholesky_numpy
+            -0.5 * (n_features * np.log(2 * np.pi) + log_prob)
+            + self.log_det_cholesky_numpy
         )
 
     @lazyproperty
@@ -178,22 +179,17 @@ class GaussianMixtureModel(nn.Module):
 
         log_prob = torch.empty((n_samples, self.n_components))
 
-        iterate = zip(
-            self.means_precisions_cholesky_torch, self.precisions_cholesky
-        )
+        iterate = zip(self.means_precisions_cholesky, self.precisions_cholesky)
 
         for k, (mu_prec, prec_chol) in enumerate(iterate):
             y = torch.matmul(x, prec_chol) - mu_prec
-            log_prob[:, k] = torch.sum(
-                torch.square(y) * self.pixel_weights, axis=1
-            )
+            log_prob[:, k] = torch.sum(torch.square(y) * self.pixel_weights, axis=1)
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
         two_pi = torch.tensor(2 * np.pi)
         return (
-            -0.5 * (n_features * torch.log(two_pi) + log_prob)
-            + self.log_det_cholesky
+            -0.5 * (n_features * torch.log(two_pi) + log_prob) + self.log_det_cholesky
         )
 
     @classmethod

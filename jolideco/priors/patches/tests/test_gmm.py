@@ -43,4 +43,3 @@ def test_gmm_registry(name):
 
     assert values.shape == (2, gmm.n_components)
     assert name in str(gmm)
-    

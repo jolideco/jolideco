@@ -172,8 +172,8 @@ class InverseGammaPrior(Prior):
 
     def __init__(self, alpha=10, beta=3 / 2, cycle_spin_subpix=False, generator=None):
         super().__init__()
-        self.alpha = torch.tensor([alpha])
-        self.beta = torch.tensor([beta])
+        self.register_buffer("alpha", torch.Tensor([alpha]))
+        self.register_buffer("beta", torch.Tensor([beta]))
 
         self.cycle_spin_subpix = cycle_spin_subpix
 
@@ -276,7 +276,7 @@ class ExponentialPrior(Prior):
 
     def __init__(self, alpha=10, cycle_spin_subpix=False, generator=None):
         super().__init__()
-        self.alpha = torch.tensor([alpha])
+        self.register_buffer("alpha", torch.Tensor([alpha]))
 
         self.cycle_spin_subpix = cycle_spin_subpix
 
