@@ -65,8 +65,9 @@ class GaussianMixtureModel(nn.Module):
         weights : `~numpy.ndarray`
             Weights
         stride : int
-            Stride of the patch. Will be used to compute a correction factor for overlapping patches.
-            Overlapping pixels are down-weighted in the log-likelihood computation.
+            Stride of the patch. Will be used to compute a correction factor for
+            overlapping patches. Overlapping pixels are down-weighted in the
+            log-likelihood computation.
 
         Returns
         -------
