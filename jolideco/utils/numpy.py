@@ -5,6 +5,27 @@ import numpy as np
 __all__ = ["view_as_overlapping_patches"]
 
 
+def compute_precision_cholesky(covariances):
+    """Compute precision matrices"""
+    from scipy import linalg
+
+    shape = covariances.shape
+
+    precisions_chol = np.empty(shape)
+
+    for k, covariance in enumerate(covariances):
+        try:
+            cov_chol = linalg.cholesky(covariance, lower=True)
+        except linalg.LinAlgError:
+            raise ValueError(f"Cholesky decomposition failed for {covariance}")
+
+        precisions_chol[k] = linalg.solve_triangular(
+            cov_chol, np.eye(shape[1]), lower=True
+        ).T
+
+    return precisions_chol
+
+
 def evaluate_trapez(x, width, slope):
     """One dimensional Trapezoid model function"""
     # Compute the four points where the trapezoid changes slope

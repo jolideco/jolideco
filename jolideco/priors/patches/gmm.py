@@ -9,7 +9,7 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.numpy import get_pixel_weights
+from jolideco.utils.numpy import compute_precision_cholesky, get_pixel_weights
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
 
@@ -25,16 +25,19 @@ class GaussianMixtureModel(nn.Module):
         Covariances
     weights : `~torch.Tensor`
         Weights
+    precisions_cholesky : `~torch.Tensor`
+        Precision matrices
     stride : int
         Stride of the patch. Will be used to compute a correction factor for overlapping patches.
         Overlapping pixels are down-weighted in the log-likelihood computation.
     """
 
-    def __init__(self, means, covariances, weights, stride=None):
+    def __init__(self, means, covariances, weights, precisions_cholesky, stride=None):
         super().__init__()
         self.register_buffer("means", means)
         self.register_buffer("covariances", covariances)
         self.register_buffer("weights", weights)
+        self.register_buffer("precisions_cholesky", precisions_cholesky)
         self.stride = stride
 
     @lazyproperty
@@ -74,10 +77,15 @@ class GaussianMixtureModel(nn.Module):
         gmm : `GaussianMixtureModel`
             Gaussian mixture model.
         """
+        precisions_cholesky = compute_precision_cholesky(covariances=covariances)
+
         return cls(
-            means=torch.from_numpy(means.astype(np.float64)),
-            covariances=torch.from_numpy(covariances.astype(np.float64)),
-            weights=torch.from_numpy(weights.astype(np.float64)),
+            means=torch.from_numpy(means.astype(np.float32)),
+            covariances=torch.from_numpy(covariances.astype(np.float32)),
+            weights=torch.from_numpy(weights.astype(np.float32)),
+            precisions_cholesky=torch.from_numpy(
+                precisions_cholesky.astype(np.float32)
+            ),
             stride=stride,
         )
 
@@ -127,36 +135,11 @@ class GaussianMixtureModel(nn.Module):
             ax.set_title(f"{idx}")
 
     @lazyproperty
-    def precisions_cholesky_numpy(self):
-        """Cholesky decomposition of the precision matrix"""
-        from scipy import linalg
-
-        shape = (self.n_components, self.n_features, self.n_features)
-        precisions_chol = np.empty(shape)
-
-        for k, covariance in enumerate(self.covariances_numpy):
-            try:
-                cov_chol = linalg.cholesky(covariance, lower=True)
-            except linalg.LinAlgError:
-                raise ValueError(f"Cholesky decomposition failed for {covariance}")
-
-            precisions_chol[k] = linalg.solve_triangular(
-                cov_chol, np.eye(self.n_features), lower=True
-            ).T
-
-        return precisions_chol
-
-    @lazyproperty
-    def precisions_cholesky(self):
-        """Precisison matrix pytorch"""
-        return torch.from_numpy(self.precisions_cholesky_numpy.astype(np.float32))
-
-    @lazyproperty
     def means_precisions_cholesky(self):
         """Precision matrices pytorch"""
         means_precisions = []
 
-        iterate = zip(self.means.to(torch.float32), self.precisions_cholesky)
+        iterate = zip(self.means, self.precisions_cholesky)
 
         for mu, prec_chol in iterate:
             y = torch.matmul(mu, prec_chol)
@@ -167,14 +150,14 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def log_det_cholesky_numpy(self):
         """Compute the log-det of the cholesky decomposition of matrices"""
-        reshaped = self.precisions_cholesky_numpy.reshape(self.n_components, -1)
-        reshaped = reshaped[:, :: self.n_features + 1]
-        return np.sum(np.log(reshaped), axis=1)
+        return self.log_det_cholesky.detach().cpu().numpy()
 
     @lazyproperty
     def log_det_cholesky(self):
         """Precision matrices pytorch"""
-        return torch.from_numpy(self.log_det_cholesky_numpy.astype(np.float32))
+        reshaped = self.precisions_cholesky.reshape(self.n_components, -1)
+        reshaped = reshaped[:, :: self.n_features + 1]
+        return torch.sum(torch.log(reshaped), axis=1)
 
     def estimate_log_prob_numpy(self, x):
         """Compute log likelihood for given feature vector"""
