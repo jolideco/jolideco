@@ -7,7 +7,7 @@ from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_p
 from jolideco.models import FluxComponent, FluxComponents
 from jolideco.priors import GMMPatchPrior, InverseGammaPrior, UniformPrior
 from jolideco.priors.core import ExponentialPrior
-from jolideco.utils.testing import requires_gpu
+from jolideco.utils.testing import requires_device
 
 
 @pytest.fixture(scope="session")
@@ -207,7 +207,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
 
 
-@requires_gpu()
+@requires_device("cuda")
 def test_map_deconvolver_gpu():
     deco = MAPDeconvolver(n_epochs=100, learning_rate=0.1, device="cuda")
 

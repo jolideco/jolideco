@@ -181,7 +181,9 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def pixel_weights(self):
         """Pixel weights"""
-        return torch.from_numpy(self.pixel_weights_numpy)
+        return torch.from_numpy(self.pixel_weights_numpy.astype(np.float32)).to(
+            self.means.device
+        )
 
     @lazyproperty
     def pixel_weights_numpy(self):
@@ -198,7 +200,7 @@ class GaussianMixtureModel(nn.Module):
         """Compute log likelihood for given feature vector"""
         n_samples, n_features = x.shape
 
-        log_prob = torch.empty((n_samples, self.n_components))
+        log_prob = torch.empty((n_samples, self.n_components), device=self.means.device)
 
         iterate = zip(self.means_precisions_cholesky, self.precisions_cholesky)
 

@@ -4,6 +4,7 @@ import torch
 from numpy.testing import assert_allclose
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import _compute_precision_cholesky
+from jolideco.utils.testing import requires_device
 
 from jolideco.priors.patches import GMM_REGISTRY, GaussianMixtureModel
 
@@ -43,3 +44,14 @@ def test_gmm_registry(name):
 
     assert values.shape == (2, gmm.n_components)
     assert name in str(gmm)
+
+
+@requires_device("mps")
+def test_gmm_mps():
+    gmm = GaussianMixtureModel.from_registry(name="zoran-weiss").to("mps")
+
+    x = torch.ones((2, 64)).to("mps")
+
+    values = gmm.estimate_log_prob(x=x)
+
+    assert values.shape == (2, gmm.n_components)
