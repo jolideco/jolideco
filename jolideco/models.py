@@ -254,12 +254,14 @@ class FluxComponent(nn.Module):
     @property
     def flux_upsampled_numpy(self):
         """Flux (`~numpy.ndarray`)"""
-        return self.flux_upsampled.detach().numpy()[0, 0]
+        flux_cpu = self.flux_upsampled.detach().cpu()
+        return flux_cpu.numpy()[0, 0]
 
     @property
     def flux_upsampled_error_numpy(self):
         """Flux error (`~numpy.ndarray`)"""
-        return self.flux_upsampled_error.detach().numpy()[0, 0]
+        flux_error_cpu = self.flux_upsampled_error.detach().cpu()
+        return flux_error_cpu.numpy()[0, 0]
 
     @classmethod
     @document_io_formats(registry=_registry_read)
