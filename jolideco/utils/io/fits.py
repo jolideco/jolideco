@@ -28,6 +28,7 @@ FITS_META = {
     "prior.gmm.stride": "PGMMSTRI",
     "prior.norm.type": "PNORMTYP",
     "prior.norm.max_value": "PNORMMAX",
+    "prior.device": "PDEVICE",
 }
 
 
