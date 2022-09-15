@@ -190,11 +190,19 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
 
     size = (len(idx),)
     jitter_x = torch.randint(
-        low=-overlap, high=overlap + 1, size=size, generator=generator, device=image.device
+        low=-overlap,
+        high=overlap + 1,
+        size=size,
+        generator=generator,
+        device=image.device,
     )
 
     jitter_y = torch.randint(
-        low=-overlap, high=overlap + 1, size=size, generator=generator, device=image.device
+        low=-overlap,
+        high=overlap + 1,
+        size=size,
+        generator=generator,
+        device=image.device,
     )
 
     idx += jitter_x

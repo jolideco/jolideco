@@ -42,6 +42,8 @@ class GMMPatchPrior(Prior):
         Image normalisation applied before the GMM patch prior.
     jitter : bool
         Jitter patch positions.
+    device : `~pytorch.Device`
+        Pytorch device
     """
 
     def __init__(
@@ -53,6 +55,7 @@ class GMMPatchPrior(Prior):
         generator=None,
         norm=None,
         jitter=False,
+        device=TORCH_DEFAULT_DEVICE,
     ):
         super().__init__()
 
@@ -68,7 +71,7 @@ class GMMPatchPrior(Prior):
         self.cycle_spin = cycle_spin
 
         if generator is None:
-            generator = torch.Generator(TORCH_DEFAULT_DEVICE)
+            generator = torch.Generator(device=device)
 
         self.generator = generator
 
@@ -78,6 +81,7 @@ class GMMPatchPrior(Prior):
         self.norm = norm
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
+        self.device = torch.device(device)
 
     def to_dict(self):
         """To dict"""
@@ -88,6 +92,7 @@ class GMMPatchPrior(Prior):
         data["jitter"] = bool(self.jitter)
         data["gmm"] = self.gmm.to_dict()
         data["norm"] = self.norm.to_dict()
+        data["device"] = str(self.device)
         return data
 
     @classmethod
