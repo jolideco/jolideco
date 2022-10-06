@@ -1,4 +1,5 @@
 from math import sqrt
+import logging
 
 import numpy as np
 import torch
@@ -21,6 +22,8 @@ from jolideco.utils.torch import (
 from ..core import Prior
 
 __all__ = ["GMMPatchPrior", "MultiScalePrior"]
+
+log = logging.getLogger(__name__)
 
 
 class GMMPatchPrior(Prior):
@@ -71,7 +74,13 @@ class GMMPatchPrior(Prior):
         self.cycle_spin = cycle_spin
 
         if generator is None:
-            generator = torch.Generator(device=device)
+            try:
+                generator = torch.Generator(device=device)
+            except RuntimeError:
+                log.warning(
+                    f"Device {device} not available, falling back to {TORCH_DEFAULT_DEVICE}"
+                )
+                generator = torch.Generator(device=TORCH_DEFAULT_DEVICE)
 
         self.generator = generator
 
