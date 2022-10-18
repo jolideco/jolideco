@@ -212,6 +212,9 @@ def view_as_random_overlapping_patches_torch(image, shape, stride, generator):
 
     patches = view_as_windows_torch(image=image, shape=shape, stride=1)
 
+    idx = torch.clip(idx, 0, patches.shape[-1])
+    idy = torch.clip(idy, 0, patches.shape[-2])
+
     patches = patches[:, :, idy, idx]
     size = np.multiply(*shape)
     n_patches = np.multiply(*idx.shape)
