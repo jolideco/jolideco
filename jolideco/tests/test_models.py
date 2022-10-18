@@ -1,9 +1,8 @@
-import numpy as np
 import pytest
-import torch
-from astropy.convolution import Gaussian2DKernel
+import numpy as np
 from numpy.testing import assert_allclose
-
+from astropy.convolution import Gaussian2DKernel
+import torch
 from jolideco.models import FluxComponent, FluxComponents, NPredModel
 from jolideco.priors import PRIOR_REGISTRY, UniformPrior
 

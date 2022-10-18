@@ -1,13 +1,11 @@
 import copy
 import logging
-
-import matplotlib.pyplot as plt
 import numpy as np
-import torch
 from astropy.table import Table
 from astropy.utils import lazyproperty
+import matplotlib.pyplot as plt
+import torch
 from tqdm.auto import tqdm
-
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
 from .utils.io import (
@@ -76,7 +74,7 @@ class MAPDeconvolver:
                 f"Device {device} not available, falling back to {TORCH_DEFAULT_DEVICE}"
             )
             device = TORCH_DEFAULT_DEVICE
-        
+
         self.device = torch.device(device)
 
     def to_dict(self):

@@ -1,9 +1,8 @@
 import numpy as np
-import torch
-import torch.nn as nn
 from astropy.table import Table
 from astropy.utils import lazyproperty
-
+import torch
+import torch.nn as nn
 from .models import NPredModels
 from .utils.torch import TORCH_DEFAULT_DEVICE
 

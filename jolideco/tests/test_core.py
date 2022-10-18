@@ -1,7 +1,6 @@
-import numpy as np
 import pytest
+import numpy as np
 from numpy.testing import assert_allclose
-
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponent, FluxComponents

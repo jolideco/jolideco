@@ -1,7 +1,5 @@
 import abc
-
 import torch
-
 from .torch import interp1d_torch
 
 __all__ = [

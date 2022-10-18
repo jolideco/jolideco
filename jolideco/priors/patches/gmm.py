@@ -1,13 +1,11 @@
 import os
 from pathlib import Path
-
-import matplotlib.pyplot as plt
 import numpy as np
-import torch
-import torch.nn as nn
 from astropy.table import Table
 from astropy.utils import lazyproperty
-
+import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
 from jolideco.utils.misc import format_class_str
 from jolideco.utils.numpy import compute_precision_cholesky, get_pixel_weights
 

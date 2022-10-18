@@ -1,5 +1,4 @@
 from itertools import product
-
 import numpy as np
 
 __all__ = ["view_as_overlapping_patches"]

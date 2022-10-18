@@ -1,8 +1,6 @@
 import torch
 from torch.distributions import Dirichlet
-
 from jolideco.utils.torch import cycle_spin, view_as_overlapping_patches_torch
-
 from .core import Prior
 
 

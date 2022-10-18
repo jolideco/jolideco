@@ -1,5 +1,4 @@
 import torch
-
 from jolideco.priors import UniformPrior
 
 

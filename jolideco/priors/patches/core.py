@@ -1,12 +1,10 @@
-from math import sqrt
 import logging
-
+from math import sqrt
 import numpy as np
-import torch
-import torch.nn.functional as F
 from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
-
+import torch
+import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
 from jolideco.utils.norms import ImageNorm, MaxImageNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
@@ -18,7 +16,6 @@ from jolideco.utils.torch import (
     view_as_overlapping_patches_torch,
     view_as_random_overlapping_patches_torch,
 )
-
 from ..core import Prior
 
 __all__ = ["GMMPatchPrior", "MultiScalePrior"]

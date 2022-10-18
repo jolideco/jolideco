@@ -1,6 +1,5 @@
 import pytest
 import torch
-
 from jolideco.priors import GMMPatchPrior
 
 

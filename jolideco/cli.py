@@ -1,8 +1,6 @@
 import logging
 import warnings
-
 import click
-
 from jolideco import __version__
 
 

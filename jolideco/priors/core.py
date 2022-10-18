@@ -1,8 +1,7 @@
-import torch
-import torch.nn as nn
 from astropy.convolution import Gaussian2DKernel
 from astropy.utils import lazyproperty
-
+import torch
+import torch.nn as nn
 from jolideco.utils.misc import format_class_str
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,

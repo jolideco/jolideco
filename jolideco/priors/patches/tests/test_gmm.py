@@ -1,10 +1,9 @@
-import numpy as np
 import pytest
-import torch
+import numpy as np
 from numpy.testing import assert_allclose
+import torch
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import _compute_precision_cholesky
-
 from jolideco.priors.patches import GMM_REGISTRY, GaussianMixtureModel
 from jolideco.utils.testing import requires_device
 

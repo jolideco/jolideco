@@ -1,15 +1,12 @@
 import logging
 from pathlib import Path
-
-import matplotlib.pyplot as plt
 import numpy as np
+from astropy.visualization import simple_norm
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from astropy.visualization import simple_norm
-
 from jolideco.priors.core import Prior, Priors, UniformPrior
-
 from .utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
     IO_FORMATS_FLUX_COMPONENT_WRITE,
