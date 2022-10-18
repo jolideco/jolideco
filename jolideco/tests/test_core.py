@@ -206,6 +206,31 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
 
 
+def test_map_deconvolver_gmm_odd_stride_jitter():
+    random_state = np.random.RandomState(642020)
+
+    dataset = gauss_and_point_sources_gauss_psf(
+        random_state=random_state, shape=(37, 37)
+    )
+
+    deco = MAPDeconvolver(n_epochs=10, learning_rate=0.1)
+
+    flux_init = random_state.gamma(20, size=(37, 37))
+
+    components = FluxComponents()
+    components["flux-1"] = FluxComponent.from_numpy(
+        flux=flux_init, upsampling_factor=1, prior=GMMPatchPrior(stride=3, jitter=True)
+    )
+
+    result = deco.run(
+        datasets=[dataset],
+        components=components,
+    )
+
+    trace_loss = result.trace_loss[-1]
+    assert_allclose(trace_loss["total"], 5.180159)
+
+
 @requires_device("cuda")
 def test_map_deconvolver_gpu():
     deco = MAPDeconvolver(n_epochs=100, learning_rate=0.1, device="cuda")
