@@ -38,6 +38,7 @@ dependencies:
   - isort
   - ruamel.yaml
   - ruamel.yaml.string
+  - pre-commit
   - sphinx
   - sphinx-astropy
   - sphinx-click
