@@ -228,7 +228,7 @@ def test_map_deconvolver_gmm_odd_stride_jitter():
     )
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 5.180159)
+    assert_allclose(trace_loss["total"], 5.180159, rtol=1e-3)
 
 
 @requires_device("cuda")
