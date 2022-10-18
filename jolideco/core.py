@@ -70,6 +70,13 @@ class MAPDeconvolver:
         self.fit_background_norm = fit_background_norm
         self.stop_early = stop_early
         self.stop_early_n_average = stop_early_n_average
+
+        if "cuda" in device and not torch.cuda.is_available():
+            log.warning(
+                f"Device {device} not available, falling back to {TORCH_DEFAULT_DEVICE}"
+            )
+            device = TORCH_DEFAULT_DEVICE
+        
         self.device = torch.device(device)
 
     def to_dict(self):
