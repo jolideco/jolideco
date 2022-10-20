@@ -190,7 +190,8 @@ class GMMPatchPrior(Prior):
 
         if self.cycle_spin_subpix:
             normed = cycle_spin_subpixel(image=normed, generator=self.generator)
-
+            # TODO: how to compute the sub-pixel shift here?
+            shifts = (0, 0)
         else:
             shifts = (0, 0)
 
