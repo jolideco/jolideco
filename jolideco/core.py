@@ -94,7 +94,7 @@ class MAPDeconvolver:
         """String representation"""
         return format_class_str(instance=self)
 
-    def run(self, datasets, datasets_validation=None, components=None):
+    def run(self, datasets, datasets_validation=None, components=None, calibrate=False):
         """Run the MAP deconvolver
 
         Parameters
@@ -106,6 +106,8 @@ class MAPDeconvolver:
             "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
+        calibrate : bool
+            Whether to fit a the calibration only.
 
         Returns
         -------
@@ -122,13 +124,6 @@ class MAPDeconvolver:
         components_init = copy.deepcopy(components)
 
         components = components.to(self.device)
-
-        parameters = components.parameters()
-
-        optimizer = torch.optim.Adam(
-            params=parameters,
-            lr=self.learning_rate,
-        )
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets, components=components, device=self.device
@@ -148,6 +143,19 @@ class MAPDeconvolver:
             poisson_loss_validation=poisson_loss_validation,
             prior_loss=prior_loss,
             beta=self.beta,
+        )
+
+        if calibrate:
+            parameters = []
+
+            for npred_models in poisson_loss.npred_models_all:
+                parameters.extend(npred_models.parameters())
+        else:
+            parameters = components.parameters()
+
+        optimizer = torch.optim.Adam(
+            params=parameters,
+            lr=self.learning_rate,
         )
 
         with tqdm(total=self.n_epochs) as pbar:
