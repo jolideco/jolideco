@@ -3,7 +3,12 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.convolution import Gaussian2DKernel
 import torch
-from jolideco.models import FluxComponent, FluxComponents, NPredModel
+from jolideco.models import (
+    FluxComponent,
+    FluxComponents,
+    NPredModel,
+    SparseFluxComponent,
+)
 from jolideco.priors import PRIOR_REGISTRY, UniformPrior
 
 
@@ -13,6 +18,19 @@ def dataset():
     exposure = torch.ones(shape)
     psf = Gaussian2DKernel(3).array
     background = torch.ones(shape)
+    return {
+        "psf": torch.from_numpy(psf[None, None]),
+        "exposure": exposure,
+        "background": background,
+    }
+
+
+@pytest.fixture
+def dataset_zero_background():
+    shape = (1, 1, 25, 25)
+    exposure = torch.ones(shape)
+    psf = Gaussian2DKernel(3).array
+    background = torch.zeros(shape)
     return {
         "psf": torch.from_numpy(psf[None, None]),
         "exposure": exposure,
@@ -62,6 +80,21 @@ def test_simple_npred_model(dataset):
     npred = npred.detach().numpy()[0, 0]
     assert_allclose(npred[10, 10], 1.017218, rtol=1e-5)
     assert_allclose(npred.sum(), 513.039549, rtol=1e-5)
+
+
+def test_simple_npred_model_sparse(dataset_zero_background):
+    flux = torch.tensor([3.7, 2.1, 4.2])
+    x_pos = torch.tensor([7.2, 12.1, 19.2])
+    y_pos = torch.tensor([7.7, 3.1, 14.2])
+
+    component = SparseFluxComponent(flux=flux, x_pos=x_pos, y_pos=y_pos, shape=(25, 25))
+    npred_model = NPredModel(**dataset_zero_background)
+
+    npred = npred_model(flux=component.flux)
+
+    npred = npred.detach().numpy()[0, 0]
+    assert_allclose(npred[10, 10], 0.033733, rtol=1e-5)
+    assert_allclose(npred.sum(), 9.55952, rtol=1e-5)
 
 
 def test_simple_npred_model_3d(dataset_3d):
