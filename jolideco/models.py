@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import numpy as np
+from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
 import matplotlib.pyplot as plt
 import torch
@@ -18,11 +19,211 @@ from .utils.io import (
 )
 from .utils.misc import format_class_str
 from .utils.plot import add_cbar
-from .utils.torch import convolve_fft_torch, transpose
+from .utils.torch import convolve_fft_torch, grid_weights, transpose
 
 log = logging.getLogger(__name__)
 
 __all__ = ["FluxComponent", "FluxComponents", "NPredModel", "NPredModels"]
+
+
+class SparseFluxComponent(nn.Module):
+    """Sparse flux component to represent a list of point sources
+
+    Attributes
+    ----------
+    flux : `~torch.Tensor`
+        Initial flux tensor
+    x_pos : `~torch.Tensor`
+        x position in pixel coordinates
+    y_pos : `~torch.Tensor`
+        y position in pixel coordinates
+    shape : tuple of int
+        Image shape
+    use_log_flux : bool
+        Use log scaling for flux
+    prior : `Prior`
+        Prior for this flux component.
+    frozen : bool
+        Whether to freeze component.
+    wcs : `~astropy.wcs.WCS`
+        World coordinate transform object
+    """
+
+    _shape_eval = (-1, 1, 1, 1, 1)
+    _shape_eval_x = (1, 1, 1, -1, 1)
+    _shape_eval_y = (1, 1, 1, 1, -1)
+
+    def __init__(
+        self,
+        flux,
+        x_pos,
+        y_pos,
+        shape,
+        use_log_flux=True,
+        prior=None,
+        frozen=False,
+        wcs=None,
+    ):
+        super().__init__()
+
+        if prior is None:
+            prior = UniformPrior()
+
+        if use_log_flux:
+            flux = torch.log(flux)
+
+        self.prior = prior
+        self.frozen = frozen
+        self._wcs = wcs
+        self._shape = shape
+        self._flux = nn.Parameter(flux)
+        self.x_pos = nn.Parameter(x_pos)
+        self.y_pos = nn.Parameter(y_pos)
+        self._use_log_flux = use_log_flux
+
+    def parameters(self, recurse=True):
+        """Parameter list"""
+        if self.frozen:
+            return []
+        else:
+            return super().parameters(recurse)
+
+    @classmethod
+    def from_numpy(cls, flux, x_pos, y_pos, **kwargs):
+        """Create sparse flux component from numpy arrays
+
+        Attributes
+        ----------
+        flux : `~numpy.ndarray`
+            Initial flux tensor
+        x_pos : `~numpy.ndarray`
+            x position in pixel coordinates
+        y_pos : `~numpy.ndarray`
+            y position in pixel coordinates
+        **kwargs : dict
+            Keyword arguments forwared to `SparseFluxComponent`
+
+        Returns
+        -------
+        sparse_flux_component : `SparseFluxComponent`
+            Sparse flux component
+        """
+        flux = flux.from_numpy(flux)
+        x_pos = flux.from_numpy(x_pos)
+        y_pos = flux.from_numpy(y_pos)
+
+        return cls(flux=flux, x_pos=x_pos, y_pos=y_pos, **kwargs)
+
+    @classmethod
+    def from_skycoord(cls, skycoord, wcs, **kwargs):
+        """Create sparse flux component from sky coordinates
+
+        Parameters
+        ----------
+        skycoord: `~astropy.coodinates.SkyCoord`
+            Sky coordinates
+        wcs : `~astropy.wcs.WCS`
+            World coordinate transform object
+
+        Returns
+        -------
+        sparse_flux_component : `SparseFluxComponent`
+            Sparse flux component
+        """
+        x_pos, y_pos = skycoord.to_pixel(wcs=wcs)
+        return cls.from_numpy(x_pos=x_pos, y_pos=y_pos, **kwargs)
+
+    @property
+    def wcs(self):
+        """Flux error"""
+        return self._wcs
+
+    @property
+    def shape(self):
+        """Shape of the flux component"""
+        return self._shape
+
+    @lazyproperty
+    def indices(self):
+        """Shape of the flux component"""
+        idx = torch.arange(self.shape[1])
+        idy = torch.arange(self.shape[0])
+        return idx.reshape(self._shape_eval_x), idy.reshape(self._shape_eval_y)
+
+    @property
+    def use_log_flux(self):
+        """Use log flux (`bool`)"""
+        return self._use_log_flux
+
+    @property
+    def flux_numpy(self):
+        """Flux (`~numpy.ndarray`)"""
+        flux_cpu = self.flux.detach().cpu()
+        return flux_cpu.numpy()[0, 0]
+
+    @property
+    def flux(self):
+        """Flux (`~torch.Tensor`)"""
+        y, x = self.indices
+        x0 = self.x_pos.reshape(self._shape_eval)
+        y0 = self.y_pos.reshape(self._shape_eval)
+
+        weights = grid_weights(x=x, y=y, x0=x0, y0=y0)
+
+        if self.use_log_flux:
+            flux = torch.exp(self._flux)
+        else:
+            flux = self._flux
+
+        flux = weights * flux.reshape(self._shape_eval)
+
+        return flux.sum(axis=0)
+
+    def plot(self, ax=None, **kwargs):
+        """Plot flux component as sky image
+
+        Parameters
+        ----------
+        ax : `~matplotlib.pyplot.Axes`
+            Plotting axes
+        **kwargs : dict
+            Keywords forwarded to `~matplotlib.pyplot.imshow`
+
+        Returns
+        -------
+        ax : `~matplotlib.pyplot.Axes`
+            Plotting axes
+        """
+        if ax is None:
+            ax = plt.subplot(projection=self.wcs)
+
+        kwargs.setdefault("interpolation", "None")
+
+        flux = self.flux_numpy
+        _ = ax.imshow(flux, origin="lower", **kwargs)
+        return ax
+
+    def to_dict(self, **kwargs):
+        """Convert sparse flux component configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        # TODO: add all parameters, flux_upsampled could be filename
+        data = {}
+        data["use_log_flux"] = self.use_log_flux
+        data["frozen"] = self.frozen
+        data["prior"] = self.prior.to_dict()
+        data["flux"] = self._flux.detach().cpu().numpy()
+        data["x_pos"] = self.x_pos.detach().cpu().numpy()
+        data["y_pos"] = self.y_pos.detach().cpu().numpy()
+        return data
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
 
 
 class FluxComponent(nn.Module):
