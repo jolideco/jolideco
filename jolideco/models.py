@@ -60,8 +60,8 @@ class SparseFluxComponent(nn.Module):
     upsampling_factor = 1
 
     _shape_eval = (-1, 1, 1, 1, 1)
-    _shape_eval_x = (1, 1, 1, -1, 1)
-    _shape_eval_y = (1, 1, 1, 1, -1)
+    _shape_eval_x = (1, 1, 1, 1, -1)
+    _shape_eval_y = (1, 1, 1, -1, 1)
 
     def __init__(
         self,
