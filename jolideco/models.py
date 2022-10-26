@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 import numpy as np
+from astropy.coordinates import SkyCoord
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
 import matplotlib.pyplot as plt
@@ -23,7 +24,14 @@ from .utils.torch import convolve_fft_torch, grid_weights, transpose
 
 log = logging.getLogger(__name__)
 
-__all__ = ["FluxComponent", "FluxComponents", "NPredModel", "NPredModels"]
+
+__all__ = [
+    "FluxComponent",
+    "FluxComponents",
+    "SparseFluxComponent",
+    "NPredModel",
+    "NPredModels",
+]
 
 
 class SparseFluxComponent(nn.Module):
@@ -48,6 +56,8 @@ class SparseFluxComponent(nn.Module):
     wcs : `~astropy.wcs.WCS`
         World coordinate transform object
     """
+
+    upsampling_factor = 1
 
     _shape_eval = (-1, 1, 1, 1, 1)
     _shape_eval_x = (1, 1, 1, -1, 1)
@@ -88,6 +98,23 @@ class SparseFluxComponent(nn.Module):
         else:
             return super().parameters(recurse)
 
+    @property
+    def x_pos_numpy(self):
+        """x pos as numpy array"""
+        return self.x_pos.detach().cpu().numpy()
+
+    @property
+    def y_pos_numpy(self):
+        """y pos as numpy array"""
+        return self.y_pos.detach().cpu().numpy()
+
+    @property
+    def sky_coord(self):
+        """Positions as SkyCoord"""
+        return SkyCoord.from_pixel(
+            xp=self.x_pos_numpy, yp=self.y_pos_numpy, wcs=self.wcs
+        )
+
     @classmethod
     def from_numpy(cls, flux, x_pos, y_pos, **kwargs):
         """Create sparse flux component from numpy arrays
@@ -108,14 +135,14 @@ class SparseFluxComponent(nn.Module):
         sparse_flux_component : `SparseFluxComponent`
             Sparse flux component
         """
-        flux = flux.from_numpy(flux)
-        x_pos = flux.from_numpy(x_pos)
-        y_pos = flux.from_numpy(y_pos)
+        flux = torch.from_numpy(flux)
+        x_pos = torch.from_numpy(x_pos)
+        y_pos = torch.from_numpy(y_pos)
 
         return cls(flux=flux, x_pos=x_pos, y_pos=y_pos, **kwargs)
 
     @classmethod
-    def from_skycoord(cls, skycoord, wcs, **kwargs):
+    def from_sky_coord(cls, skycoord, wcs, **kwargs):
         """Create sparse flux component from sky coordinates
 
         Parameters
@@ -141,13 +168,13 @@ class SparseFluxComponent(nn.Module):
     @property
     def shape(self):
         """Shape of the flux component"""
-        return self._shape
+        return (1, 1) + self._shape
 
     @lazyproperty
     def indices(self):
         """Shape of the flux component"""
-        idx = torch.arange(self.shape[1])
-        idy = torch.arange(self.shape[0])
+        idx = torch.arange(self._shape[1])
+        idy = torch.arange(self._shape[0])
         return idx.reshape(self._shape_eval_x), idy.reshape(self._shape_eval_y)
 
     @property
@@ -178,6 +205,11 @@ class SparseFluxComponent(nn.Module):
         flux = weights * flux.reshape(self._shape_eval)
 
         return flux.sum(axis=0)
+
+    @property
+    def flux_upsampled(self):
+        """Upsampled flux"""
+        return self.flux
 
     def plot(self, ax=None, **kwargs):
         """Plot flux component as sky image
@@ -215,10 +247,17 @@ class SparseFluxComponent(nn.Module):
         data = {}
         data["use_log_flux"] = self.use_log_flux
         data["frozen"] = self.frozen
+        data["shape"] = self.shape
+
+        if self.use_log_flux:
+            flux = torch.exp(self._flux)
+        else:
+            flux = self._flux
+
+        data["flux"] = flux.detach().cpu().numpy()
+        data["x_pos"] = self.x_pos_numpy
+        data["y_pos"] = self.y_pos_numpy
         data["prior"] = self.prior.to_dict()
-        data["flux"] = self._flux.detach().cpu().numpy()
-        data["x_pos"] = self.x_pos.detach().cpu().numpy()
-        data["y_pos"] = self.y_pos.detach().cpu().numpy()
         return data
 
     def __str__(self):
@@ -851,7 +890,7 @@ class NPredModel(nn.Module):
             npred = torch.matmul(npred_T, self.rmf)
             npred = transpose(npred)[None]
 
-        return npred
+        return torch.clip(npred, 0, torch.inf)
 
 
 class NPredModels(nn.ModuleDict):
