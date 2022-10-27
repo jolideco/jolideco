@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from jolideco.priors.core import Prior, Priors, UniformPrior
-from .utils.io import (
+from jolideco.utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     IO_FORMATS_FLUX_COMPONENTS_READ,
@@ -18,9 +18,9 @@ from .utils.io import (
     get_reader,
     get_writer,
 )
-from .utils.misc import format_class_str
-from .utils.plot import add_cbar
-from .utils.torch import convolve_fft_torch, grid_weights, transpose
+from jolideco.utils.misc import format_class_str
+from jolideco.utils.plot import add_cbar
+from jolideco.utils.torch import convolve_fft_torch, grid_weights, transpose
 
 log = logging.getLogger(__name__)
 
