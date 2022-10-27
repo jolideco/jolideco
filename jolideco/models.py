@@ -265,6 +265,50 @@ class SparseFluxComponent(nn.Module):
         return format_class_str(instance=self)
 
 
+class NPredCalibration(nn.Module):
+    """Dataset position calibration
+
+    Attributes
+    ----------
+    shift_x : `~torch.Tensor`
+        Shift in x direction
+    shift_y: `~torch.Tensor`
+        Shift in y direction
+    grid_sample_kwargs : dict
+        Keyword arguments passed to `~torch.nn.functional.grid_sample`
+
+    """
+
+    def __init__(self, shift_x=0, shift_y=0, grid_sample_kwargs=None):
+        super().__init__()
+        self.shifts = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
+        self.grid_sample_kwargs = grid_sample_kwargs or {}
+
+    def __call__(self, flux, scale):
+        """Apply affine transform to calibrate position.
+
+        Parameters
+        ----------
+        flux : `~torch.Tensor`
+            Flux tensor
+        scale : float
+            Upsampling factor scale.
+
+        Returns
+        -------
+        flux : `~torch.Tensor`
+            Flux tensor
+        """
+        size = flux.size()
+
+        diag = torch.eye(2)
+        theta = torch.cat([diag, self.shifts.T], dim=1)[None]
+
+        grid = F.affine_grid(theta=theta, size=size)
+        flux_shift = F.grid_sample(flux, grid=grid, **self.grid_sample_kwargs)
+        return flux_shift
+
+
 class FluxComponent(nn.Module):
     """Flux component
 
@@ -894,7 +938,17 @@ class NPredModel(nn.Module):
 
 
 class NPredModels(nn.ModuleDict):
-    """Flux components"""
+    """Flux components
+
+    Parameters
+    ----------
+    calibration : `NPredCalibration`
+        Calibration model.
+    """
+
+    def __init__(self, calibration=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.calibration = calibration
 
     def evaluate(self, fluxes):
         """Evaluate npred model
@@ -914,6 +968,9 @@ class NPredModels(nn.ModuleDict):
         npred_total = torch.zeros(values[0].shape, device=fluxes[0].device)
 
         for npred_model, flux in zip(values, fluxes):
+            if self.calibration is not None:
+                flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
+
             npred = npred_model(flux=flux)
             npred_total += npred
 
@@ -937,10 +994,12 @@ class NPredModels(nn.ModuleDict):
         """
         values = []
 
+        calibration = dataset.get("calibration", None)
+
         for name, component in components.items():
             npred_model = NPredModel.from_dataset_numpy(
                 dataset=dataset, upsampling_factor=component.upsampling_factor
             )
             values.append((name, npred_model))
 
-        return cls(values)
+        return cls(calibration, values)
