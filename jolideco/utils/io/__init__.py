@@ -18,8 +18,10 @@ from .fits import (
 from .yaml import (
     read_flux_component_from_yaml,
     read_flux_components_from_yaml,
+    read_npred_calibrations_from_yaml,
     write_flux_component_to_yaml,
     write_flux_components_to_yaml,
+    write_npred_calibrations_to_yaml,
 )
 
 __all__ = [
@@ -169,4 +171,12 @@ IO_FORMATS_FLUX_COMPONENTS_WRITE = {
     "fits": write_flux_components_to_fits,
     "asdf": write_flux_components_to_asdf,
     "yaml": write_flux_components_to_yaml,
+}
+
+IO_FORMATS_NPRED_CALIBRATIONS_READ = {
+    "yaml": read_npred_calibrations_from_yaml,
+}
+
+IO_FORMATS_NPRED_CALIBRATIONS_WRITE = {
+    "yaml": write_npred_calibrations_to_yaml,
 }

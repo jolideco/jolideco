@@ -204,3 +204,39 @@ def read_flux_components_from_yaml(filename):
     data = load_yaml(filename=filename)
 
     return FluxComponents.from_dict(data=data)
+
+
+def read_npred_calibrations_from_yaml(filename):
+    """Read npred calibrations from YAML file
+
+    Parameters
+    ----------
+    filename : str or `Path`
+        Filename
+
+    Returns
+    -------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    """
+    from jolideco.models import NPredCalibrations
+
+    data = load_yaml(filename=filename)
+
+    return NPredCalibrations.from_dict(data=data)
+
+
+def write_npred_calibrations_to_yaml(npred_calibrations, filename, overwrite):
+    """Write npred calibrations to YAML file
+
+    Parameters
+    ----------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    filename : str or `Path`
+        Filename
+    overwrite : bool
+        Overwrite file.
+    """
+    data = npred_calibrations.to_dict()
+    write_yaml(filename=filename, data=data, overwrite=overwrite)

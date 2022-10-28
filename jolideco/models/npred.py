@@ -2,12 +2,21 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from jolideco.utils.io import (
+    IO_FORMATS_NPRED_CALIBRATIONS_READ,
+    IO_FORMATS_NPRED_CALIBRATIONS_WRITE,
+    document_io_formats,
+    get_reader,
+    get_writer,
+)
+from jolideco.utils.misc import format_class_str
 from jolideco.utils.torch import convolve_fft_torch, transpose
 
 __all__ = [
     "NPredModel",
     "NPredModels",
     "NPredCalibration",
+    "NPredCalibrations",
 ]
 
 
@@ -210,7 +219,7 @@ class NPredModels(nn.ModuleDict):
 
 
 class NPredCalibration(nn.Module):
-    """Dataset position calibration
+    """Dataset calibration parameters
 
     Attributes
     ----------
@@ -218,18 +227,52 @@ class NPredCalibration(nn.Module):
         Shift in x direction
     shift_y: `~torch.Tensor`
         Shift in y direction
-    grid_sample_kwargs : dict
-        Keyword arguments passed to `~torch.nn.functional.grid_sample`
-
+    background_norm: `~torch.Tensor`
+        Background normalisation parameter
     """
 
+    _grid_sample_kwargs = {}
+
     def __init__(
-        self, shift_x=0, shift_y=0, background_norm=1, grid_sample_kwargs=None
+        self,
+        shift_x=0,
+        shift_y=0,
+        background_norm=1,
     ):
         super().__init__()
-        self.shifts = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
-        self.background_norm = nn.Parameter(torch.Tensor(background_norm))
-        self.grid_sample_kwargs = grid_sample_kwargs or {}
+        self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
+        self.background_norm = nn.Parameter(torch.Tensor([background_norm]))
+
+    def to_dict(self):
+        """Convert calibration model to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = {}
+        shift_xy = self.shift_xy.detach().cpu().numpy()
+        data["shift_x"] = float(shift_xy[0, 0])
+        data["shift_y"] = float(shift_xy[0, 1])
+        data["background_norm"] = float(self.background_norm.detach().cpu().numpy())
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create calibration model from dict
+
+        Parameters
+        ----------
+        data : dict
+            Parameter dict.
+
+        Returns
+        -------
+        calibration : `NPredCalibration`
+            Calibration model.
+        """
+        return cls(**data)
 
     def __call__(self, flux):
         """Apply affine transform to calibrate position.
@@ -249,8 +292,109 @@ class NPredCalibration(nn.Module):
         size = flux.size()
 
         diag = torch.eye(2)
-        theta = torch.cat([diag, self.shifts.T], dim=1)[None]
+        theta = torch.cat([diag, self.shift_xy.T], dim=1)[None]
 
         grid = F.affine_grid(theta=theta, size=size)
-        flux_shift = F.grid_sample(flux, grid=grid, **self.grid_sample_kwargs)
+        flux_shift = F.grid_sample(flux, grid=grid, **self._grid_sample_kwargs)
         return flux_shift
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
+
+
+class NPredCalibrations(nn.ModuleDict):
+    """Calibration components
+
+    Parameters
+    ----------
+    calibration : `NPredCalibration`
+        Calibration model.
+    """
+
+    _registry_read = IO_FORMATS_NPRED_CALIBRATIONS_READ
+    _registry_write = IO_FORMATS_NPRED_CALIBRATIONS_WRITE
+
+    def to_dict(self):
+        """Convert calibration configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        data = {}
+
+        for name, model in self.items():
+            data[name] = model.to_dict()
+
+        return data
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create calibration models from dict
+
+        Parameters
+        ----------
+        data : dict
+            Parameter dict.
+
+        Returns
+        -------
+        calibrations : `NPredCalibrations`
+            Calibrations
+        """
+        components = []
+
+        for name, component_data in data.items():
+            component = NPredCalibration.from_dict(data=component_data)
+            components.append((name, component))
+
+        return cls(components)
+
+    @classmethod
+    @document_io_formats(registry=_registry_read)
+    def read(cls, filename, format=None):
+        """Read npred calibrations from file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {formats}
+            Format to use.
+
+        Returns
+        -------
+        calibrations : `NPredCalibrations`
+            Calibrations
+        """
+        reader = get_reader(
+            filename=filename, format=format, registry=cls._registry_read
+        )
+        return reader(filename)
+
+    @document_io_formats(registry=_registry_write)
+    def write(self, filename, format=None, overwrite=False, **kwargs):
+        """Write npred calibrations fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {formats}
+            Format to use.
+        overwrite : bool
+            Overwrite file.
+        """
+        writer = get_writer(
+            filename=filename, format=format, registry=self._registry_write
+        )
+
+        return writer(
+            npred_calibrations=self, filename=filename, overwrite=overwrite, **kwargs
+        )
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
