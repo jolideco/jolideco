@@ -199,7 +199,6 @@ def npred_calibrations_from_table(table):
         name = data_row.pop("name").decode("utf-8")
         data[name] = data_row
 
-    print(data)
     return NPredCalibrations.from_dict(data=data)
 
 
@@ -334,6 +333,18 @@ def write_map_result_to_fits(result, filename, overwrite):
     hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
     hdulist.extend(hdus)
 
+    if result.calibrations:
+        table = npred_calibrations_to_table(result.calibrations)
+        hdu = fits.BinTableHDU(table, name="CALIBRATIONS")
+        hdulist.append(hdu)
+
+        table = npred_calibrations_to_table(result.calibrations_init)
+        hdu = fits.BinTableHDU(table, name="CALIBRATIONS_INIT")
+        hdulist.append(hdu)
+
+    hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
+    hdulist.extend(hdus)
+
     table = result.trace_loss.copy()
     table.meta = None
     trace_hdu = fits.BinTableHDU(table, name="TRACE_LOSS")
@@ -375,9 +386,23 @@ def read_map_result_from_fits(filename):
         hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
         components_init = flux_components_from_hdulist(hdulist=hdulist)
 
+        if "CALIBRATIONS" in hdulist:
+            table = Table.read(hdulist["CALIBRATIONS"])
+            calibrations = npred_calibrations_from_table(table=table)
+        else:
+            calibrations = None
+
+        if "CALIBRATIONS_INIT" in hdulist:
+            table = Table.read(hdulist["CALIBRATIONS_INIT"])
+            calibrations_init = npred_calibrations_from_table(table=table)
+        else:
+            calibrations_init = None
+
     return MAPDeconvolverResult(
         config=config,
         components=components,
         components_init=components_init,
+        calibrations=calibrations,
+        calibrations_init=calibrations_init,
         trace_loss=trace_loss,
     )
