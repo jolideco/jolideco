@@ -56,7 +56,9 @@ class PoissonLoss:
             yield data
 
     @classmethod
-    def from_datasets(cls, datasets, components, device=TORCH_DEFAULT_DEVICE):
+    def from_datasets(
+        cls, datasets, components, calibrations=None, device=TORCH_DEFAULT_DEVICE
+    ):
         """Create loss function from datasets
 
         Parameters
@@ -65,6 +67,10 @@ class PoissonLoss:
             List of datasets
         components : `FluxComponents`
             Flux components
+        calibrations: `NPredCalibrations`
+            NPred calibrations
+        device : `~pytorch.Device`
+            Pytorch device
 
         Returns
         -------
@@ -73,9 +79,14 @@ class PoissonLoss:
         """
         npred_models_all, counts_all = [], []
 
-        for dataset in datasets:
+        for idx, dataset in enumerate(datasets):
+            if calibrations:
+                calibration = list(calibrations.values())[idx]
+            else:
+                calibration = None
+
             npred_models = NPredModels.from_dataset_numpy(
-                dataset=dataset, components=components
+                dataset=dataset, components=components, calibration=calibration
             )
             npred_models_all.append(npred_models.to(device))
 

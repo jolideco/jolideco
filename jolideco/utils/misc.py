@@ -66,6 +66,8 @@ def to_str(data, level=1):
             indent = level * "\t"
             width = MAX_WIDTH - TABSIZE * level
             info += indent + f"{key:{width}s}: {value}\n"
+    elif isinstance(data, float):
+        info = f"{data:.3f}"
     else:
         info = str(data)
 
