@@ -1,3 +1,4 @@
+from os import read
 from pathlib import Path
 from .asdf import (
     read_flux_component_from_asdf,
@@ -11,9 +12,11 @@ from .fits import (
     read_flux_component_from_fits,
     read_flux_components_from_fits,
     read_map_result_from_fits,
+    read_npred_calibrations_from_fits,
     write_flux_component_to_fits,
     write_flux_components_to_fits,
     write_map_result_to_fits,
+    write_npred_calibrations_to_fits,
 )
 from .yaml import (
     read_flux_component_from_yaml,
@@ -175,8 +178,10 @@ IO_FORMATS_FLUX_COMPONENTS_WRITE = {
 
 IO_FORMATS_NPRED_CALIBRATIONS_READ = {
     "yaml": read_npred_calibrations_from_yaml,
+    "fits": read_npred_calibrations_from_fits,
 }
 
 IO_FORMATS_NPRED_CALIBRATIONS_WRITE = {
     "yaml": write_npred_calibrations_to_yaml,
+    "fits": write_npred_calibrations_to_fits,
 }

@@ -233,10 +233,21 @@ class MAPDeconvolverResult:
         Trace of the total loss.
     """
 
-    def __init__(self, config, components, components_init, trace_loss, wcs=None):
+    def __init__(
+        self,
+        config,
+        components,
+        components_init,
+        trace_loss,
+        calibrations=None,
+        calibrations_init=None,
+        wcs=None,
+    ):
         self._components = components
-        self.components_init = components_init
+        self._components_init = components_init
         self.trace_loss = trace_loss
+        self._calibrations = calibrations
+        self._calibrations_init = calibrations_init
         self._config = config
         self._wcs = wcs
 
@@ -244,6 +255,21 @@ class MAPDeconvolverResult:
     def components(self):
         """Flux components (`FluxComponents`)"""
         return self._components
+
+    @property
+    def components_init(self):
+        """Initial flux components (`FluxComponents`)"""
+        return self._components_init
+
+    @property
+    def calibrations(self):
+        """Calibrations (`NPredCalibrations`)"""
+        return self._calibrations
+
+    @property
+    def calibrations_init(self):
+        """Initial calibrations (`NPredCalibrations`)"""
+        return self._calibrations_init
 
     @property
     def flux_total(self):

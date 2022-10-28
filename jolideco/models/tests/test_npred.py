@@ -3,7 +3,7 @@ from numpy.testing import assert_allclose
 from jolideco.models import NPredCalibration, NPredCalibrations
 
 
-@pytest.mark.parametrize("format", ["yaml"])
+@pytest.mark.parametrize("format", ["yaml", "fits"])
 def test_flux_components_io(format, tmpdir):
     calibrations = NPredCalibrations()
 

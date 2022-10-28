@@ -2,7 +2,7 @@ import logging
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
-from jolideco.utils.misc import flatten_dict, unflatten_dict
+from jolideco.utils.misc import flatten_dict, table_from_row_data, unflatten_dict
 
 log = logging.getLogger(__name__)
 
@@ -151,6 +151,58 @@ def flux_components_from_hdulist(hdulist):
     return flux_components
 
 
+def npred_calibrations_to_table(npred_calibrations):
+    """Convert NPredCalibrations to table
+
+    Parameters
+    ----------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+
+    Returns
+    -------
+    table : `~astropy.table.Table`
+        Table
+    """
+    data = npred_calibrations.to_dict()
+
+    rows = []
+
+    for name, value in data.items():
+        row = {"name": name}
+        row.update(value)
+        rows.append(row)
+
+    return table_from_row_data(rows=rows)
+
+
+def npred_calibrations_from_table(table):
+    """Create NPredCalibrations from table
+
+    Parameters
+    ----------
+    table : `~astropy.table.Table`
+        Table
+
+
+    Returns
+    -------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    """
+    from jolideco.models import NPredCalibrations
+
+    data = {}
+
+    for row in table:
+        data_row = dict(zip(row.colnames, row.as_void()))
+        name = data_row.pop("name").decode("utf-8")
+        data[name] = data_row
+
+    print(data)
+    return NPredCalibrations.from_dict(data=data)
+
+
 def write_flux_components_to_fits(flux_components, filename, overwrite):
     """Write flux components to FITS file
 
@@ -225,6 +277,41 @@ def read_flux_component_from_fits(filename, hdu_name=0):
     """
     with fits.open(filename) as hdulist:
         return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
+
+
+def read_npred_calibrations_from_fits(filename):
+    """Read npred calibrations from FITS file
+
+    Parameters
+    ----------
+    filename : str or `Path`
+        Filename
+
+    Returns
+    -------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    """
+    log.info(f"Reading {filename}")
+
+    table = Table.read(filename)
+    return npred_calibrations_from_table(table=table)
+
+
+def write_npred_calibrations_to_fits(npred_calibrations, filename, overwrite):
+    """Write npred calibrations to FITS file
+
+    Parameters
+    ----------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    filename : str or `Path`
+        Filename
+    overwrite : bool
+        Overwrite file.
+    """
+    table = npred_calibrations_to_table(npred_calibrations)
+    table.write(filename, overwrite=overwrite, format="fits")
 
 
 def write_map_result_to_fits(result, filename, overwrite):
