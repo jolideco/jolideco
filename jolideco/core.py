@@ -95,7 +95,7 @@ class MAPDeconvolver:
         return format_class_str(instance=self)
 
     def run(
-        self, datasets, datasets_validation=None, components=None, calibrations=False
+        self, datasets, datasets_validation=None, components=None, calibrations=None
     ):
         """Run the MAP deconvolver
 
@@ -124,18 +124,25 @@ class MAPDeconvolver:
 
         components = FluxComponents(components)
         components_init = copy.deepcopy(components)
+        calibrations_init = copy.deepcopy(calibrations)
 
         components = components.to(self.device)
+
+        if calibrations:
+            calibrations = calibrations.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets,
             components=components,
             device=self.device,
+            calibrations=calibrations,
         )
 
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
-                datasets=datasets_validation, components=components
+                datasets=datasets_validation,
+                components=components,
+                calibrations=calibrations,
             )
         else:
             poisson_loss_validation = None
@@ -215,6 +222,8 @@ class MAPDeconvolver:
             components=components,
             components_init=components_init,
             trace_loss=total_loss.trace,
+            calibrations=calibrations,
+            calibrations_init=calibrations_init,
         )
 
 

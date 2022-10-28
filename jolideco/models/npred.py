@@ -180,16 +180,17 @@ class NPredModels(nn.ModuleDict):
         for npred_model, flux in zip(values, fluxes):
             if self.calibration is not None:
                 flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
+                background_norm = self.calibration.background_norm
+            else:
+                background_norm = 1.0
 
-            npred = npred_model(
-                flux=flux, background_norm=self.calibration.background_norm
-            )
+            npred = npred_model(flux=flux, background_norm=background_norm)
             npred_total += npred
 
         return npred_total
 
     @classmethod
-    def from_dataset_numpy(cls, dataset, components):
+    def from_dataset_numpy(cls, dataset, components, calibration=None):
         """Create multiple npred models.
 
         Parameters
@@ -205,8 +206,6 @@ class NPredModels(nn.ModuleDict):
             NPredModels
         """
         values = []
-
-        calibration = dataset.get("calibration", None)
 
         for name, component in components.items():
             # TODO: select component specific PSF and RMF here
@@ -229,19 +228,30 @@ class NPredCalibration(nn.Module):
         Shift in y direction
     background_norm: `~torch.Tensor`
         Background normalisation parameter
+    frozen : bool
+        Whether to freeze component.
     """
 
-    _grid_sample_kwargs = {}
+    _grid_sample_kwargs = {"align_corners": False}
 
     def __init__(
         self,
         shift_x=0,
         shift_y=0,
         background_norm=1,
+        frozen=False,
     ):
         super().__init__()
         self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
         self.background_norm = nn.Parameter(torch.Tensor([background_norm]))
+        self.frozen = frozen
+
+    def parameters(self, recurse=True):
+        """Parameter list"""
+        if self.frozen:
+            return []
+        else:
+            return super().parameters(recurse)
 
     def to_dict(self):
         """Convert calibration model to dict, with simple data types.
@@ -274,7 +284,7 @@ class NPredCalibration(nn.Module):
         """
         return cls(**data)
 
-    def __call__(self, flux):
+    def __call__(self, flux, scale):
         """Apply affine transform to calibrate position.
 
         Parameters
@@ -291,8 +301,10 @@ class NPredCalibration(nn.Module):
         """
         size = flux.size()
 
+        scale = 2 * scale / torch.Tensor([[size[-1]], [size[-2]]])
+
         diag = torch.eye(2)
-        theta = torch.cat([diag, self.shift_xy.T], dim=1)[None]
+        theta = torch.cat([diag, scale * self.shift_xy.T], dim=1)[None]
 
         grid = F.affine_grid(theta=theta, size=size)
         flux_shift = F.grid_sample(flux, grid=grid, **self._grid_sample_kwargs)
