@@ -236,15 +236,21 @@ class NPredCalibration(nn.Module):
 
     def __init__(
         self,
-        shift_x=0,
-        shift_y=0,
-        background_norm=1,
+        shift_x=0.0,
+        shift_y=0.0,
+        background_norm=1.0,
         frozen=False,
     ):
         super().__init__()
         self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
-        self.background_norm = nn.Parameter(torch.Tensor([background_norm]))
+        value = torch.log(torch.Tensor([background_norm]))
+        self._background_norm = nn.Parameter(value)
         self.frozen = frozen
+
+    @property
+    def background_norm(self):
+        """Background norm"""
+        return torch.exp(self._background_norm)
 
     def parameters(self, recurse=True):
         """Parameter list"""
