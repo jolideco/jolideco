@@ -20,12 +20,13 @@ class PoissonLoss:
         List of predicted counts models
     """
 
-    def __init__(self, counts_all, npred_models_all):
+    def __init__(self, counts_all, npred_models_all, names_all):
         self.counts_all = counts_all
         self.npred_models_all = npred_models_all
         self.loss_function = nn.PoissonNLLLoss(
             log_input=False, reduction="mean", eps=1e-25, full=True
         )
+        self.names_all = names_all
 
     @property
     def n_datasets(self):
@@ -63,8 +64,9 @@ class PoissonLoss:
 
         Parameters
         ----------
-        datasets : list of dict
-            List of datasets
+        datasets : dict of [str, dict]
+            Dictionary containing a name of the dataset as key and a dictionary containing,
+            the data like "counts", "psf", "background" and "exposure".
         components : `FluxComponents`
             Flux components
         calibrations: `NPredCalibrations`
@@ -79,9 +81,9 @@ class PoissonLoss:
         """
         npred_models_all, counts_all = [], []
 
-        for idx, dataset in enumerate(datasets):
+        for name, dataset in datasets.items():
             if calibrations:
-                calibration = list(calibrations.values())[idx]
+                calibration = calibrations[name]
             else:
                 calibration = None
 
@@ -95,7 +97,11 @@ class PoissonLoss:
             )
             counts_all.append(counts)
 
-        return cls(counts_all=counts_all, npred_models_all=npred_models_all)
+        return cls(
+            counts_all=counts_all,
+            npred_models_all=npred_models_all,
+            names_all=list(datasets),
+        )
 
     def __call__(self, fluxes):
         """Evaluate and sum all losses"""
@@ -170,7 +176,7 @@ class TotalLoss:
         """
         names = ["total", "datasets-total", "priors-total"]
         names += [f"prior-{name}" for name in self.prior_loss.priors]
-        names += [f"dataset-{idx}" for idx in range(self.poisson_loss.n_datasets)]
+        names += [f"dataset-{name}" for name in self.poisson_loss.names_all]
 
         if self.poisson_loss_validation:
             names += ["datasets-validation-total"]
@@ -202,8 +208,8 @@ class TotalLoss:
         for name, value in zip(self.prior_loss.priors, loss_priors):
             row[f"prior-{name}"] = value / self.prior_weight
 
-        for idx, value in enumerate(loss_datasets):
-            row[f"dataset-{idx}"] = value
+        for name, value in zip(self.poisson_loss.names_all, loss_datasets):
+            row[f"dataset-{name}"] = value
 
         if self.poisson_loss_validation:
             loss_datasets_total_test = [

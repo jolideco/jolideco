@@ -101,11 +101,12 @@ class MAPDeconvolver:
 
         Parameters
         ----------
-        datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        datasets_validation : list of dict
-            List of validation datasets. List of dictionaries containing,
-            "counts", "psf", "background" and "exposure".
+        datasets : dict of [str, dict]
+            Dictionary containing a name of the dataset as key and a dictionary containing,
+            the data like "counts", "psf", "background" and "exposure".
+        datasets_validation : dict of [str, dict]
+            Dictionary containing a name of the validation dataset as key and a dictionary containing,
+            the data like "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
         calibrations : `NPredCalibrations`
