@@ -263,6 +263,15 @@ class SparseFluxComponent(nn.Module):
         return format_class_str(instance=self)
 
 
+def freeze_mask(module, grad_input, grad_output):
+    """Freeze masked parameters"""
+
+    if module.mask:
+        grad_input = grad_input * module.mask
+
+    return grad_input
+
+
 class FluxComponent(nn.Module):
     """Flux component
 
@@ -291,6 +300,7 @@ class FluxComponent(nn.Module):
         self,
         flux_upsampled,
         flux_upsampled_error=None,
+        mask=None,
         use_log_flux=True,
         upsampling_factor=1,
         prior=None,
@@ -309,6 +319,15 @@ class FluxComponent(nn.Module):
 
         self._flux_upsampled = nn.Parameter(flux_upsampled)
         self._flux_upsampled_error = flux_upsampled_error
+
+        if mask is not None and not mask.shape == flux_upsampled.shape:
+            raise ValueError(
+                "Flux and mask need to have the same shape, got "
+                f"{flux_upsampled.shape} and {mask.shape}"
+            )
+
+        self.mask = mask
+
         self._use_log_flux = use_log_flux
         self.upsampling_factor = int(upsampling_factor)
 
@@ -318,6 +337,7 @@ class FluxComponent(nn.Module):
         self.prior = prior
         self.frozen = frozen
         self._wcs = wcs
+        self.register_full_backward_hook(freeze_mask)
 
     def to_dict(self, include_data=None):
         """Convert flux component configuration to dict, with simple data types.
@@ -457,10 +477,15 @@ class FluxComponent(nn.Module):
     @property
     def flux_upsampled(self):
         """Flux (`~torch.Tensor`)"""
+        flux = self._flux_upsampled
+
         if self.use_log_flux:
-            return torch.exp(self._flux_upsampled)
-        else:
-            return self._flux_upsampled
+            flux = torch.exp(flux)
+
+        if self.mask is not None:
+            flux = flux * self.mask
+
+        return flux
 
     @property
     def flux(self):
