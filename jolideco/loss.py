@@ -133,7 +133,7 @@ class PriorLoss:
         loss_priors = []
 
         for flux, prior in zip(fluxes, self.priors.values()):
-            value = prior(flux)
+            value = prior(flux=flux)
             loss_priors.append(value)
 
         return loss_priors

@@ -180,7 +180,7 @@ class GMMPatchPrior(Prior):
         npix = int(sqrt(shape_mean[-1]))
         return npix, npix
 
-    def _evaluate_log_like(self, flux):
+    def _evaluate_log_like(self, flux, mask=None):
         normed = self.norm(flux)
 
         if self.cycle_spin:
@@ -207,6 +207,10 @@ class GMMPatchPrior(Prior):
                 image=normed, shape=self.patch_shape, stride=self.stride
             )
 
+        # filter patches with zero flux
+        selection = torch.all(patches > 0, dim=1, keepdims=False)
+        patches = patches[selection, :]
+
         mean = torch.mean(patches, dim=1, keepdims=True)
         patches = patches - mean
         loglike = self.gmm.estimate_log_prob(patches)
@@ -217,7 +221,7 @@ class GMMPatchPrior(Prior):
         """Log likelihood weight"""
         return self.stride**2 / np.multiply(*self.patch_shape)
 
-    def __call__(self, flux):
+    def __call__(self, flux, mask=None):
         """Evaluate the prior
 
         Parameters
@@ -230,7 +234,7 @@ class GMMPatchPrior(Prior):
         log_prior : float
             Summed log prior over all overlapping patches.
         """
-        loglike, _, _ = self._evaluate_log_like(flux=flux)
+        loglike, _, _ = self._evaluate_log_like(flux=flux, mask=mask)
         max_loglike = torch.max(loglike, dim=1)
         return torch.sum(max_loglike.values) * self.log_like_weight / flux.numel()
 
