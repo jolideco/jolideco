@@ -272,6 +272,7 @@ class NPredCalibration(nn.Module):
         data["shift_x"] = float(shift_xy[0, 0])
         data["shift_y"] = float(shift_xy[0, 1])
         data["background_norm"] = float(self.background_norm.detach().cpu().numpy())
+        data["frozen"] = self.frozen
         return data
 
     @classmethod

@@ -84,9 +84,9 @@ class SparseFluxComponent(nn.Module):
         self.frozen = frozen
         self._wcs = wcs
         self._shape = shape
-        self._flux = nn.Parameter(flux)
-        self.x_pos = nn.Parameter(x_pos)
-        self.y_pos = nn.Parameter(y_pos)
+        self._flux = nn.Parameter(flux.type(torch.float32))
+        self.x_pos = nn.Parameter(x_pos.type(torch.float32))
+        self.y_pos = nn.Parameter(y_pos.type(torch.float32))
         self._use_log_flux = use_log_flux
 
     def parameters(self, recurse=True):
@@ -171,8 +171,8 @@ class SparseFluxComponent(nn.Module):
     @lazyproperty
     def indices(self):
         """Shape of the flux component"""
-        idx = torch.arange(self._shape[1])
-        idy = torch.arange(self._shape[0])
+        idx = torch.arange(self._shape[1], dtype=torch.float32)
+        idy = torch.arange(self._shape[0], dtype=torch.float32)
         return idx.reshape(self._shape_eval_x), idy.reshape(self._shape_eval_y)
 
     @property
@@ -414,7 +414,7 @@ class FluxComponent(nn.Module):
             return super().parameters(recurse)
 
     @classmethod
-    def from_numpy(cls, flux, **kwargs):
+    def from_numpy(cls, flux, mask=None, **kwargs):
         """Create flux component from downsampled data.
 
         Parameters
@@ -437,7 +437,18 @@ class FluxComponent(nn.Module):
         if upsampling_factor:
             flux = F.interpolate(flux, scale_factor=upsampling_factor, mode="bilinear")
 
-        return cls(flux_upsampled=flux, **kwargs)
+        if mask is not None:
+            mask = torch.from_numpy(mask[np.newaxis, np.newaxis].astype(bool))
+
+            if upsampling_factor:
+                mask = F.interpolate(
+                    mask.type(torch.float32),
+                    scale_factor=upsampling_factor,
+                    mode="bilinear",
+                )
+                mask = mask > 0.5
+
+        return cls(flux_upsampled=flux, mask=mask, **kwargs)
 
     @classmethod
     def from_flux_init_datasets(cls, datasets, **kwargs):
@@ -468,6 +479,11 @@ class FluxComponent(nn.Module):
     def shape(self):
         """Shape of the flux component"""
         return self._flux_upsampled.shape
+
+    @property
+    def shape_image(self):
+        """Image shape of the flux component"""
+        return self.shape[-2:]
 
     @property
     def use_log_flux(self):
@@ -587,6 +603,19 @@ class FluxComponent(nn.Module):
         flux = self.flux_upsampled_numpy
         _ = ax.imshow(flux, origin="lower", **kwargs)
         return ax
+
+    def as_gp_map(self):
+        """Convert to Gammapy map
+
+        Returns
+        -------
+        map : `~gammapy.maps.WcsNDmap`
+            Gammapy WCS map
+        """
+        from gammapy.maps import Map, WcsGeom
+
+        geom = WcsGeom(wcs=self.wcs, npix=self.shape_image)
+        return Map.from_geom(geom=geom, data=self.flux_numpy)
 
 
 class FluxComponents(nn.ModuleDict):
