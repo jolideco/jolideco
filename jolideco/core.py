@@ -94,18 +94,23 @@ class MAPDeconvolver:
         """String representation"""
         return format_class_str(instance=self)
 
-    def run(self, datasets, datasets_validation=None, components=None):
+    def run(
+        self, datasets, datasets_validation=None, components=None, calibrations=None
+    ):
         """Run the MAP deconvolver
 
         Parameters
         ----------
-        datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
-        datasets_validation : list of dict
-            List of validation datasets. List of dictionaries containing,
-            "counts", "psf", "background" and "exposure".
+        datasets : dict of [str, dict]
+            Dictionary containing a name of the dataset as key and a dictionary containing,
+            the data like "counts", "psf", "background" and "exposure".
+        datasets_validation : dict of [str, dict]
+            Dictionary containing a name of the validation dataset as key and a dictionary containing,
+            the data like "counts", "psf", "background" and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
+        calibrations : `NPredCalibrations`
+            Optional model calibrations.
 
         Returns
         -------
@@ -120,23 +125,25 @@ class MAPDeconvolver:
 
         components = FluxComponents(components)
         components_init = copy.deepcopy(components)
+        calibrations_init = copy.deepcopy(calibrations)
 
         components = components.to(self.device)
 
-        parameters = components.parameters()
-
-        optimizer = torch.optim.Adam(
-            params=parameters,
-            lr=self.learning_rate,
-        )
+        if calibrations:
+            calibrations = calibrations.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
-            datasets=datasets, components=components, device=self.device
+            datasets=datasets,
+            components=components,
+            device=self.device,
+            calibrations=calibrations,
         )
 
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
-                datasets=datasets_validation, components=components
+                datasets=datasets_validation,
+                components=components,
+                calibrations=calibrations,
             )
         else:
             poisson_loss_validation = None
@@ -148,6 +155,16 @@ class MAPDeconvolver:
             poisson_loss_validation=poisson_loss_validation,
             prior_loss=prior_loss,
             beta=self.beta,
+        )
+
+        parameters = list(components.parameters())
+
+        if calibrations:
+            parameters.extend(calibrations.parameters())
+
+        optimizer = torch.optim.Adam(
+            params=parameters,
+            lr=self.learning_rate,
         )
 
         with tqdm(total=self.n_epochs) as pbar:
@@ -206,6 +223,8 @@ class MAPDeconvolver:
             components=components,
             components_init=components_init,
             trace_loss=total_loss.trace,
+            calibrations=calibrations,
+            calibrations_init=calibrations_init,
         )
 
 
@@ -224,10 +243,21 @@ class MAPDeconvolverResult:
         Trace of the total loss.
     """
 
-    def __init__(self, config, components, components_init, trace_loss, wcs=None):
+    def __init__(
+        self,
+        config,
+        components,
+        components_init,
+        trace_loss,
+        calibrations=None,
+        calibrations_init=None,
+        wcs=None,
+    ):
         self._components = components
-        self.components_init = components_init
+        self._components_init = components_init
         self.trace_loss = trace_loss
+        self._calibrations = calibrations
+        self._calibrations_init = calibrations_init
         self._config = config
         self._wcs = wcs
 
@@ -235,6 +265,21 @@ class MAPDeconvolverResult:
     def components(self):
         """Flux components (`FluxComponents`)"""
         return self._components
+
+    @property
+    def components_init(self):
+        """Initial flux components (`FluxComponents`)"""
+        return self._components_init
+
+    @property
+    def calibrations(self):
+        """Calibrations (`NPredCalibrations`)"""
+        return self._calibrations
+
+    @property
+    def calibrations_init(self):
+        """Initial calibrations (`NPredCalibrations`)"""
+        return self._calibrations_init
 
     @property
     def flux_total(self):

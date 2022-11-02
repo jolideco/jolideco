@@ -2,7 +2,7 @@ import logging
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
-from jolideco.utils.misc import flatten_dict, unflatten_dict
+from jolideco.utils.misc import flatten_dict, table_from_row_data, unflatten_dict
 
 log = logging.getLogger(__name__)
 
@@ -151,6 +151,57 @@ def flux_components_from_hdulist(hdulist):
     return flux_components
 
 
+def npred_calibrations_to_table(npred_calibrations):
+    """Convert NPredCalibrations to table
+
+    Parameters
+    ----------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+
+    Returns
+    -------
+    table : `~astropy.table.Table`
+        Table
+    """
+    data = npred_calibrations.to_dict()
+
+    rows = []
+
+    for name, value in data.items():
+        row = {"name": name}
+        row.update(value)
+        rows.append(row)
+
+    return table_from_row_data(rows=rows)
+
+
+def npred_calibrations_from_table(table):
+    """Create NPredCalibrations from table
+
+    Parameters
+    ----------
+    table : `~astropy.table.Table`
+        Table
+
+
+    Returns
+    -------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    """
+    from jolideco.models import NPredCalibrations
+
+    data = {}
+
+    for row in table:
+        data_row = dict(zip(row.colnames, row.as_void()))
+        name = data_row.pop("name").decode("utf-8")
+        data[name] = data_row
+
+    return NPredCalibrations.from_dict(data=data)
+
+
 def write_flux_components_to_fits(flux_components, filename, overwrite):
     """Write flux components to FITS file
 
@@ -227,6 +278,41 @@ def read_flux_component_from_fits(filename, hdu_name=0):
         return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
 
 
+def read_npred_calibrations_from_fits(filename):
+    """Read npred calibrations from FITS file
+
+    Parameters
+    ----------
+    filename : str or `Path`
+        Filename
+
+    Returns
+    -------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    """
+    log.info(f"Reading {filename}")
+
+    table = Table.read(filename)
+    return npred_calibrations_from_table(table=table)
+
+
+def write_npred_calibrations_to_fits(npred_calibrations, filename, overwrite):
+    """Write npred calibrations to FITS file
+
+    Parameters
+    ----------
+    npred_calibrations : `NPredCalibrations`
+        NPred calibrations
+    filename : str or `Path`
+        Filename
+    overwrite : bool
+        Overwrite file.
+    """
+    table = npred_calibrations_to_table(npred_calibrations)
+    table.write(filename, overwrite=overwrite, format="fits")
+
+
 def write_map_result_to_fits(result, filename, overwrite):
     """Write MAP result to FITS.
 
@@ -243,6 +329,18 @@ def write_map_result_to_fits(result, filename, overwrite):
 
     hdus = flux_components_to_hdulist(result.components)
     hdulist.extend(hdus)
+
+    hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
+    hdulist.extend(hdus)
+
+    if result.calibrations:
+        table = npred_calibrations_to_table(result.calibrations)
+        hdu = fits.BinTableHDU(table, name="CALIBRATIONS")
+        hdulist.append(hdu)
+
+        table = npred_calibrations_to_table(result.calibrations_init)
+        hdu = fits.BinTableHDU(table, name="CALIBRATIONS_INIT")
+        hdulist.append(hdu)
 
     hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
     hdulist.extend(hdus)
@@ -288,9 +386,23 @@ def read_map_result_from_fits(filename):
         hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
         components_init = flux_components_from_hdulist(hdulist=hdulist)
 
+        if "CALIBRATIONS" in hdulist:
+            table = Table.read(hdulist["CALIBRATIONS"])
+            calibrations = npred_calibrations_from_table(table=table)
+        else:
+            calibrations = None
+
+        if "CALIBRATIONS_INIT" in hdulist:
+            table = Table.read(hdulist["CALIBRATIONS_INIT"])
+            calibrations_init = npred_calibrations_from_table(table=table)
+        else:
+            calibrations_init = None
+
     return MAPDeconvolverResult(
         config=config,
         components=components,
         components_init=components_init,
+        calibrations=calibrations,
+        calibrations_init=calibrations_init,
         trace_loss=trace_loss,
     )

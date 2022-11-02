@@ -11,7 +11,7 @@ from jolideco.utils.testing import requires_device
 
 @pytest.fixture(scope="session")
 def datasets_gauss():
-    datasets = []
+    datasets = {}
 
     random_state = np.random.RandomState(642020)
 
@@ -19,14 +19,14 @@ def datasets_gauss():
         dataset = gauss_and_point_sources_gauss_psf(
             random_state=random_state,
         )
-        datasets.append(dataset)
+        datasets[f"{idx}"] = dataset
 
     return datasets
 
 
 @pytest.fixture(scope="session")
 def datasets_disk():
-    datasets = []
+    datasets = {}
 
     random_state = np.random.RandomState(642020)
 
@@ -34,7 +34,7 @@ def datasets_disk():
         dataset = disk_source_gauss_psf(
             random_state=random_state,
         )
-        datasets.append(dataset)
+        datasets[f"{idx}"] = dataset
 
     return datasets
 
@@ -140,6 +140,7 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 0.135454, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
+    print(trace_loss)
     assert_allclose(trace_loss["total"], 4.593177, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 1.743475, rtol=1e-3)
     assert_allclose(trace_loss["dataset-1"], 1.76312, rtol=1e-3)
@@ -163,10 +164,13 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
         flux=flux_init, upsampling_factor=1, prior=ExponentialPrior(alpha=1)
     )
 
+    datasets = {name: datasets_disk[name] for name in ["0", "1"]}
+    datasets_validation = {name: datasets_disk[name] for name in ["2"]}
+
     result = deco.run(
-        datasets=datasets_disk[:2],
+        datasets=datasets,
         components=components,
-        datasets_validation=datasets_disk[2:],
+        datasets_validation=datasets_validation,
     )
 
     assert result.flux_upsampled_total.shape == (32, 32)
@@ -223,7 +227,7 @@ def test_map_deconvolver_gmm_odd_stride_jitter():
     )
 
     result = deco.run(
-        datasets=[dataset],
+        datasets={"dataset-1": dataset},
         components=components,
     )
 
@@ -243,10 +247,13 @@ def test_map_deconvolver_gpu():
         flux=flux_init, upsampling_factor=1, prior=GMMPatchPrior()
     )
 
+    datasets = {name: datasets_disk[name] for name in ["0", "1"]}
+    datasets_validation = {name: datasets_disk[name] for name in ["2"]}
+
     result = deco.run(
-        datasets=datasets_disk[:2],
+        datasets=datasets,
         components=components,
-        datasets_validation=datasets_disk[2:],
+        datasets_validation=datasets_validation,
     )
 
     assert result.flux_upsampled_total.shape == (32, 32)

@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from jolideco.priors.core import Prior, Priors, UniformPrior
-from .utils.io import (
+from jolideco.utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     IO_FORMATS_FLUX_COMPONENTS_READ,
@@ -18,9 +18,9 @@ from .utils.io import (
     get_reader,
     get_writer,
 )
-from .utils.misc import format_class_str
-from .utils.plot import add_cbar
-from .utils.torch import convolve_fft_torch, grid_weights, transpose
+from jolideco.utils.misc import format_class_str
+from jolideco.utils.plot import add_cbar
+from jolideco.utils.torch import grid_weights
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +29,6 @@ __all__ = [
     "FluxComponent",
     "FluxComponents",
     "SparseFluxComponent",
-    "NPredModel",
-    "NPredModels",
 ]
 
 
@@ -766,181 +764,3 @@ class FluxComponents(nn.ModuleDict):
 
     def __str__(self):
         return format_class_str(instance=self)
-
-
-class NPredModel(nn.Module):
-    """Predicted counts model with mutiple components
-
-    Parameters
-    ----------
-    flux : `~torch.Tensor`
-        Flux tensor
-    background : `~torch.Tensor`
-        Background tensor
-    exposure : `~torch.Tensor`
-        Exposure tensor
-    psf : `~torch.Tensor`
-        Point spread function
-    rmf : `~torch.Tensor`
-        Energy redistribution matrix.
-    upsampling_factor : int
-            Upsampling factor.
-    """
-
-    def __init__(
-        self, background, exposure, psf=None, rmf=None, upsampling_factor=None
-    ):
-        super().__init__()
-        self.register_buffer("background", background)
-        self.register_buffer("exposure", exposure)
-        self.register_buffer("psf", psf)
-        self.register_buffer("rmf", rmf)
-        self.upsampling_factor = upsampling_factor
-
-    @property
-    def shape_upsampled(self):
-        """Shape of the NPred model"""
-        return tuple(self.background.shape)
-
-    @property
-    def shape(self):
-        """Shape of the NPred model"""
-        shape = list(self.shape_upsampled)
-        shape[-1] //= self.upsampling_factor
-        shape[-2] //= self.upsampling_factor
-        return tuple(shape)
-
-    @classmethod
-    def from_dataset_numpy(
-        cls,
-        dataset,
-        upsampling_factor=None,
-        correct_exposure_edges=True,
-    ):
-        """Convert dataset to dataset of pytorch tensors
-
-        Parameters
-        ----------
-        dataset : dict of `~numpy.ndarray`
-            Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
-        upsampling_factor : int
-            Upsampling factor for exposure, background and psf.
-        correct_exposure_edges : bool
-            Correct psf leakage at the exposure edges.
-
-        Returns
-        -------
-        npred_model : `NPredModel`
-            Predicted counts model
-        """
-        dims = (np.newaxis, np.newaxis)
-
-        kwargs = {
-            "upsampling_factor": upsampling_factor,
-        }
-
-        for name in ["psf", "exposure", "background"]:
-            value = dataset[name]
-            tensor = torch.from_numpy(value[dims])
-
-            if upsampling_factor:
-                tensor = F.interpolate(
-                    tensor, scale_factor=upsampling_factor, mode="bilinear"
-                )
-
-            if name in ["psf", "background", "flux"] and upsampling_factor:
-                tensor = tensor / upsampling_factor**2
-
-            kwargs[name] = tensor
-
-        if correct_exposure_edges:
-            exposure = kwargs["exposure"]
-            weights = convolve_fft_torch(
-                image=torch.ones_like(exposure), kernel=kwargs["psf"]
-            )
-            kwargs["exposure"] = exposure / weights
-
-        return cls(**kwargs)
-
-    def forward(self, flux):
-        """Forward folding model evaluation.
-
-        Parameters
-        ----------
-        flux : `~torch.Tensor`
-            Flux tensor
-
-        Returns
-        -------
-        npred : `~torch.Tensor`
-            Predicted number of counts
-        """
-        npred = (flux + self.background) * self.exposure
-
-        if self.psf is not None:
-            npred = convolve_fft_torch(npred, self.psf)
-
-        if self.upsampling_factor:
-            npred = F.avg_pool2d(
-                npred, kernel_size=self.upsampling_factor, divisor_override=1
-            )
-
-        if self.rmf is not None:
-            npred_T = transpose(npred[0])
-            npred = torch.matmul(npred_T, self.rmf)
-            npred = transpose(npred)[None]
-
-        return torch.clip(npred, 0, torch.inf)
-
-
-class NPredModels(nn.ModuleDict):
-    """Flux components"""
-
-    def evaluate(self, fluxes):
-        """Evaluate npred model
-
-        Parameters
-        ----------
-        fluxes : tuple of  `~torch.tensor`
-            Flux components
-
-        Returns
-        -------
-        npred_total : `~torch.tensor`
-            Predicted counts tensort
-        """
-        values = list(self.values())
-
-        npred_total = torch.zeros(values[0].shape, device=fluxes[0].device)
-
-        for npred_model, flux in zip(values, fluxes):
-            npred = npred_model(flux=flux)
-            npred_total += npred
-
-        return npred_total
-
-    @classmethod
-    def from_dataset_numpy(cls, dataset, components):
-        """Create multiple npred models.
-
-        Parameters
-        ----------
-        dataset : dict of `~torch.tensor`
-            Dataset
-        components : `FluxComponents`
-            Flux components
-
-        Returns
-        -------
-        npred_models : `NPredModel`
-            NPredModels
-        """
-        values = []
-
-        for name, component in components.items():
-            npred_model = NPredModel.from_dataset_numpy(
-                dataset=dataset, upsampling_factor=component.upsampling_factor
-            )
-            values.append((name, npred_model))
-
-        return cls(values)
