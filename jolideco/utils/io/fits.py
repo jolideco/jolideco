@@ -14,6 +14,7 @@ FITS_META = {
     "use_log_flux": "LOG_FLUX",
     "upsampling_factor": "UPSAMPLE",
     "frozen": "FROZEN",
+    "shape": "SHAPE",
     "prior.type": "PTYPE",
     "prior.stride": "PSTRIDE",
     "prior.cycle_spin": "PSPIN",

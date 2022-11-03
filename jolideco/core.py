@@ -37,8 +37,6 @@ class MAPDeconvolver:
         Learning rate
     compute_error : bool
         Whether to compute flux error
-    fit_background_norm : bool
-        Whether to fit background norm.
     stop_early : bool
         Stop training early, once the average results on the last n test
         datasets do not improve any more.
@@ -56,7 +54,6 @@ class MAPDeconvolver:
         beta=1,
         learning_rate=0.1,
         compute_error=False,
-        fit_background_norm=False,
         stop_early=False,
         stop_early_n_average=10,
         device=TORCH_DEFAULT_DEVICE,
@@ -65,7 +62,6 @@ class MAPDeconvolver:
         self.beta = beta
         self.learning_rate = learning_rate
         self.compute_error = compute_error
-        self.fit_background_norm = fit_background_norm
         self.stop_early = stop_early
         self.stop_early_n_average = stop_early_n_average
 

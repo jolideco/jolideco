@@ -208,6 +208,7 @@ class GMMPatchPrior(Prior):
             )
 
         # filter patches with zero flux
+        # TODO: use mask for this....
         selection = torch.all(patches > 0, dim=1, keepdims=False)
         patches = patches[selection, :]
 
