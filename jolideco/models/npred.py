@@ -334,6 +334,17 @@ class NPredCalibrations(nn.ModuleDict):
     _registry_read = IO_FORMATS_NPRED_CALIBRATIONS_READ
     _registry_write = IO_FORMATS_NPRED_CALIBRATIONS_WRITE
 
+    def parameters(self, recurse=True):
+        """Parameter list"""
+        parameters = []
+
+        for model in self.values():
+            if not model.frozen:
+                pars = list(model.parameters())
+                parameters.extend(pars)
+
+        return parameters
+
     def to_dict(self):
         """Convert calibration configuration to dict, with simple data types.
 
