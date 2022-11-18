@@ -63,20 +63,23 @@ class NPredModel(nn.Module):
         return tuple(shape)
 
     @classmethod
-    def from_dataset_numpy(
-        cls,
-        dataset,
-        upsampling_factor=None,
-        correct_exposure_edges=True,
+    def from_numpy(
+        cls, background, exposure, psf, upsampling_factor, correct_exposure_edges=True
     ):
-        """Convert dataset to dataset of pytorch tensors
+        """Create NPred model from numpy arrays
 
         Parameters
         ----------
-        dataset : dict of `~numpy.ndarray`
-            Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
+        flux : `~torch.Tensor`
+            Flux tensor
+        background : `~torch.Tensor`
+            Background tensor
+        exposure : `~torch.Tensor`
+            Exposure tensor
+        psf : `~torch.Tensor`
+            Point spread function
         upsampling_factor : int
-            Upsampling factor for exposure, background and psf.
+                Upsampling factor.
         correct_exposure_edges : bool
             Correct psf leakage at the exposure edges.
 
@@ -89,12 +92,13 @@ class NPredModel(nn.Module):
 
         kwargs = {
             "upsampling_factor": upsampling_factor,
+            "background": torch.from_numpy(background[dims]),
+            "exposure": torch.from_numpy(exposure[dims]),
+            "psf": torch.from_numpy(psf[dims]),
         }
 
         for name in ["psf", "exposure", "background"]:
-            value = dataset[name]
-            tensor = torch.from_numpy(value[dims])
-
+            tensor = kwargs[name]
             if upsampling_factor:
                 tensor = F.interpolate(
                     tensor, scale_factor=upsampling_factor, mode="bilinear"
@@ -113,6 +117,37 @@ class NPredModel(nn.Module):
             kwargs["exposure"] = exposure / weights
 
         return cls(**kwargs)
+
+    @classmethod
+    def from_dataset_numpy(
+        cls,
+        dataset,
+        upsampling_factor=None,
+        correct_exposure_edges=True,
+    ):
+        """Create NPred model from dataset
+
+        Parameters
+        ----------
+        dataset : dict of `~numpy.ndarray`
+            Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
+        upsampling_factor : int
+            Upsampling factor for exposure, background and psf.
+        correct_exposure_edges : bool
+            Correct psf leakage at the exposure edges.
+
+        Returns
+        -------
+        npred_model : `NPredModel`
+            Predicted counts model
+        """
+        return cls.from_numpy(
+            background=dataset["background"],
+            exposure=dataset["exposure"],
+            psf=dataset["psf"],
+            upsampling_factor=upsampling_factor,
+            correct_exposure_edges=correct_exposure_edges,
+        )
 
     def forward(self, flux, background_norm=1):
         """Forward folding model evaluation.

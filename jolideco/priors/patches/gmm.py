@@ -392,4 +392,12 @@ GMM_REGISTRY = {
         "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-gleam-v0.2.fits",
         "format": "table",
     },
+    "nrao-jets-v0.1": {
+        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-nrao-jets-v0.1.fits",
+        "format": "table",
+    },
+    "nrao-jets-v0.2": {
+        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-nrao-jets-v0.2.fits",
+        "format": "table",
+    },
 }
