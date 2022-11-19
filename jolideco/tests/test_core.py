@@ -133,6 +133,9 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
         flux=flux_init, upsampling_factor=1, prior=InverseGammaPrior(alpha=10)
     )
 
+    for name, dataset in datasets_disk.items():
+        dataset["psf"] = {"flux-1": dataset["psf"]}
+
     result = deco.run(datasets=datasets_disk, components=components)
 
     assert result.flux_upsampled_total.shape == (32, 32)
@@ -140,7 +143,6 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 0.135454, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    print(trace_loss)
     assert_allclose(trace_loss["total"], 4.593177, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 1.743475, rtol=1e-3)
     assert_allclose(trace_loss["dataset-1"], 1.76312, rtol=1e-3)

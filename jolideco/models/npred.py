@@ -230,7 +230,7 @@ class NPredModels(nn.ModuleDict):
 
         Parameters
         ----------
-        dataset : dict of `~torch.tensor`
+        dataset : dict of `~numpy.ndarray`
             Dataset
         components : `FluxComponents`
             Flux components
@@ -243,9 +243,16 @@ class NPredModels(nn.ModuleDict):
         values = []
 
         for name, component in components.items():
-            # TODO: select component specific PSF and RMF here
-            npred_model = NPredModel.from_dataset_numpy(
-                dataset=dataset, upsampling_factor=component.upsampling_factor
+            psf = dataset["psf"]
+
+            if isinstance(psf, dict):
+                psf = psf[name]
+
+            npred_model = NPredModel.from_numpy(
+                background=dataset["background"],
+                exposure=dataset["exposure"],
+                psf=psf,
+                upsampling_factor=component.upsampling_factor,
             )
             values.append((name, npred_model))
 
