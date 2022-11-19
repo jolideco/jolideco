@@ -210,6 +210,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
 
 
+@pytest.mark.xfail
 def test_map_deconvolver_gmm_odd_stride_jitter():
     random_state = np.random.RandomState(642020)
 
