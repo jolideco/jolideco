@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
@@ -36,11 +37,52 @@ FITS_META = {
 FITS_META_INVERSE = {value: key for key, value in FITS_META.items()}
 
 
+def sparse_flux_component_to_table_hdu(flux_component, name):
+    """Convert a sparse flux component to table HDU
+
+    Parameters
+    ----------
+    flux_component : `SparseFluxComponent`
+        Flux component to serialize to a table HDU
+    name : str
+        Name of the HDU
+
+    Returns
+    -------
+    hdu : `~astropy.io.fits.BinTableHDU`
+        Table HDU
+    """
+    if flux_component.wcs:
+        header = flux_component.wcs.to_header()
+    else:
+        header = fits.Header()
+
+    data = flux_component.to_dict()
+
+    table = Table()
+    table["x_pos"] = np.atleast_1d(data.pop("x_pos"))
+    table["y_pos"] = np.atleast_1d(data.pop("y_pos"))
+    table["flux"] = np.atleast_1d(data.pop("flux"))
+
+    shape = data.pop("shape")
+    header["IMSHAPE1"] = shape[-1]
+    header["IMSHAPE2"] = shape[-2]
+
+    meta = flatten_dict(data, sep=META_SEP)
+
+    for key, value in meta.items():
+        fits_key = FITS_META[key]
+        header[fits_key] = value
+
+    return fits.BinTableHDU(
+        data=table,
+        header=header,
+        name=f"{name.upper()}",
+    )
+
+
 def flux_component_to_image_hdu(flux_component, name):
     """Convert a flux component into and image HDU
-
-    The meta information is just dumbed as a YAML string into the
-    FITS header.
 
     Parameters
     ----------
@@ -118,9 +160,15 @@ def flux_components_to_hdulist(flux_components, name_suffix=""):
     hdulist = []
 
     for name, component in flux_components.items():
-        hdu = flux_component_to_image_hdu(
-            name=name + name_suffix, flux_component=component
-        )
+        name = name + name_suffix
+
+        if component.is_sparse:
+            hdu = sparse_flux_component_to_table_hdu(
+                flux_component=component, name=name
+            )
+        else:
+            hdu = flux_component_to_image_hdu(flux_component=component, name=name)
+
         hdulist.append(hdu)
 
     return hdulist
@@ -244,7 +292,7 @@ def write_flux_component_to_fits(flux_component, filename, overwrite):
 
     Parameters
     ----------
-    flux_component : `FluxComponent`
+    flux_component : `FluxComponent` or `SparseFluxComponent`
         Flux component to serialize to FITS file
     filename : `Path`
         Output filename
@@ -253,7 +301,13 @@ def write_flux_component_to_fits(flux_component, filename, overwrite):
     """
     hdulist = fits.HDUList()
 
-    hdu = flux_component_to_image_hdu(flux_component=flux_component, name="primary")
+    if flux_component.is_sparse:
+        hdu = sparse_flux_component_to_table_hdu(
+            flux_component=flux_component, name="primary"
+        )
+    else:
+        hdu = flux_component_to_image_hdu(flux_component=flux_component, name="primary")
+
     hdulist.append(hdu)
 
     log.info(f"writing {filename}")
