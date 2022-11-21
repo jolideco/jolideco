@@ -365,7 +365,12 @@ def read_flux_component_from_fits(filename, hdu_name=0):
         Flux component
     """
     with fits.open(filename) as hdulist:
-        return flux_component_from_image_hdu(hdu=hdulist[hdu_name])
+        hdu = hdulist[hdu_name]
+
+        if isinstance(hdu, fits.ImageHDU):
+            return flux_component_from_image_hdu(hdu=hdu)
+        elif isinstance(hdu, fits.BinTableHDU):
+            return sparse_flux_component_from_table_hdu(hdu=hdu)
 
 
 def read_npred_calibrations_from_fits(filename):

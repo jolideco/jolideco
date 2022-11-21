@@ -14,6 +14,7 @@ from jolideco.utils.io import (
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     IO_FORMATS_FLUX_COMPONENTS_READ,
     IO_FORMATS_FLUX_COMPONENTS_WRITE,
+    IO_FORMATS_SPARSE_FLUX_COMPONENT_READ,
     IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE,
     document_io_formats,
     get_reader,
@@ -64,6 +65,7 @@ class SparseFluxComponent(nn.Module):
     _shape_eval_y = (1, 1, 1, -1, 1)
 
     _registry_write = IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE
+    _registry_read = IO_FORMATS_SPARSE_FLUX_COMPONENT_READ
 
     def __init__(
         self,
@@ -286,6 +288,28 @@ class SparseFluxComponent(nn.Module):
         return writer(
             flux_component=self, filename=filename, overwrite=overwrite, **kwargs
         )
+
+    @classmethod
+    @document_io_formats(registry=_registry_read)
+    def read(cls, filename, format=None):
+        """Read sparse flux component from file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        format : {formats}
+            Format to use.
+
+        Returns
+        -------
+        flux_component : `SparseFluxComponent`
+            Flux component
+        """
+        reader = get_reader(
+            filename=filename, format=format, registry=cls._registry_read
+        )
+        return reader(filename)
 
 
 def freeze_mask(module, grad_input, grad_output):
