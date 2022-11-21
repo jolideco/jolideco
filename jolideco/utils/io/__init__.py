@@ -33,6 +33,7 @@ __all__ = [
     "IO_FORMATS_MAP_RESULT_WRITE",
     "IO_FORMATS_FLUX_COMPONENT_READ",
     "IO_FORMATS_FLUX_COMPONENT_WRITE",
+    "IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE",
 ]
 
 
@@ -174,6 +175,10 @@ IO_FORMATS_FLUX_COMPONENTS_WRITE = {
     "fits": write_flux_components_to_fits,
     "asdf": write_flux_components_to_asdf,
     "yaml": write_flux_components_to_yaml,
+}
+
+IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE = {
+    "fits": write_flux_components_to_fits,
 }
 
 IO_FORMATS_NPRED_CALIBRATIONS_READ = {

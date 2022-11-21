@@ -14,6 +14,7 @@ from jolideco.utils.io import (
     IO_FORMATS_FLUX_COMPONENT_WRITE,
     IO_FORMATS_FLUX_COMPONENTS_READ,
     IO_FORMATS_FLUX_COMPONENTS_WRITE,
+    IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE,
     document_io_formats,
     get_reader,
     get_writer,
@@ -55,11 +56,14 @@ class SparseFluxComponent(nn.Module):
         World coordinate transform object
     """
 
+    is_sparse = True
     upsampling_factor = 1
 
     _shape_eval = (-1, 1, 1, 1, 1)
     _shape_eval_x = (1, 1, 1, 1, -1)
     _shape_eval_y = (1, 1, 1, -1, 1)
+
+    _registry_write = IO_FORMATS_SPARSE_FLUX_COMPONENT_WRITE
 
     def __init__(
         self,
@@ -262,6 +266,27 @@ class SparseFluxComponent(nn.Module):
         """String representation"""
         return format_class_str(instance=self)
 
+    @document_io_formats(registry=_registry_write)
+    def write(self, filename, format=None, overwrite=False, **kwargs):
+        """Write flux component fo file
+
+        Parameters
+        ----------
+        filename : str or `Path`
+            Output filename
+        overwrite : bool
+            Overwrite file.
+        format : {formats}
+            Format to use.
+        """
+        writer = get_writer(
+            filename=filename, format=format, registry=self._registry_write
+        )
+
+        return writer(
+            flux_component=self, filename=filename, overwrite=overwrite, **kwargs
+        )
+
 
 def freeze_mask(module, grad_input, grad_output):
     """Freeze masked parameters"""
@@ -293,6 +318,7 @@ class FluxComponent(nn.Module):
         World coordinate transform object
     """
 
+    is_sparse = False
     _registry_read = IO_FORMATS_FLUX_COMPONENT_READ
     _registry_write = IO_FORMATS_FLUX_COMPONENT_WRITE
 
