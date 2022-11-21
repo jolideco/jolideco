@@ -22,7 +22,6 @@ def test_flux_components_io(format, tmpdir):
 
     data = calibrations.to_dict()["dataset-1"]
 
-    print(calibrations_new.to_dict())
     data_new = calibrations_new.to_dict()["dataset-1"]
 
     assert_allclose(data["shift_x"], data_new["shift_x"])

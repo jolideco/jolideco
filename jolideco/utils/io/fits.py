@@ -283,7 +283,11 @@ def npred_calibrations_from_table(table):
 
     for row in table:
         data_row = dict(zip(row.colnames, row.as_void()))
-        name = data_row.pop("name").decode("utf-8")
+        name = data_row.pop("name")
+
+        if isinstance(name, bytes):
+            name = name.decode("utf-8")
+
         data[name] = data_row
 
     return NPredCalibrations.from_dict(data=data)
