@@ -65,8 +65,8 @@ def sparse_flux_component_to_table_hdu(flux_component, name):
     table["flux"] = np.atleast_1d(data.pop("flux"))
 
     shape = data.pop("shape")
-    header["IMSHAPE1"] = shape[-1]
-    header["IMSHAPE2"] = shape[-2]
+    header["IMSHAPE1"] = shape[-2]
+    header["IMSHAPE2"] = shape[-1]
 
     meta = flatten_dict(data, sep=META_SEP)
 
@@ -78,6 +78,35 @@ def sparse_flux_component_to_table_hdu(flux_component, name):
         data=table,
         header=header,
         name=f"{name.upper()}",
+    )
+
+
+def sparse_flux_component_from_table_hdu(hdu):
+    """Create flux component from image HDU
+
+    Parameters
+    ----------
+    hdu : `~astropy.io.fits.BinTableHDU`
+        Image HDU
+
+    Returns
+    -------
+    flux_component : `SparseFluxComponent`
+        Sparse flux component
+    """
+    from jolideco.models import SparseFluxComponent
+
+    table = Table.read(hdu)
+
+    shape = (table.meta["IMSHAPE1"], table.meta["IMSHAPE2"])
+
+    return SparseFluxComponent.from_numpy(
+        x_pos=table["x_pos"].data,
+        y_pos=table["y_pos"].data,
+        flux=table["flux"].data,
+        shape=shape,
+        use_log_flux=table.meta["LOG_FLUX"],
+        frozen=table.meta["FROZEN"],
     )
 
 
@@ -192,10 +221,16 @@ def flux_components_from_hdulist(hdulist):
     flux_components = FluxComponents()
 
     for hdu in hdulist:
+        name = hdu.name.replace(SUFFIX_INIT, "").lower()
+
         if isinstance(hdu, fits.ImageHDU):
-            name = hdu.name.replace(SUFFIX_INIT, "").lower()
             component = flux_component_from_image_hdu(hdu=hdu)
-            flux_components[name] = component
+        elif isinstance(hdu, fits.BinTableHDU):
+            component = sparse_flux_component_from_table_hdu(hdu=hdu)
+        else:
+            continue
+
+        flux_components[name] = component
 
     return flux_components
 

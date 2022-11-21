@@ -137,9 +137,9 @@ class SparseFluxComponent(nn.Module):
         sparse_flux_component : `SparseFluxComponent`
             Sparse flux component
         """
-        flux = torch.from_numpy(flux)
-        x_pos = torch.from_numpy(x_pos)
-        y_pos = torch.from_numpy(y_pos)
+        flux = torch.from_numpy(flux.astype(np.float32))
+        x_pos = torch.from_numpy(x_pos.astype(np.float32))
+        y_pos = torch.from_numpy(y_pos.astype(np.float32))
 
         return cls(flux=flux, x_pos=x_pos, y_pos=y_pos, **kwargs)
 

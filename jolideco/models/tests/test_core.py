@@ -192,13 +192,13 @@ def test_sparse_flux_components_io(format, tmpdir):
 
     flux = torch.ones((3))
     x_pos = torch.arange(3)
-    y_pos = torch.arange(3)
+    y_pos = torch.arange(3) + 0.1
 
     components["flux-sparse"] = SparseFluxComponent(
         x_pos=x_pos,
         y_pos=y_pos,
         flux=flux,
-        shape=(11, 11),
+        shape=(11, 9),
         use_log_flux=False,
         frozen=False,
     )
@@ -209,4 +209,13 @@ def test_sparse_flux_components_io(format, tmpdir):
 
     components_new = FluxComponents.read(filename=filename, format=format)
 
-    assert list(components_new) == ["flux-uniform", "flux-point"]
+    assert list(components_new) == ["flux-sparse"]
+
+    component = components_new["flux-sparse"]
+    assert_allclose(component.x_pos_numpy, [0, 1, 2])
+    assert_allclose(component.y_pos_numpy, [0.1, 1.1, 2.1])
+
+    component.flux_numpy.shape == (11, 9)
+
+    assert component.shape == (1, 1, 11, 9)
+    assert not component.frozen
