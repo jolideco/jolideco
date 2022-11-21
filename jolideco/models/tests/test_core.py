@@ -184,3 +184,29 @@ def test_flux_components_io(prior_class, format, tmpdir):
     components_new = FluxComponents.read(filename=filename, format=format)
 
     assert list(components_new) == ["flux-uniform", "flux-point"]
+
+
+@pytest.mark.parametrize("format", ["fits"])
+def test_sparse_flux_components_io(format, tmpdir):
+    components = FluxComponents()
+
+    flux = torch.ones((3))
+    x_pos = torch.arange(3)
+    y_pos = torch.arange(3)
+
+    components["flux-sparse"] = SparseFluxComponent(
+        x_pos=x_pos,
+        y_pos=y_pos,
+        flux=flux,
+        shape=(11, 11),
+        use_log_flux=False,
+        frozen=False,
+    )
+
+    filename = tmpdir / f"test.{format}"
+
+    components.write(filename=filename, format=format)
+
+    components_new = FluxComponents.read(filename=filename, format=format)
+
+    assert list(components_new) == ["flux-uniform", "flux-point"]
