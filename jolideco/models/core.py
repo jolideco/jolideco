@@ -215,13 +215,15 @@ class SparseFluxComponent(nn.Module):
         """Upsampled flux"""
         return self.flux
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax=None, kwargs_norm=None, **kwargs):
         """Plot flux component as sky image
 
         Parameters
         ----------
         ax : `~matplotlib.pyplot.Axes`
             Plotting axes
+        kwargs_norm: dict
+            Keyword arguments passed to `~astropy.visualization.simple_norm`
         **kwargs : dict
             Keywords forwarded to `~matplotlib.pyplot.imshow`
 
@@ -233,10 +235,16 @@ class SparseFluxComponent(nn.Module):
         if ax is None:
             ax = plt.subplot(projection=self.wcs)
 
-        kwargs.setdefault("interpolation", "None")
+        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
 
         flux = self.flux_numpy
-        _ = ax.imshow(flux, origin="lower", **kwargs)
+
+        norm = simple_norm(flux, **kwargs_norm)
+
+        kwargs.setdefault("norm", norm)
+        kwargs.setdefault("interpolation", "None")
+
+        ax.imshow(flux, origin="lower", **kwargs)
         return ax
 
     def to_dict(self, **kwargs):
@@ -632,13 +640,15 @@ class FluxComponent(nn.Module):
             flux_component=self, filename=filename, overwrite=overwrite, **kwargs
         )
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax=None, kwargs_norm=None, **kwargs):
         """Plot flux component as sky image
 
         Parameters
         ----------
         ax : `~matplotlib.pyplot.Axes`
             Plotting axes
+        kwargs_norm: dict
+            Keyword arguments passed to `~astropy.visualization.simple_norm`
         **kwargs : dict
             Keywords forwarded to `~matplotlib.pyplot.imshow`
 
@@ -650,8 +660,15 @@ class FluxComponent(nn.Module):
         if ax is None:
             ax = plt.subplot(projection=self.wcs)
 
+        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+
         flux = self.flux_upsampled_numpy
-        _ = ax.imshow(flux, origin="lower", **kwargs)
+
+        norm = simple_norm(flux, **kwargs_norm)
+
+        kwargs.setdefault("norm", norm)
+        kwargs.setdefault("interpolation", "None")
+        ax.imshow(flux, origin="lower", **kwargs)
         return ax
 
     def as_gp_map(self):
@@ -824,11 +841,15 @@ class FluxComponents(nn.ModuleDict):
             flux_components=self, filename=filename, overwrite=overwrite, **kwargs
         )
 
-    def plot(self, figsize=None, **kwargs):
+    def plot(self, figsize=None, kwargs_norm=None, **kwargs):
         """Plot images of the flux components
 
         Parameters
         ----------
+        fisize : tuple of int
+            Figure size.
+        kwargs_norm: dict
+            Keyword arguments passed to `~astropy.visualization.simple_norm`
         **kwargs : dict
             Keywords forwared to `~matplotlib.pyplot.imshow`
 
@@ -842,12 +863,6 @@ class FluxComponents(nn.ModuleDict):
         if figsize is None:
             figsize = (ncols * 5, 5)
 
-        norm = simple_norm(
-            self.flux_upsampled_total_numpy, min_cut=0, stretch="asinh", asinh_a=0.01
-        )
-
-        kwargs.setdefault("norm", norm)
-
         fig, axes = plt.subplots(
             nrows=1,
             ncols=ncols,
@@ -855,12 +870,18 @@ class FluxComponents(nn.ModuleDict):
             figsize=figsize,
         )
 
-        im = axes[0].imshow(self.flux_upsampled_total_numpy, origin="lower", **kwargs)
+        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+
+        flux = self.flux_upsampled_total_numpy
+
+        norm = simple_norm(flux, **kwargs_norm)
+        im = axes[0].imshow(flux, origin="lower", norm=norm, **kwargs)
+
         axes[0].set_title("Total")
 
         for ax, name in zip(axes[1:], self.fluxes_upsampled_numpy):
             component = self[name]
-            component.plot(ax=ax, **kwargs)
+            component.plot(ax=ax, kwargs_norm=kwargs_norm, **kwargs)
             ax.set_title(name.title())
 
         add_cbar(im=im, ax=ax, fig=fig)
