@@ -223,6 +223,9 @@ def flux_components_from_hdulist(hdulist):
     for hdu in hdulist:
         name = hdu.name.replace(SUFFIX_INIT, "").lower()
 
+        if name in ["config", "trace_loss", "calibrations"]:
+            continue
+
         if isinstance(hdu, fits.ImageHDU):
             component = flux_component_from_image_hdu(hdu=hdu)
         elif isinstance(hdu, fits.BinTableHDU):
@@ -280,7 +283,7 @@ def npred_calibrations_from_table(table):
 
     for row in table:
         data_row = dict(zip(row.colnames, row.as_void()))
-        name = data_row.pop("name").decode("utf-8")
+        name = str(data_row.pop("name"))
         data[name] = data_row
 
     return NPredCalibrations.from_dict(data=data)
@@ -434,11 +437,8 @@ def write_map_result_to_fits(result, filename, overwrite):
         hdulist.append(hdu)
 
         table = npred_calibrations_to_table(result.calibrations_init)
-        hdu = fits.BinTableHDU(table, name="CALIBRATIONS_INIT")
+        hdu = fits.BinTableHDU(table, name="CALIBRATIONS" + SUFFIX_INIT)
         hdulist.append(hdu)
-
-    hdus = flux_components_to_hdulist(result.components, name_suffix=SUFFIX_INIT)
-    hdulist.extend(hdus)
 
     table = result.trace_loss.copy()
     table.meta = None
@@ -475,11 +475,11 @@ def read_map_result_from_fits(filename):
 
         trace_loss = Table.read(hdulist["TRACE_LOSS"])
 
-        hdulist = [hdu for hdu in hdulist if SUFFIX_INIT not in hdu.name]
-        components = flux_components_from_hdulist(hdulist=hdulist)
+        hdulist_components = [hdu for hdu in hdulist if SUFFIX_INIT not in hdu.name]
+        components = flux_components_from_hdulist(hdulist=hdulist_components)
 
-        hdulist = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
-        components_init = flux_components_from_hdulist(hdulist=hdulist)
+        hdulist_components = [hdu for hdu in hdulist if SUFFIX_INIT in hdu.name]
+        components_init = flux_components_from_hdulist(hdulist=hdulist_components)
 
         if "CALIBRATIONS" in hdulist:
             table = Table.read(hdulist["CALIBRATIONS"])
@@ -487,8 +487,8 @@ def read_map_result_from_fits(filename):
         else:
             calibrations = None
 
-        if "CALIBRATIONS_INIT" in hdulist:
-            table = Table.read(hdulist["CALIBRATIONS_INIT"])
+        if "CALIBRATIONS" + SUFFIX_INIT in hdulist:
+            table = Table.read(hdulist["CALIBRATIONS" + SUFFIX_INIT])
             calibrations_init = npred_calibrations_from_table(table=table)
         else:
             calibrations_init = None
