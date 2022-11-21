@@ -3,7 +3,7 @@ import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
-from jolideco.utils.misc import flatten_dict, table_from_row_data, unflatten_dict
+from jolideco.utils.misc import flatten_dict, unflatten_dict
 
 log = logging.getLogger(__name__)
 
@@ -260,7 +260,7 @@ def npred_calibrations_to_table(npred_calibrations):
         row.update(value)
         rows.append(row)
 
-    return table_from_row_data(rows=rows)
+    return Table(rows)
 
 
 def npred_calibrations_from_table(table):
@@ -283,7 +283,7 @@ def npred_calibrations_from_table(table):
 
     for row in table:
         data_row = dict(zip(row.colnames, row.as_void()))
-        name = str(data_row.pop("name"))
+        name = data_row.pop("name").decode("utf-8")
         data[name] = data_row
 
     return NPredCalibrations.from_dict(data=data)
@@ -370,7 +370,7 @@ def read_flux_component_from_fits(filename, hdu_name=0):
     with fits.open(filename) as hdulist:
         hdu = hdulist[hdu_name]
 
-        if isinstance(hdu, fits.ImageHDU):
+        if isinstance(hdu, (fits.ImageHDU, fits.PrimaryHDU)):
             return flux_component_from_image_hdu(hdu=hdu)
         elif isinstance(hdu, fits.BinTableHDU):
             return sparse_flux_component_from_table_hdu(hdu=hdu)

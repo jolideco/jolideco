@@ -1,6 +1,4 @@
 from collections.abc import Mapping
-from astropy import units as u
-from astropy.table import Table
 
 __all__ = ["to_str", "format_class_str"]
 
@@ -84,27 +82,3 @@ def format_class_str(instance):
     data = instance.to_dict()
     info += to_str(data=data, level=1)
     return info.expandtabs(tabsize=TABSIZE)
-
-
-def table_from_row_data(rows, **kwargs):
-    """Helper function to create table objects from row data.
-
-    Parameters
-    ----------
-    rows : list
-        List of row data (each row a dict)
-    """
-    table = Table(**kwargs)
-
-    if len(rows) == 0:
-        return table
-
-    colnames = list(rows[0].keys())
-
-    for name in colnames:
-        coldata = [_[name] for _ in rows]
-        if isinstance(rows[0][name], u.Quantity):
-            coldata = u.Quantity(coldata, unit=rows[0][name].unit)
-        table[name] = coldata
-
-    return table

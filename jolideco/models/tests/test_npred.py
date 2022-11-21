@@ -21,7 +21,10 @@ def test_flux_components_io(format, tmpdir):
     calibrations_new = NPredCalibrations.read(filename=filename, format=format)
 
     data = calibrations.to_dict()["dataset-1"]
+
+    print(calibrations_new.to_dict())
     data_new = calibrations_new.to_dict()["dataset-1"]
+
     assert_allclose(data["shift_x"], data_new["shift_x"])
     assert_allclose(data["shift_y"], data_new["shift_y"])
     assert_allclose(data["background_norm"], data_new["background_norm"])
