@@ -139,6 +139,10 @@ class SparseFluxComponent(nn.Module):
         sparse_flux_component : `SparseFluxComponent`
             Sparse flux component
         """
+        flux = np.atleast_1d(flux)
+        x_pos = np.atleast_1d(x_pos)
+        y_pos = np.atleast_1d(y_pos)
+
         flux = torch.from_numpy(flux.astype(np.float32))
         x_pos = torch.from_numpy(x_pos.astype(np.float32))
         y_pos = torch.from_numpy(y_pos.astype(np.float32))
@@ -690,6 +694,16 @@ class FluxComponents(nn.ModuleDict):
 
     _registry_read = IO_FORMATS_FLUX_COMPONENTS_READ
     _registry_write = IO_FORMATS_FLUX_COMPONENTS_WRITE
+
+    def parameters(self):
+        """Parameter list"""
+        parameters = []
+
+        for component in self.values():
+            if not component.frozen:
+                parameters.extend(component.parameters())
+
+        return parameters
 
     @property
     def priors(self):
