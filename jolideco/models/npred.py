@@ -206,6 +206,11 @@ class NPredModels(nn.ModuleDict):
 
             npreds[name] = npred_model(flux=flux)
 
+        if self.calibration is not None:
+            npreds["background"] = self.background * self.calibration.background_norm
+        else:
+            npreds["background"] = self.background
+
         return npreds
 
     def evaluate(self, fluxes):
@@ -221,20 +226,12 @@ class NPredModels(nn.ModuleDict):
         npred_total : `~torch.tensor`
             Predicted counts tensor
         """
-        values = list(self.values())
+        npreds = self.evaluate_per_component(fluxes=fluxes)
 
-        npred_total = torch.zeros(values[0].shape, device=fluxes[0].device)
+        npred_total = torch.zeros(self.background.shape, device=fluxes[0].device)
 
-        for npred_model, flux in zip(values, fluxes):
-            if self.calibration is not None:
-                flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
-
-            npred_total += npred_model(flux=flux)
-
-        if self.calibration is not None:
-            npred_total += self.background * self.calibration.background_norm
-        else:
-            npred_total += self.background
+        for npred in npreds.values():
+            npred_total += npred
 
         return npred_total
 
