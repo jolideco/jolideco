@@ -73,9 +73,11 @@ def test_simple_npred_model(dataset):
     flux_init[0, 0, 10, 10] = 1
 
     component = FluxComponent(flux_upsampled=flux_init)
+
+    background = dataset.pop("background")
     npred_model = NPredModel(**dataset)
 
-    npred = npred_model(flux=component.flux)
+    npred = npred_model(flux=component.flux) + background
 
     npred = npred.detach().numpy()[0, 0]
     assert_allclose(npred[10, 10], 1.017218, rtol=1e-5)

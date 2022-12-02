@@ -27,8 +27,6 @@ class NPredModel(nn.Module):
     ----------
     flux : `~torch.Tensor`
         Flux tensor
-    background : `~torch.Tensor`
-        Background tensor
     exposure : `~torch.Tensor`
         Exposure tensor
     psf : `~torch.Tensor`
@@ -39,11 +37,8 @@ class NPredModel(nn.Module):
             Upsampling factor.
     """
 
-    def __init__(
-        self, background, exposure, psf=None, rmf=None, upsampling_factor=None
-    ):
+    def __init__(self, exposure, psf=None, rmf=None, upsampling_factor=None):
         super().__init__()
-        self.register_buffer("background", background)
         self.register_buffer("exposure", exposure)
         self.register_buffer("psf", psf)
         self.register_buffer("rmf", rmf)
@@ -52,7 +47,7 @@ class NPredModel(nn.Module):
     @property
     def shape_upsampled(self):
         """Shape of the NPred model"""
-        return tuple(self.background.shape)
+        return tuple(self.exposure.shape)
 
     @property
     def shape(self):
@@ -63,17 +58,13 @@ class NPredModel(nn.Module):
         return tuple(shape)
 
     @classmethod
-    def from_numpy(
-        cls, background, exposure, psf, upsampling_factor, correct_exposure_edges=True
-    ):
+    def from_numpy(cls, exposure, psf, upsampling_factor, correct_exposure_edges=True):
         """Create NPred model from numpy arrays
 
         Parameters
         ----------
         flux : `~torch.Tensor`
             Flux tensor
-        background : `~torch.Tensor`
-            Background tensor
         exposure : `~torch.Tensor`
             Exposure tensor
         psf : `~torch.Tensor`
@@ -92,19 +83,18 @@ class NPredModel(nn.Module):
 
         kwargs = {
             "upsampling_factor": upsampling_factor,
-            "background": torch.from_numpy(background[dims]),
             "exposure": torch.from_numpy(exposure[dims]),
             "psf": torch.from_numpy(psf[dims]),
         }
 
-        for name in ["psf", "exposure", "background"]:
+        for name in ["psf", "exposure"]:
             tensor = kwargs[name]
             if upsampling_factor:
                 tensor = F.interpolate(
                     tensor, scale_factor=upsampling_factor, mode="bilinear"
                 )
 
-            if name in ["psf", "background", "flux"] and upsampling_factor:
+            if name in ["psf", "flux"] and upsampling_factor:
                 tensor = tensor / upsampling_factor**2
 
             kwargs[name] = tensor
@@ -142,29 +132,26 @@ class NPredModel(nn.Module):
             Predicted counts model
         """
         return cls.from_numpy(
-            background=dataset["background"],
             exposure=dataset["exposure"],
             psf=dataset["psf"],
             upsampling_factor=upsampling_factor,
             correct_exposure_edges=correct_exposure_edges,
         )
 
-    def forward(self, flux, background_norm=1):
+    def forward(self, flux):
         """Forward folding model evaluation.
 
         Parameters
         ----------
         flux : `~torch.Tensor`
             Flux tensor
-        background_norm : `~torch.Tensor`
-            Background norm
 
         Returns
         -------
         npred : `~torch.Tensor`
             Predicted number of counts
         """
-        npred = (flux + self.background * background_norm) * self.exposure
+        npred = flux * self.exposure
 
         if self.psf is not None:
             npred = convolve_fft_torch(npred, self.psf)
@@ -187,12 +174,15 @@ class NPredModels(nn.ModuleDict):
 
     Parameters
     ----------
+    background : `~torch.Tensor`
+        Background tensor
     calibration : `NPredCalibration`
         Calibration model.
     """
 
-    def __init__(self, calibration=None, *args, **kwargs):
+    def __init__(self, background, calibration=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.background = self.register_buffer("background", background)
         self.calibration = calibration
 
     def evaluate_per_component(self, fluxes):
@@ -202,11 +192,8 @@ class NPredModels(nn.ModuleDict):
         for (name, npred_model), flux in zip(self.items(), fluxes):
             if self.calibration is not None:
                 flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
-                background_norm = self.calibration.background_norm
-            else:
-                background_norm = 1.0
 
-            npreds[name] = npred_model(flux=flux, background_norm=background_norm)
+            npreds[name] = npred_model(flux=flux)
 
         return npreds
 
@@ -230,12 +217,13 @@ class NPredModels(nn.ModuleDict):
         for npred_model, flux in zip(values, fluxes):
             if self.calibration is not None:
                 flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
-                background_norm = self.calibration.background_norm
-            else:
-                background_norm = 1.0
 
-            npred = npred_model(flux=flux, background_norm=background_norm)
-            npred_total += npred
+            npred_total += npred_model(flux=flux)
+
+        if self.calibration is not None:
+            npred_total += self.background * self.calibration.background_norm
+        else:
+            npred_total += self.background
 
         return npred_total
 
@@ -264,14 +252,14 @@ class NPredModels(nn.ModuleDict):
                 psf = psf[name]
 
             npred_model = NPredModel.from_numpy(
-                background=dataset["background"],
                 exposure=dataset["exposure"],
                 psf=psf,
                 upsampling_factor=component.upsampling_factor,
             )
             values.append((name, npred_model))
 
-        return cls(calibration, values)
+        background = torch.from_numpy(dataset["background"][np.newaxis, np.newaxis])
+        return cls(background, calibration, values)
 
 
 class NPredCalibration(nn.Module):
