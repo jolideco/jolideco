@@ -195,6 +195,21 @@ class NPredModels(nn.ModuleDict):
         super().__init__(*args, **kwargs)
         self.calibration = calibration
 
+    def evaluate_per_component(self, fluxes):
+        """Evaluate npred model per component"""
+        npreds = {}
+
+        for (name, npred_model), flux in zip(self.items(), fluxes):
+            if self.calibration is not None:
+                flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
+                background_norm = self.calibration.background_norm
+            else:
+                background_norm = 1.0
+
+            npreds[name] = npred_model(flux=flux, background_norm=background_norm)
+
+        return npreds
+
     def evaluate(self, fluxes):
         """Evaluate npred model
 
