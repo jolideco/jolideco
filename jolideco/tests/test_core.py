@@ -64,14 +64,14 @@ def test_map_deconvolver_str():
 
 
 def test_map_deconvolver_result(deconvolver_result):
-    assert_allclose(deconvolver_result.flux_total[12, 12], 1.858458, rtol=1e-3)
-    assert_allclose(deconvolver_result.flux_total[0, 0], 0.272629, rtol=1e-3)
+    assert_allclose(deconvolver_result.flux_total[12, 12], 1.542659, rtol=1e-3)
+    assert_allclose(deconvolver_result.flux_total[0, 0], 3.927929, rtol=1e-3)
 
     trace_loss = deconvolver_result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 5.680209, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 1.904194, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-1"], 1.897707, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-2"], 1.878308, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 5.842237, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.956523, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-1"], 1.945902, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-2"], 1.939812, rtol=1e-3)
 
 
 @pytest.mark.parametrize("format", ["fits", "asdf"])
@@ -82,8 +82,8 @@ def test_map_deconvolver_result_io(format, deconvolver_result, tmpdir):
     result = MAPDeconvolverResult.read(filename=filename, format=format)
 
     assert result.config["n_epochs"] == 100
-    assert_allclose(result.flux_total[12, 12], 1.858458, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 0.272629, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 1.542659, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 3.927929, rtol=1e-3)
 
 
 def test_map_deconvolver_result_plot(deconvolver_result):
@@ -109,14 +109,14 @@ def test_map_deconvolver_usampling(datasets_disk):
 
     assert result.flux_upsampled_total.shape == (64, 64)
     assert result.components["flux-1"].upsampling_factor == 2
-    assert_allclose(result.flux_total[12, 12], 3.620424, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 0.849501, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 3.565998, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 1.605782, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 5.784892, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 1.919231, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-1"], 1.937949, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-2"], 1.927711, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 5.844786, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.946759, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-1"], 1.958015, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-2"], 1.940012, rtol=1e-3)
 
 
 def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
@@ -139,16 +139,16 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     result = deco.run(datasets=datasets_disk, components=components)
 
     assert result.flux_upsampled_total.shape == (32, 32)
-    assert_allclose(result.flux_total[12, 12], 0.136744, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 0.135454, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 0.136798, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.136563, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 4.593177, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 1.743475, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-1"], 1.76312, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-2"], 1.737586, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 4.77867, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.817045, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-1"], 1.825257, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-2"], 1.786648, rtol=1e-3)
 
-    assert_allclose(trace_loss["prior-flux-1"], 0.651003, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], 0.65028, rtol=1e-3)
 
 
 def test_map_deconvolver_validation_datasets(datasets_disk):
@@ -176,14 +176,14 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     )
 
     assert result.flux_upsampled_total.shape == (32, 32)
-    assert_allclose(result.flux_total[12, 12], 1.3698, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 0.320872, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 1.382768, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 0.407479, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 4.141166, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 1.846206, rtol=1e-3)
-    assert_allclose(trace_loss["prior-flux-1"], -0.4010013, rtol=1e-3)
-    assert_allclose(trace_loss["datasets-validation-total"], 1.881669, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 4.253348, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 1.917588, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], -0.412892, rtol=1e-3)
+    assert_allclose(trace_loss["datasets-validation-total"], 1.888031, rtol=1e-3)
 
 
 def test_map_deconvolver_gmm(datasets_disk):
@@ -204,11 +204,11 @@ def test_map_deconvolver_gmm(datasets_disk):
 
     assert result.flux_upsampled_total.shape == (64, 64)
     assert_allclose(result.flux_total[12, 12], 11.981349, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 10.000738, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 10.44422, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 19.691189, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 7.064192, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 18.82799, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 6.753493, rtol=1e-3)
     assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
 
 

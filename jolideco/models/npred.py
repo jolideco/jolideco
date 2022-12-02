@@ -182,11 +182,22 @@ class NPredModels(nn.ModuleDict):
 
     def __init__(self, background, calibration=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.background = self.register_buffer("background", background)
+        self.register_buffer("background", background)
         self.calibration = calibration
 
     def evaluate_per_component(self, fluxes):
-        """Evaluate npred model per component"""
+        """Evaluate npred model per component
+
+        Parameters
+        ----------
+        fluxes : tuple of  `~torch.tensor`
+            Flux components
+
+        Returns
+        -------
+        npreds : dict `~torch.tensor`
+            Predicted counts tensor per component
+        """
         npreds = {}
 
         for (name, npred_model), flux in zip(self.items(), fluxes):
@@ -208,7 +219,7 @@ class NPredModels(nn.ModuleDict):
         Returns
         -------
         npred_total : `~torch.tensor`
-            Predicted counts tensort
+            Predicted counts tensor
         """
         values = list(self.values())
 
