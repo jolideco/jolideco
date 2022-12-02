@@ -17,11 +17,9 @@ def dataset():
     shape = (1, 1, 25, 25)
     exposure = torch.ones(shape)
     psf = Gaussian2DKernel(3).array
-    background = torch.ones(shape)
     return {
         "psf": torch.from_numpy(psf[None, None]),
         "exposure": exposure,
-        "background": background,
     }
 
 
@@ -30,11 +28,9 @@ def dataset_zero_background():
     shape = (1, 1, 25, 25)
     exposure = torch.ones(shape)
     psf = Gaussian2DKernel(3).array
-    background = torch.zeros(shape)
     return {
         "psf": torch.from_numpy(psf[None, None]),
         "exposure": exposure,
-        "background": background,
     }
 
 
@@ -43,11 +39,9 @@ def dataset_3d():
     shape = (1, 3, 25, 25)
     exposure = torch.ones(shape)
     psf = np.stack([Gaussian2DKernel(_, x_size=25) for _ in [1, 2, 3]])
-    background = torch.ones(shape)
     return {
         "psf": torch.from_numpy(psf[None]),
         "exposure": exposure,
-        "background": background,
     }
 
 
@@ -58,12 +52,10 @@ def dataset_3d_rmf():
     psf = np.stack([Gaussian2DKernel(_, x_size=25) for _ in [1, 2, 3]]).astype(
         np.float32
     )
-    background = torch.zeros(shape)
     rmf = torch.ones((3, 1)) / 3.0
     return {
         "psf": torch.from_numpy(psf[None]),
         "exposure": exposure,
-        "background": background,
         "rmf": rmf,
     }
 
@@ -73,13 +65,14 @@ def test_simple_npred_model(dataset):
     flux_init[0, 0, 10, 10] = 1
 
     component = FluxComponent(flux_upsampled=flux_init)
+
     npred_model = NPredModel(**dataset)
 
     npred = npred_model(flux=component.flux)
 
     npred = npred.detach().numpy()[0, 0]
-    assert_allclose(npred[10, 10], 1.017218, rtol=1e-5)
-    assert_allclose(npred.sum(), 513.039549, rtol=1e-5)
+    assert_allclose(npred[10, 10], 0.017684, rtol=1e-5)
+    assert_allclose(npred.sum(), 1.0, rtol=1e-3)
 
 
 def test_simple_npred_model_sparse(dataset_zero_background):
@@ -108,8 +101,8 @@ def test_simple_npred_model_3d(dataset_3d):
 
     npred = npred.detach().numpy()[0]
     assert npred.shape == (3, 25, 25)
-    assert_allclose(npred[0, 10, 10], 1.002915, rtol=1e-5)
-    assert_allclose(npred.sum(), 1653.52562, rtol=1e-5)
+    assert_allclose(npred[0, 10, 10], 0.002915, rtol=1e-5)
+    assert_allclose(npred.sum(), 3, rtol=1e-3)
 
 
 def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
