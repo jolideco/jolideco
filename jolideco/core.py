@@ -5,6 +5,7 @@ from astropy.table import Table
 from astropy.utils import lazyproperty
 import matplotlib.pyplot as plt
 import torch
+from packaging import version
 from tqdm.auto import tqdm
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponent, FluxComponents
@@ -125,12 +126,18 @@ class MAPDeconvolver:
 
         components = components.to(self.device)
 
+        # Use torch's JIT compilation feature if available...
+        if version.parse(torch.__version__) >= version.parse("2.0"):
+            components_compiled = torch.compile(components)
+        else:
+            components_compiled = components
+
         if calibrations:
             calibrations = calibrations.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets,
-            components=components,
+            components=components_compiled,
             device=self.device,
             calibrations=calibrations,
         )
@@ -138,13 +145,13 @@ class MAPDeconvolver:
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
                 datasets=datasets_validation,
-                components=components,
+                components=components_compiled,
                 calibrations=calibrations,
             )
         else:
             poisson_loss_validation = None
 
-        prior_loss = PriorLoss(priors=components.priors)
+        prior_loss = PriorLoss(priors=components_compiled.priors)
 
         total_loss = TotalLoss(
             poisson_loss=poisson_loss,
@@ -153,7 +160,7 @@ class MAPDeconvolver:
             beta=self.beta,
         )
 
-        parameters = list(components.parameters())
+        parameters = list(components_compiled.parameters())
 
         if calibrations:
             parameters.extend(calibrations.parameters())
@@ -171,7 +178,7 @@ class MAPDeconvolver:
                 for counts, npred_model in poisson_loss.iter_by_dataset:
                     optimizer.zero_grad()
                     # evaluate npred model
-                    fluxes = components.to_flux_tuple()
+                    fluxes = components_compiled.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
 
                     # compute Poisson loss
@@ -185,7 +192,7 @@ class MAPDeconvolver:
                     loss_total.backward()
                     optimizer.step()
 
-                components.eval()
+                components_compiled.eval()
                 total_loss.append_trace(fluxes=fluxes)
 
                 row = total_loss.trace[-1]
@@ -211,7 +218,7 @@ class MAPDeconvolver:
 
         if self.compute_error:
             flux_errors = total_loss.fluxes_error(fluxes=fluxes)
-            components.set_flux_errors(flux_errors=flux_errors)
+            components_compiled.set_flux_errors(flux_errors=flux_errors)
 
         config = self.to_dict()
         return MAPDeconvolverResult(
