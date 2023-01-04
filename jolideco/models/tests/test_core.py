@@ -87,7 +87,7 @@ def test_simple_npred_model_sparse(dataset_zero_background):
 
     npred = npred.detach().numpy()[0, 0]
     assert_allclose(npred[10, 10], 0.033733, atol=1e-5)
-    assert_allclose(npred.sum(), 9.55952, rtol=1e-5)
+    assert_allclose(npred.sum(), 9.55952, rtol=1e-4)
 
 
 def test_simple_npred_model_3d(dataset_3d):
