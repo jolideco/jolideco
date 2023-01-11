@@ -132,6 +132,17 @@ class GaussianMixtureModel(nn.Module):
             ax.set_axis_off()
             ax.set_title(f"{idx}")
 
+    def plot_mean_images(self, ncols=20, figsize=(16, 10)):
+        """Plot mean images"""
+        nrows = self.n_components // ncols
+
+        _, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=figsize)
+
+        for idx, ax in enumerate(axes.flat):
+            ax.imshow(self.means_numpy[idx].reshape(self.patch_shape))
+            ax.set_axis_off()
+            ax.set_title(f"{idx}")
+
     @lazyproperty
     def means_precisions_cholesky(self):
         """Precision matrices pytorch"""
