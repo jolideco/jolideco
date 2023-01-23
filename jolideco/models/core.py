@@ -886,14 +886,14 @@ class FluxComponents(nn.ModuleDict):
 
         kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
 
-        flux = self.flux_upsampled_total_numpy
+        flux = self.flux_total_numpy
 
         norm = simple_norm(flux, **kwargs_norm)
         im = axes[0].imshow(flux, origin="lower", norm=norm, **kwargs)
 
         axes[0].set_title("Total")
 
-        for ax, name in zip(axes[1:], self.fluxes_upsampled_numpy):
+        for ax, name in zip(axes[1:], self.fluxes_numpy):
             component = self[name]
             component.plot(ax=ax, kwargs_norm=kwargs_norm, **kwargs)
             ax.set_title(name.title())

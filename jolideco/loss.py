@@ -183,6 +183,7 @@ class TotalLoss:
 
         return Table(names=names)
 
+    @torch.no_grad()
     def append_trace(self, fluxes):
         """Append trace
 
