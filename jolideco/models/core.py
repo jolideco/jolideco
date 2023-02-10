@@ -28,13 +28,13 @@ log = logging.getLogger(__name__)
 
 
 __all__ = [
-    "FluxComponent",
+    "SpatialFluxComponent",
     "FluxComponents",
-    "SparseFluxComponent",
+    "SparseSpatialFluxComponent",
 ]
 
 
-class SparseFluxComponent(nn.Module):
+class SparseSpatialFluxComponent(nn.Module):
     """Sparse flux component to represent a list of point sources
 
     Attributes
@@ -333,7 +333,7 @@ def freeze_mask(module, grad_input, grad_output):
     return grad_input
 
 
-class FluxComponent(nn.Module):
+class SpatialFluxComponent(nn.Module):
     """Flux component
 
     Attributes
@@ -789,7 +789,7 @@ class FluxComponents(nn.ModuleDict):
         components = []
 
         for name, component_data in data.items():
-            component = FluxComponent.from_dict(data=component_data)
+            component = SpatialFluxComponent.from_dict(data=component_data)
             components.append((name, component))
 
         return cls(components)

@@ -179,11 +179,11 @@ def read_flux_component_from_yaml(filename):
     flux_component : `FluxComponent`
         Flux component
     """
-    from jolideco.models import FluxComponent
+    from jolideco.models import SpatialFluxComponent
 
     data = load_yaml(filename=filename)
 
-    return FluxComponent.from_dict(data=data)
+    return SpatialFluxComponent.from_dict(data=data)
 
 
 def read_flux_components_from_yaml(filename):

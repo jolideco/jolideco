@@ -4,10 +4,10 @@ from numpy.testing import assert_allclose
 from astropy.convolution import Gaussian2DKernel
 import torch
 from jolideco.models import (
-    FluxComponent,
     FluxComponents,
     NPredModel,
-    SparseFluxComponent,
+    SparseSpatialFluxComponent,
+    SpatialFluxComponent,
 )
 from jolideco.priors import PRIOR_REGISTRY, UniformPrior
 
@@ -64,7 +64,7 @@ def test_simple_npred_model(dataset):
     flux_init = torch.zeros(dataset["exposure"].shape)
     flux_init[0, 0, 10, 10] = 1
 
-    component = FluxComponent(flux_upsampled=flux_init)
+    component = SpatialFluxComponent(flux_upsampled=flux_init)
 
     npred_model = NPredModel(**dataset)
 
@@ -80,7 +80,9 @@ def test_simple_npred_model_sparse(dataset_zero_background):
     x_pos = torch.tensor([7.2, 12.1, 19.2])
     y_pos = torch.tensor([7.7, 3.1, 14.2])
 
-    component = SparseFluxComponent(flux=flux, x_pos=x_pos, y_pos=y_pos, shape=(25, 25))
+    component = SparseSpatialFluxComponent(
+        flux=flux, x_pos=x_pos, y_pos=y_pos, shape=(25, 25)
+    )
     npred_model = NPredModel(**dataset_zero_background)
 
     npred = npred_model(flux=component.flux)
@@ -94,7 +96,7 @@ def test_simple_npred_model_3d(dataset_3d):
     flux_init = torch.zeros(dataset_3d["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
 
-    component = FluxComponent(flux_upsampled=flux_init)
+    component = SpatialFluxComponent(flux_upsampled=flux_init)
     npred_model = NPredModel(**dataset_3d)
 
     npred = npred_model(flux=component.flux)
@@ -109,7 +111,7 @@ def test_simple_npred_model_3d_rmf(dataset_3d_rmf):
     flux_init = torch.zeros(dataset_3d_rmf["exposure"].shape)
     flux_init[0, :, 12, 12] = 1
 
-    component = FluxComponent(flux_upsampled=flux_init)
+    component = SpatialFluxComponent(flux_upsampled=flux_init)
     npred_model = NPredModel(**dataset_3d_rmf)
 
     npred = npred_model(flux=component.flux)
@@ -126,7 +128,7 @@ def test_flux_component_io(prior_class, format, tmpdir):
     flux_init = torch.ones((1, 1, 32, 32))
 
     prior = prior_class()
-    component = FluxComponent(
+    component = SpatialFluxComponent(
         flux_upsampled=flux_init,
         upsampling_factor=2,
         use_log_flux=False,
@@ -138,7 +140,7 @@ def test_flux_component_io(prior_class, format, tmpdir):
 
     component.write(filename=filename, format=format)
 
-    component_new = FluxComponent.read(filename=filename, format=format)
+    component_new = SpatialFluxComponent.read(filename=filename, format=format)
 
     assert component.shape == component_new.shape
     assert component.upsampling_factor == component_new.upsampling_factor
@@ -153,7 +155,7 @@ def test_flux_components_io(prior_class, format, tmpdir):
 
     flux_init = torch.ones((1, 1, 32, 32))
 
-    components["flux-uniform"] = FluxComponent(
+    components["flux-uniform"] = SpatialFluxComponent(
         flux_upsampled=flux_init,
         upsampling_factor=2,
         use_log_flux=False,
@@ -162,7 +164,7 @@ def test_flux_components_io(prior_class, format, tmpdir):
     )
 
     prior = prior_class()
-    components["flux-point"] = FluxComponent(
+    components["flux-point"] = SpatialFluxComponent(
         flux_upsampled=flux_init,
         upsampling_factor=2,
         use_log_flux=False,
@@ -187,7 +189,7 @@ def test_sparse_flux_components_io(format, tmpdir):
     x_pos = torch.arange(3)
     y_pos = torch.arange(3) + 0.1
 
-    components["flux-sparse"] = SparseFluxComponent(
+    components["flux-sparse"] = SparseSpatialFluxComponent(
         x_pos=x_pos,
         y_pos=y_pos,
         flux=flux,

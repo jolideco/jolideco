@@ -3,7 +3,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
-from jolideco.models import FluxComponent, FluxComponents
+from jolideco.models import FluxComponents, SpatialFluxComponent
 from jolideco.priors import GMMPatchPrior, InverseGammaPrior, UniformPrior
 from jolideco.priors.core import ExponentialPrior
 from jolideco.utils.testing import requires_device
@@ -50,7 +50,7 @@ def deconvolver_result(datasets_gauss):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, prior=UniformPrior()
     )
 
@@ -101,7 +101,7 @@ def test_map_deconvolver_usampling(datasets_disk):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=2, prior=UniformPrior()
     )
 
@@ -129,7 +129,7 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=InverseGammaPrior(alpha=10)
     )
 
@@ -162,7 +162,7 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=ExponentialPrior(alpha=1)
     )
 
@@ -193,7 +193,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=2, prior=GMMPatchPrior()
     )
 
@@ -225,7 +225,7 @@ def test_map_deconvolver_gmm_odd_stride_jitter():
     flux_init = random_state.gamma(20, size=(37, 37))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=GMMPatchPrior(stride=3, jitter=True)
     )
 
@@ -246,7 +246,7 @@ def test_map_deconvolver_gpu():
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
-    components["flux-1"] = FluxComponent.from_numpy(
+    components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=GMMPatchPrior()
     )
 

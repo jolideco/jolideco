@@ -50,13 +50,13 @@ def read_flux_component_from_asdf(filename):
         Flux component
     """
     import asdf
-    from jolideco.models import FluxComponent
+    from jolideco.models import SpatialFluxComponent
 
     path = Path(filename)
 
     with asdf.open(path, copy_arrays=True) as af:
         data = recursive_update({}, af)
-        return FluxComponent.from_dict(data=data)
+        return SpatialFluxComponent.from_dict(data=data)
 
 
 def write_flux_components_to_asdf(flux_components, filename, overwrite, **kwargs):

@@ -8,7 +8,7 @@ import torch
 from packaging import version
 from tqdm.auto import tqdm
 from .loss import PoissonLoss, PriorLoss, TotalLoss
-from .models import FluxComponent, FluxComponents
+from .models import FluxComponents, SpatialFluxComponent
 from .utils.io import (
     IO_FORMATS_MAP_RESULT_READ,
     IO_FORMATS_MAP_RESULT_WRITE,
@@ -117,7 +117,7 @@ class MAPDeconvolver:
         if self.stop_early and datasets_validation is None:
             raise ValueError("Early stopping requires providing test datasets")
 
-        if isinstance(components, FluxComponent):
+        if isinstance(components, SpatialFluxComponent):
             components = {self._default_flux_component: components}
 
         components = FluxComponents(components)

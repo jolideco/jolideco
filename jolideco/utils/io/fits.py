@@ -94,13 +94,13 @@ def sparse_flux_component_from_table_hdu(hdu):
     flux_component : `SparseFluxComponent`
         Sparse flux component
     """
-    from jolideco.models import SparseFluxComponent
+    from jolideco.models import SparseSpatialFluxComponent
 
     table = Table.read(hdu)
 
     shape = (table.meta["IMSHAPE1"], table.meta["IMSHAPE2"])
 
-    return SparseFluxComponent.from_numpy(
+    return SparseSpatialFluxComponent.from_numpy(
         x_pos=table["x_pos"].data,
         y_pos=table["y_pos"].data,
         flux=table["flux"].data,
@@ -156,7 +156,7 @@ def flux_component_from_image_hdu(hdu):
     flux_component : `FluxComponent`
         Flux component to serialize to an image HDU
     """
-    from jolideco.models import FluxComponent
+    from jolideco.models import SpatialFluxComponent
 
     data = {}
     data["wcs"] = WCS(hdu.header)
@@ -168,7 +168,7 @@ def flux_component_from_image_hdu(hdu):
             data[key] = value
 
     data = unflatten_dict(data, sep=META_SEP)
-    return FluxComponent.from_dict(data=data)
+    return SpatialFluxComponent.from_dict(data=data)
 
 
 def flux_components_to_hdulist(flux_components, name_suffix=""):
