@@ -25,8 +25,6 @@ class NPredModel(nn.Module):
 
     Parameters
     ----------
-    flux : `~torch.Tensor`
-        Flux tensor
     exposure : `~torch.Tensor`
         Exposure tensor
     psf : `~torch.Tensor`
