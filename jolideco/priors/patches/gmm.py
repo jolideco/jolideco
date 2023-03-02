@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import numpy as np
@@ -120,9 +121,14 @@ class GaussianMixtureModel(nn.Module):
 
         return np.stack(eigen_images)
 
-    def plot_eigen_images(self, ncols=20, figsize=(16, 10)):
+    def plot_eigen_images(self, ncols=20, figsize=None):
         """Plot images"""
         nrows = self.n_components // ncols
+
+        if figsize is None:
+            width = 12
+            height = width * nrows / ncols
+            figsize = (width, height)
 
         _, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=figsize)
 
@@ -132,9 +138,14 @@ class GaussianMixtureModel(nn.Module):
             ax.set_axis_off()
             ax.set_title(f"{idx}")
 
-    def plot_mean_images(self, ncols=20, figsize=(16, 10)):
+    def plot_mean_images(self, ncols=20, figsize=None):
         """Plot mean images"""
         nrows = self.n_components // ncols
+
+        if figsize is None:
+            width = 12
+            height = width * nrows / ncols
+            figsize = (width, height)
 
         _, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=figsize)
 
@@ -390,25 +401,13 @@ class GaussianMixtureModel(nn.Module):
         return format_class_str(instance=self)
 
 
-GMM_REGISTRY = {
-    "zoran-weiss": {
-        "filename": "$JOLIDECO_GMM_LIBRARY/GSModel_8x8_200_2M_noDC_zeromean.mat",
-        "format": "epll-matlab",
-    },
-    "gleam-v0.1": {
-        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-gleam-v0.1.fits",
-        "format": "table",
-    },
-    "gleam-v0.2": {
-        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-gleam-v0.2.fits",
-        "format": "table",
-    },
-    "nrao-jets-v0.1": {
-        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-nrao-jets-v0.1.fits",
-        "format": "table",
-    },
-    "nrao-jets-v0.2": {
-        "filename": "$JOLIDECO_GMM_LIBRARY/patch-priors-nrao-jets-v0.2.fits",
-        "format": "table",
-    },
-}
+def get_gmm_registry():
+    """Get GMM registry"""
+    # TODO: automatically download and cache stuff from
+    # "https://raw.githubusercontent.com/adonath/jolideco-gmm-library/main/"
+    filename = "$JOLIDECO_GMM_LIBRARY/jolideco-gmm-library-index.json"
+    path = str(Path(os.path.expandvars(filename)))
+    return json.load(path)
+
+
+GMM_REGISTRY = get_gmm_registry()

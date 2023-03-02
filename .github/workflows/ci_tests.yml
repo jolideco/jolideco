@@ -20,7 +20,7 @@ jobs:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     env:
-      JOLIDECO_GMM_LIBRARY: ${{ matrix.gmm_path}}
+      JOLIDECO_GMM_LIBRARY: ${{ matrix.gmm_path }}
     strategy:
       matrix:
         include:
@@ -33,19 +33,19 @@ jobs:
             os: ubuntu-latest
             python: 3.8
             toxenv: py38-test-alldeps-cov
-            gmm_path: /home/runner/work/jolideco/jolideco/jolideco-comparison-data/patch-priors
+            gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
           - name: macOS - Python 3.8 with all optional dependencies
             os: macos-latest
             python: 3.8
             toxenv: py38-test-alldeps
-            gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-comparison-data/patch-priors
+            gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
           - name: Windows - Python 3.8 with all optional dependencies
             os: windows-latest
             python: 3.8
             toxenv: py38-test-alldeps
-            gmm_path: D:\a\jolideco\jolideco\jolideco-comparison-data\patch-priors
+            gmm_path: D:\a\jolideco\jolideco\jolideco-gmm-prior-library
 
           # - name: Python 3.8 with latest dev versions of key dependencies
           #   os: ubuntu-latest
@@ -65,10 +65,9 @@ jobs:
     - name: Checkout Jolideco test data
       uses: actions/checkout@v3
       with:
-        repository: adonath/jolideco-comparison-data
-        token: ${{ secrets.JOLIDECO_DATA_REPO }} # `GH_PAT` is a secret that contains your PAT
+        repository: jolideco-91a763fa/jolideco-gmm-prior-library
         fetch-depth: 0
-        path: jolideco-comparison-data
+        path: jolideco-gmm-prior-library
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
