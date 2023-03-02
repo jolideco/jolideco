@@ -406,8 +406,12 @@ def get_gmm_registry():
     # TODO: automatically download and cache stuff from
     # "https://raw.githubusercontent.com/adonath/jolideco-gmm-library/main/"
     filename = "$JOLIDECO_GMM_LIBRARY/jolideco-gmm-library-index.json"
-    path = str(Path(os.path.expandvars(filename)))
-    return json.load(path)
+    path = Path(os.path.expandvars(filename))
+
+    with path.open() as f:
+        data = json.load(f)
+
+    return data
 
 
 GMM_REGISTRY = get_gmm_registry()
