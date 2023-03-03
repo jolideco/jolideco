@@ -1,5 +1,5 @@
-Jolideco: a Python package for Poisson joint likelihood deconvolution
------------------------------------------------------------
+Jolideco: a Python package for Poisson Joint Likelihood Deconvolution
+---------------------------------------------------------------------
 
 
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
