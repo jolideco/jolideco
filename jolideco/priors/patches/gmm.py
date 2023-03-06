@@ -343,16 +343,57 @@ class GaussianMixtureModel(nn.Module):
         """
         if not (self.n_components == 1 and other.n_components == 1):
             raise ValueError(
-                "KL divergence can onlyy be computed for single component GMM"
+                "KL divergence can only be computed for single component GMM"
             )
 
         k = self.means_numpy.shape[1]
 
-        diff = self.means_numpy[0] - other.means[0]
-        term_mean = diff.T @ other.precisons_cholesky[0] @ diff
-        term_trace = np.trace(other.precisions_cholesky[0] * self.covariances_numpy[0])
-        term_log = np.log(other.covariance_det / self.covariance_det)
+        diff = self.means[0] - other.means[0]
+        term_mean = diff.T @ other.precisions_cholesky[0] @ diff
+        term_trace = np.trace(other.precisions_cholesky[0] @ self.covariances[0])
+        term_log = 0  # np.log(other.covariance_det / self.covariance_det)
         return 0.5 * (term_log - k + term_mean + term_trace)
+
+    def get_component(self, idx):
+        """Get GMM component by idx
+
+        Parameters
+        ----------
+        idx : int
+            Component index
+
+        Return
+        ------
+        gmm : `GaussianMixtureModel`
+            Single component Gaussian
+        """
+        idx = slice(idx, idx + 1)
+        return self.__class__(
+            means=self.means[idx],
+            covariances=self.covariances[idx],
+            weights=torch.tensor([1]),
+            precisions_cholesky=self.precisions_cholesky[idx],
+            stride=self.stride,
+        )
+
+    def sort_by_symmetric_kl_divergence(self, idx_ref=0):
+        """Sort GMM by symmetric KL divergence"""
+        kls = []
+
+        comp_ref = self.get_component(idx=idx_ref)
+        for idx in range(self.n_components):
+            comp = self.get_component(idx)
+            kl = comp_ref.kl_divergence(comp)
+            kls.append(kl)
+
+        idx_sort = torch.argsort(torch.tensor(kls))
+        return self.__class__(
+            means=self.means[idx_sort],
+            covariances=self.covariances[idx_sort],
+            weights=self.weights[idx_sort],
+            precisions_cholesky=self.precisions_cholesky[idx_sort],
+            stride=self.stride,
+        )
 
     def is_equal(self, other):
         # TODO: improve check here?
