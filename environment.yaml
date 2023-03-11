@@ -37,10 +37,11 @@ dependencies:
   - flake8
   - isort
   - ruamel.yaml
-  - ruamel.yaml.string
   - pre-commit
   - sphinx
   - sphinx-astropy
   - sphinx-click
   - pydata-sphinx-theme
   - twine
+  - pip:
+    - ruamel.yaml.string
