@@ -55,6 +55,11 @@ class GaussianMixtureModel(nn.Module):
         return self.weights.detach().cpu().numpy()
 
     @lazyproperty
+    def precisions_cholesky_numpy(self):
+        """Precisions Cholesky (~numpy.ndarray)"""
+        return self.precisions_cholesky.detach().cpu().numpy()
+
+    @lazyproperty
     def log_weights_numpy(self):
         """Weights (~numpy.ndarray)"""
         return np.log(self.weights_numpy)
