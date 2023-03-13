@@ -27,7 +27,7 @@ def test_gmm_torch_basic():
     x = np.ones((2, 9), dtype=np.float32)
 
     assert gmm_torch.patch_shape == (3, 3)
-    result_ref = gmm._estimate_log_prob(X=x)
+    result_ref = gmm._estimate_weighted_log_prob(X=x)
     result = gmm_torch.estimate_log_prob(x=torch.from_numpy(x))
     result = result.detach().numpy()
     assert_allclose(result_ref, result)

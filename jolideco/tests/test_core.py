@@ -209,7 +209,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     trace_loss = result.trace_loss[-1]
     assert_allclose(trace_loss["total"], 18.82799, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 6.753493, rtol=1e-3)
-    assert_allclose(trace_loss["prior-flux-1"], 1.559196, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], 1.541872, rtol=1e-3)
 
 
 @pytest.mark.xfail
