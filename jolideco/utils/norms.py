@@ -9,6 +9,7 @@ __all__ = [
     "ATanImageNorm",
     "FixedMaxImageNorm",
     "ASinhImageNorm",
+    "LogImageNorm",
 ]
 
 
@@ -228,6 +229,27 @@ class InverseCDFImageNorm(ImageNorm):
         raise NotImplementedError
 
 
+class LogImageNorm(ImageNorm):
+    """Log image normalisation"""
+
+    def __init__(self, alpha=1):
+        super().__init__()
+        self.register_buffer("alpha", torch.Tensor([alpha]))
+
+    def __call__(self, image):
+        return torch.log(image / self.alpha)
+
+    def inverse(self, image):
+        """Inverse image norm"""
+        return self.alpha * torch.exp(image)
+
+    def to_dict(self):
+        """To dict"""
+        data = super().to_dict()
+        data["alpha"] = float(self.alpha)
+        return data
+
+
 NORMS_REGISTRY = {
     "max": MaxImageNorm,
     "fixed-max": FixedMaxImageNorm,
@@ -235,4 +257,5 @@ NORMS_REGISTRY = {
     "atan": ATanImageNorm,
     "inverse-cdf": InverseCDFImageNorm,
     "asinh": ASinhImageNorm,
+    "log": LogImageNorm,
 }
