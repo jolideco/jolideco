@@ -53,6 +53,16 @@ class ImageNorm(torch.nn.Module):
     def __call__(self, image):
         pass
 
+    def evaluate_numpy(self, image):
+        """Evaluate norm on numpy array"""
+        image = torch.from_numpy(image)
+        return self(image).detach().numpy()
+
+    def inverse_numpy(self, image):
+        """Evaluate inverse norm on numpy array"""
+        image = torch.from_numpy(image)
+        return self.inverse(image).detach().numpy()
+
     def inverse(self, image):
         raise NotImplementedError
 
@@ -162,17 +172,19 @@ class FixedMaxImageNorm(ImageNorm):
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
 
-    def __init__(self, alpha=1):
+    def __init__(self, alpha=1, beta=0.5):
         super().__init__()
         self.alpha = torch.Tensor([alpha])
+        self.beta = torch.Tensor([beta])
 
     def __call__(self, image):
-        return 1 / (1 + torch.exp(-image / self.alpha))
+        return 1 / (1 + torch.exp(-(image - self.beta) / self.alpha))
 
     def to_dict(self):
         """To dict"""
         data = super().to_dict()
         data["alpha"] = float(self.alpha)
+        data["beta"] = float(self.beta)
         return data
 
 
