@@ -1,4 +1,5 @@
 import abc
+import numpy as np
 import torch
 from .torch import interp1d_torch
 
@@ -55,12 +56,12 @@ class ImageNorm(torch.nn.Module):
 
     def evaluate_numpy(self, image):
         """Evaluate norm on numpy array"""
-        image = torch.from_numpy(image)
+        image = torch.from_numpy(image.astype(np.float32))
         return self(image).detach().numpy()
 
     def inverse_numpy(self, image):
         """Evaluate inverse norm on numpy array"""
-        image = torch.from_numpy(image)
+        image = torch.from_numpy(image.astype(np.float32))
         return self.inverse(image).detach().numpy()
 
     def inverse(self, image):
@@ -172,13 +173,17 @@ class FixedMaxImageNorm(ImageNorm):
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
 
-    def __init__(self, alpha=1, beta=0.5):
+    def __init__(self, alpha=1, beta=1.0):
         super().__init__()
         self.alpha = torch.Tensor([alpha])
         self.beta = torch.Tensor([beta])
 
     def __call__(self, image):
-        return 1 / (1 + torch.exp(-(image - self.beta) / self.alpha))
+        return 1 / (1 + torch.exp(-(image - self.beta / 2.0) / self.alpha))
+
+    def inverse(self, image):
+        """Inverse image norm"""
+        return self.alpha * torch.log(image / (1.0 - image)) + self.beta / 2.0
 
     def to_dict(self):
         """To dict"""
