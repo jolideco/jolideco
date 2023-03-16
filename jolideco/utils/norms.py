@@ -129,8 +129,8 @@ class ImageNorm(torch.nn.Module):
 class ASinhImageNorm(ImageNorm):
     """Inverse hyperbolic sine image norm"""
 
-    def __init__(self, alpha, beta):
-        super().__init__()
+    def __init__(self, alpha=1.0, beta=1.0, **kwargs):
+        super().__init__(**kwargs)
         self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
         self.beta = torch.nn.Parameter(torch.Tensor([beta]))
 

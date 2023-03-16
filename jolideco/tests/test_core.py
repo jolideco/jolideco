@@ -203,13 +203,13 @@ def test_map_deconvolver_gmm(datasets_disk):
     )
 
     assert result.flux_upsampled_total.shape == (64, 64)
-    assert_allclose(result.flux_total[12, 12], 11.981349, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 10.44422, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 10.796226, rtol=1e-3)
+    assert_allclose(result.flux_total[0, 0], 10.553964, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 18.82799, rtol=1e-3)
-    assert_allclose(trace_loss["dataset-0"], 6.753493, rtol=1e-3)
-    assert_allclose(trace_loss["prior-flux-1"], 1.541872, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 19.068433, rtol=1e-3)
+    assert_allclose(trace_loss["dataset-0"], 6.76425, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], 1.359349, rtol=1e-3)
 
 
 @pytest.mark.xfail

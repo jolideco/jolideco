@@ -6,7 +6,7 @@ from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
-from jolideco.utils.norms import ImageNorm, MaxImageNorm
+from jolideco.utils.norms import ASinhImageNorm, ImageNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,
@@ -82,7 +82,7 @@ class GMMPatchPrior(Prior):
         self.generator = generator
 
         if norm is None:
-            norm = MaxImageNorm()
+            norm = ASinhImageNorm()
 
         self.norm = norm
         self.jitter = jitter
