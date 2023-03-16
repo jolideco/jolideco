@@ -1,6 +1,7 @@
 import abc
 import numpy as np
 import torch
+from .misc import format_class_str
 from .torch import interp1d_torch
 
 __all__ = [
@@ -17,6 +18,17 @@ __all__ = [
 
 class ImageNorm(torch.nn.Module):
     """Image normalisation"""
+
+    def __init__(self, frozen=False):
+        super().__init__()
+        self.frozen = frozen
+
+    def parameters(self, recurse=True):
+        """Parameter list"""
+        if self.frozen:
+            return []
+        else:
+            return super().parameters(recurse)
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -50,6 +62,10 @@ class ImageNorm(torch.nn.Module):
             return cls.from_dict(kwargs)
 
         return cls(**kwargs)
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
 
     @abc.abstractmethod
     def __call__(self, image):
@@ -115,8 +131,8 @@ class ASinhImageNorm(ImageNorm):
 
     def __init__(self, alpha, beta):
         super().__init__()
-        self.register_buffer("alpha", torch.Tensor([alpha]))
-        self.register_buffer("beta", torch.Tensor([beta]))
+        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
+        self.beta = torch.nn.Parameter(torch.Tensor([beta]))
 
     def __call__(self, image):
         top = torch.asinh(image / self.alpha)
@@ -153,9 +169,9 @@ class MaxImageNorm(ImageNorm):
 class FixedMaxImageNorm(ImageNorm):
     """Fixed max image normalisation"""
 
-    def __init__(self, max_value):
-        super().__init__()
-        self.register_buffer("max_value", torch.Tensor([max_value]))
+    def __init__(self, max_value, **kwargs):
+        super().__init__(**kwargs)
+        self.max_value = torch.nn.Parameter(torch.Tensor([max_value]))
 
     def __call__(self, image):
         return torch.clip(image / self.max_value, min=0, max=1)
@@ -174,10 +190,10 @@ class FixedMaxImageNorm(ImageNorm):
 class SigmoidImageNorm(ImageNorm):
     """Sigmoid image normalisation"""
 
-    def __init__(self, alpha=1, beta=1.0):
-        super().__init__()
-        self.alpha = torch.Tensor([alpha])
-        self.beta = torch.Tensor([beta])
+    def __init__(self, alpha=1, beta=1.0, **kwargs):
+        super().__init__(**kwargs)
+        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
+        self.beta = torch.nn.Parameter(torch.Tensor([beta]))
 
     def __call__(self, image):
         return 1 / (1 + torch.exp(-(image - self.beta / 2.0) / self.alpha))
@@ -197,9 +213,9 @@ class SigmoidImageNorm(ImageNorm):
 class ATanImageNorm(ImageNorm):
     """ATan image normalisation"""
 
-    def __init__(self, alpha=1):
-        super().__init__()
-        self.register_buffer("alpha", torch.Tensor([alpha]))
+    def __init__(self, alpha=1, **kwargs):
+        super().__init__(**kwargs)
+        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
 
     def __call__(self, image):
         return 2 * torch.atan(image / self.alpha) / torch.pi
@@ -250,9 +266,9 @@ class InverseCDFImageNorm(ImageNorm):
 class LogImageNorm(ImageNorm):
     """Log image normalisation"""
 
-    def __init__(self, alpha=1):
-        super().__init__()
-        self.register_buffer("alpha", torch.Tensor([alpha]))
+    def __init__(self, alpha=1, **kwargs):
+        super().__init__(**kwargs)
+        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
 
     def __call__(self, image):
         return torch.log(image / self.alpha)
@@ -271,21 +287,23 @@ class LogImageNorm(ImageNorm):
 class PowerImageNorm(ImageNorm):
     """Power image normalisation"""
 
-    def __init__(self, alpha=1):
-        super().__init__()
-        self.register_buffer("alpha", torch.Tensor([alpha]))
+    def __init__(self, alpha=1, beta=1, **kwargs):
+        super().__init__(**kwargs)
+        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
+        self.beta = torch.nn.Parameter(torch.Tensor([beta]))
 
     def __call__(self, image):
-        return torch.pow(image, self.alpha)
+        return torch.pow(image / self.beta, self.alpha)
 
     def inverse(self, image):
         """Inverse image norm"""
-        return torch.pow(image, 1 / self.alpha)
+        return self.beta * torch.pow(image, 1 / self.alpha)
 
     def to_dict(self):
         """To dict"""
         data = super().to_dict()
         data["alpha"] = float(self.alpha)
+        data["beta"] = float(self.beta)
         return data
 
 
