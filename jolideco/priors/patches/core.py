@@ -261,7 +261,7 @@ class MultiScalePrior(Prior):
     """
 
     def __init__(
-        self, prior, n_levels=2, weights=None, cycle_spin=False, anti_alias=False
+        self, prior, n_levels=2, weights=None, cycle_spin=True, anti_alias=True
     ):
         super().__init__()
         self.n_levels = n_levels
@@ -269,10 +269,15 @@ class MultiScalePrior(Prior):
         self.prior = prior
 
         if weights is None:
-            weights = [1 / n_levels] * n_levels
+            weights = torch.tensor([1 / n_levels] * n_levels)
 
-        self.weights = weights
+        self._log_weights = torch.nn.Parameter(torch.log(weights))
         self.anti_alias = anti_alias
+
+    @property
+    def weights(self):
+        """Weights"""
+        return torch.exp(self._log_weights) / torch.sum(torch.exp(self._log_weights))
 
     def __call__(self, flux):
         """Evaluate the prior
@@ -297,11 +302,12 @@ class MultiScalePrior(Prior):
             )
 
         for idx, weight in enumerate(self.weights):
+            factor = 2**idx
+
             if weight == 0:
                 continue
 
             if self.anti_alias:
-                factor = 2**idx
                 sigma = 2 * factor / 6.0
                 kernel = Gaussian2DKernel(sigma).array[None, None]
                 kernel = torch.from_numpy(kernel.astype(np.float32))
@@ -312,3 +318,14 @@ class MultiScalePrior(Prior):
             log_like += factor**2 * weight * log_like_level
 
         return log_like
+
+    def to_dict(self):
+        """Convert to dict"""
+        data = dict(
+            n_levels=self.n_levels,
+            weights=self.weights.detach().numpy().tolist(),
+            cycle_spin=self.cycle_spin,
+            anti_alias=self.anti_alias,
+            prior=self.prior.to_dict(),
+        )
+        return data
