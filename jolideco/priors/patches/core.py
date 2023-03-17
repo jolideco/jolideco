@@ -6,7 +6,12 @@ from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
-from jolideco.utils.norms import ASinhImageNorm, ImageNorm, SubtractMeanPatchNorm
+from jolideco.utils.norms import (
+    ASinhImageNorm,
+    ImageNorm,
+    PatchNorm,
+    SubtractMeanPatchNorm,
+)
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,
@@ -108,10 +113,12 @@ class GMMPatchPrior(Prior):
         kwargs = data.copy()
 
         gmm_config = kwargs.pop("gmm")
-        kwargs["gmm"] = GaussianMixtureModel.from_dict(gmm_config)
+        gmm = GaussianMixtureModel.from_dict(gmm_config)
+        kwargs["gmm"] = gmm
 
         norm_config = kwargs.pop("norm")
         kwargs["norm"] = ImageNorm.from_dict(norm_config)
+        kwargs["patch_norm"] = PatchNorm.from_dict()
 
         return cls(**kwargs)
 

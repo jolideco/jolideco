@@ -29,15 +29,20 @@ class GaussianMixtureModel(nn.Module):
     stride : int
         Stride of the patch. Will be used to compute a correction factor for overlapping patches.
         Overlapping pixels are down-weighted in the log-likelihood computation.
+    meta: dict
+        Meta data
     """
 
-    def __init__(self, means, covariances, weights, precisions_cholesky, stride=None):
+    def __init__(
+        self, means, covariances, weights, precisions_cholesky, stride=None, meta=None
+    ):
         super().__init__()
         self.register_buffer("means", means)
         self.register_buffer("covariances", covariances)
         self.register_buffer("weights", weights)
         self.register_buffer("precisions_cholesky", precisions_cholesky)
         self.stride = stride
+        self.meta = meta or {}
 
     @lazyproperty
     def means_numpy(self):
