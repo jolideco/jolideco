@@ -51,6 +51,11 @@ class PatchNorm(torch.nn.Module):
         """
         pass
 
+    @classmethod
+    def from_dict(self, data):
+        """Create from dict"""
+        pass
+
 
 class MeanPatchNorm(PatchNorm):
     """Mean patch normalisation"""
@@ -69,6 +74,10 @@ class MeanPatchNorm(PatchNorm):
         self.patches_mean = torch.mean(patches, dim=1, keepdims=True)
         normed = patches - self.patches_mean
         return normed
+
+    def to_dict(self):
+        """To dict"""
+        pass
 
 
 class SumPatchNorm(PatchNorm):
@@ -198,6 +207,16 @@ class ImageNorm(torch.nn.Module):
 
         plt.legend()
         return ax
+
+
+class IdentityImageNorm(ImageNorm):
+    """Identity image norm"""
+
+    def __call__(self, image):
+        return image
+
+    def inverse(self, image):
+        return image
 
 
 class ASinhImageNorm(ImageNorm):
@@ -390,4 +409,5 @@ NORMS_REGISTRY = {
     "asinh": ASinhImageNorm,
     "log": LogImageNorm,
     "power": PowerImageNorm,
+    "identity": IdentityImageNorm,
 }
