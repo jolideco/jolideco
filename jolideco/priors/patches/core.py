@@ -6,7 +6,7 @@ from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
-from jolideco.utils.norms import ASinhImageNorm, ImageNorm, MeanPatchNorm
+from jolideco.utils.norms import ASinhImageNorm, ImageNorm, SubtractMeanPatchNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,
@@ -84,7 +84,7 @@ class GMMPatchPrior(Prior):
 
         self.generator = generator
         self.norm = ASinhImageNorm() if norm is None else norm
-        self.norm_patch = MeanPatchNorm() if norm_patch is None else norm_patch
+        self.norm_patch = SubtractMeanPatchNorm() if norm_patch is None else norm_patch
 
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
@@ -183,6 +183,7 @@ class GMMPatchPrior(Prior):
 
     def _evaluate_log_like(self, flux, mask=None):
         normed = self.norm(flux)
+        shifts = (0, 0)
 
         if self.cycle_spin:
             normed, shifts = cycle_spin(
@@ -192,9 +193,6 @@ class GMMPatchPrior(Prior):
         if self.cycle_spin_subpix:
             normed = cycle_spin_subpixel(image=normed, generator=self.generator)
             # TODO: how to compute the sub-pixel shift here?
-            shifts = (0, 0)
-        else:
-            shifts = (0, 0)
 
         if self.jitter:
             patches = view_as_random_overlapping_patches_torch(
@@ -215,7 +213,7 @@ class GMMPatchPrior(Prior):
 
         patches = self.norm_patch(patches)
         loglike = self.gmm.estimate_log_prob(patches)
-        return loglike, self.norm_patch.patches_mean, shifts
+        return loglike, None, shifts
 
     @lazyproperty
     def log_like_weight(self):

@@ -51,51 +51,59 @@ class PatchNorm(torch.nn.Module):
         """
         pass
 
+    def to_dict(self):
+        """Convert deconvolver configuration to dict, with simple data types.
+
+        Returns
+        -------
+        data : dict
+            Parameter dict.
+        """
+        from jolideco.utils.norms import NORMS_PATCH_REGISTRY
+
+        data = {}
+
+        for name, cls in NORMS_PATCH_REGISTRY.items():
+            if isinstance(self, cls):
+                data["type"] = name
+                break
+
+        return data
+
     @classmethod
-    def from_dict(self, data):
+    def from_dict(cls, data):
         """Create from dict"""
-        pass
+        from jolideco.utils.norms import NORMS_PATCH_REGISTRY
+
+        kwargs = data.copy()
+
+        if "type" in data:
+            type_ = kwargs.pop("type")
+            cls = NORMS_PATCH_REGISTRY[type_]
+            return cls.from_dict(kwargs)
+
+        return cls(**kwargs)
+
+    def __str__(self):
+        """String representation"""
+        return format_class_str(instance=self)
 
 
-class MeanPatchNorm(PatchNorm):
-    """Mean patch normalisation"""
-
-    def __init__(self, patches_mean=None):
-        super().__init__()
-        self.register_buffer("patches_mean", patches_mean)
-
-    def inverse(self, patches_normed):
-        if self.patches_mean is None:
-            raise ValueError("Mean not set, call the norm first.")
-
-        return patches_normed + self.patches_mean
+class SubtractMeanPatchNorm(PatchNorm):
+    """Subtract mean patch normalisation from Zoran & Weiss"""
 
     def __call__(self, patches):
-        self.patches_mean = torch.mean(patches, dim=1, keepdims=True)
-        normed = patches - self.patches_mean
+        patches_mean = torch.mean(patches, dim=1, keepdims=True)
+        normed = patches - patches_mean
         return normed
 
-    def to_dict(self):
-        """To dict"""
-        pass
 
-
-class SumPatchNorm(PatchNorm):
-    """Mean patch normalisation"""
-
-    def __init__(self, patches_sum=None):
-        super().__init__()
-        self.register_buffer("patches_sum", patches_sum)
-
-    def inverse(self, patches_normed):
-        if self.patches_sum is None:
-            raise ValueError("Sum not set, call the norm first.")
-
-        return (patches_normed + 1.0) * self.patches_sum
+class StandardizedSubtractMeanPatchNorm(PatchNorm):
+    """Standardized subtract mean patch normalisation"""
 
     def __call__(self, patches):
-        self.patches_sum = torch.sum(patches, dim=1, keepdims=True)
-        normed = patches / self.patches_sum - 1.0
+        patches_mean = torch.mean(patches, dim=1, keepdims=True)
+        normed = (patches - patches_mean) / patches_mean
         return normed
 
 
@@ -197,9 +205,9 @@ class ImageNorm(torch.nn.Module):
 
         kwargs.setdefault("label", self.__class__.__name__)
 
-        x = torch.linspace(xrange[0], xrange[1], 1000)
-        y = self(image=x)
-        ax.plot(x.detach().numpy(), y.detach().numpy(), **kwargs)
+        x = np.linspace(xrange[0], xrange[1], 1000)
+        y = self.evaluate_numpy(image=x)
+        ax.plot(x, y, **kwargs)
 
         ax.set_xlabel("Pixel value")
         ax.set_ylabel("Scaled pixel value / A.U.")
@@ -410,4 +418,9 @@ NORMS_REGISTRY = {
     "log": LogImageNorm,
     "power": PowerImageNorm,
     "identity": IdentityImageNorm,
+}
+
+NORMS_PATCH_REGISTRY = {
+    "std-subtract-mean": StandardizedSubtractMeanPatchNorm,
+    "subtract-mean": SubtractMeanPatchNorm,
 }
