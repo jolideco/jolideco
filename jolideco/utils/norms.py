@@ -51,6 +51,11 @@ class PatchNorm(torch.nn.Module):
         """
         pass
 
+    def evaluate_numpy(self, patches):
+        """Evaluate norm on numpy array"""
+        patches = torch.from_numpy(patches.astype(np.float32))
+        return self(patches).detach().numpy()
+
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
 
@@ -93,7 +98,7 @@ class SubtractMeanPatchNorm(PatchNorm):
     """Subtract mean patch normalisation from Zoran & Weiss"""
 
     def __call__(self, patches):
-        patches_mean = torch.mean(patches, dim=1, keepdims=True)
+        patches_mean = torch.nanmean(patches, dim=1, keepdims=True)
         normed = patches - patches_mean
         return normed
 
@@ -102,7 +107,7 @@ class StandardizedSubtractMeanPatchNorm(PatchNorm):
     """Standardized subtract mean patch normalisation"""
 
     def __call__(self, patches):
-        patches_mean = torch.mean(patches, dim=1, keepdims=True)
+        patches_mean = torch.nanmean(patches, dim=1, keepdims=True)
         normed = (patches - patches_mean) / patches_mean
         return normed
 

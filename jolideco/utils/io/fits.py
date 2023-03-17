@@ -30,6 +30,7 @@ FITS_META = {
     "prior.norm.max_value": "PNORMMAX",
     "prior.norm.alpha": "PNORMALP",
     "prior.norm.beta": "PNORMBET",
+    "prior.norm_patch.type": "PNPTYPE",
     "prior.device": "PDEVICE",
 }
 
