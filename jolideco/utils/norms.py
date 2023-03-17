@@ -16,6 +16,80 @@ __all__ = [
 ]
 
 
+class PatchNorm(torch.nn.Module):
+    """Patch normalisation"""
+
+    @abc.abstractmethod
+    def inverse(self, patches_normed):
+        """Inverse normalisation
+
+        Parameters
+        ----------
+        patches_normed : `~torch.Tensor`
+            Normalised patches with shape (n_patches, patch_size * patch_size)
+
+        Returns
+        -------
+        patches : `~torch.Tensor`
+            Patches with shape (n_patches, patch_size * patch_size)
+        """
+        pass
+
+    @abc.abstractmethod
+    def __call__(self, patches):
+        """Normalise patches
+
+        Parameters
+        ----------
+        patches : `~torch.Tensor`
+            Patches with shape (n_patches, patch_size * patch_size)
+
+        Returns
+        -------
+        normed : `~torch.Tensor`
+            Normalised patches with shape (n_patches, patch_size * patch_size)
+        """
+        pass
+
+
+class MeanPatchNorm(PatchNorm):
+    """Mean patch normalisation"""
+
+    def __init__(self, patches_mean=None):
+        super().__init__()
+        self.register_buffer("patches_mean", patches_mean)
+
+    def inverse(self, patches_normed):
+        if self.patches_mean is None:
+            raise ValueError("Mean not set, call the norm first.")
+
+        return patches_normed + self.patches_mean
+
+    def __call__(self, patches):
+        self.patches_mean = torch.mean(patches, dim=1, keepdims=True)
+        normed = patches - self.patches_mean
+        return normed
+
+
+class SumPatchNorm(PatchNorm):
+    """Mean patch normalisation"""
+
+    def __init__(self, patches_sum=None):
+        super().__init__()
+        self.register_buffer("patches_sum", patches_sum)
+
+    def inverse(self, patches_normed):
+        if self.patches_sum is None:
+            raise ValueError("Sum not set, call the norm first.")
+
+        return (patches_normed + 1.0) * self.patches_sum
+
+    def __call__(self, patches):
+        self.patches_sum = torch.sum(patches, dim=1, keepdims=True)
+        normed = patches / self.patches_sum - 1.0
+        return normed
+
+
 class ImageNorm(torch.nn.Module):
     """Image normalisation"""
 
@@ -290,7 +364,7 @@ class PowerImageNorm(ImageNorm):
     def __init__(self, alpha=1, beta=1, **kwargs):
         super().__init__(**kwargs)
         self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
-        self.beta = torch.nn.Parameter(torch.Tensor([beta]))
+        self.register_buffer("beta", torch.Tensor([beta]))
 
     def __call__(self, image):
         return torch.pow(image / self.beta, self.alpha)

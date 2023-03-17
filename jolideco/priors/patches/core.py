@@ -6,7 +6,7 @@ from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
-from jolideco.utils.norms import ASinhImageNorm, ImageNorm
+from jolideco.utils.norms import ASinhImageNorm, ImageNorm, MeanPatchNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,
@@ -40,6 +40,8 @@ class GMMPatchPrior(Prior):
         Random number generator
     norm : `~jolideco.utils.ImageNorm`
         Image normalisation applied before the GMM patch prior.
+    norm_patch : `~jolideco.utils.PatchNorm`
+        Patch normalisation.
     jitter : bool
         Jitter patch positions.
     device : `~pytorch.Device`
@@ -54,6 +56,7 @@ class GMMPatchPrior(Prior):
         cycle_spin_subpix=False,
         generator=None,
         norm=None,
+        norm_patch=None,
         jitter=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -80,11 +83,9 @@ class GMMPatchPrior(Prior):
                 generator = torch.Generator(device=TORCH_DEFAULT_DEVICE)
 
         self.generator = generator
+        self.norm = ASinhImageNorm() if norm is None else norm
+        self.norm_patch = MeanPatchNorm() if norm_patch is None else norm_patch
 
-        if norm is None:
-            norm = ASinhImageNorm()
-
-        self.norm = norm
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
         self.device = torch.device(device)
@@ -212,10 +213,9 @@ class GMMPatchPrior(Prior):
         selection = torch.all(patches > 0, dim=1, keepdims=False)
         patches = patches[selection, :]
 
-        mean = torch.mean(patches, dim=1, keepdims=True)
-        patches = patches - mean
+        patches = self.norm_patch(patches)
         loglike = self.gmm.estimate_log_prob(patches)
-        return loglike, mean, shifts
+        return loglike, self.norm_patch.patches_mean, shifts
 
     @lazyproperty
     def log_like_weight(self):
