@@ -165,7 +165,7 @@ class SparseSpatialFluxComponent(nn.Module):
         sparse_flux_component : `SparseFluxComponent`
             Sparse flux component
         """
-        x_pos, y_pos = skycoord.to_pixel(wcs=wcs)
+        y_pos, x_pos = skycoord.to_pixel(wcs=wcs)
         return cls.from_numpy(x_pos=x_pos, y_pos=y_pos, **kwargs)
 
     @property
