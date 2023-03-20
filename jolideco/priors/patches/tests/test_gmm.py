@@ -15,8 +15,11 @@ def test_gmm_torch_basic():
     weights = weights / weights.sum()
 
     gmm_torch = GaussianMixtureModel.from_numpy(
-        means=means, covariances=covariances, weights=weights, stride=None
+        means=means,
+        covariances=covariances,
+        weights=weights,
     )
+    gmm_torch.meta.stride = None
 
     gmm = GaussianMixture()
     gmm.weights_ = weights

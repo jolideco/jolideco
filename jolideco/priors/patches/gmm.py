@@ -2,6 +2,7 @@ import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 import numpy as np
 from astropy.table import Table
 from astropy.utils import lazyproperty
@@ -22,12 +23,14 @@ class GaussianMixtureModelMeta:
     Attributes
     ----------
     stride : int
-        Stride
+        Stride of the patch. Will be used to compute a correction factor for
+        overlapping patches. Overlapping pixels are down-weighted in the
+        log-likelihood computation.
     patch_norm : str
         Patch normalization
     """
 
-    stride: int
+    stride: Optional[int] = None
     patch_norm: PatchNorm = PatchNorm.from_dict({"type": "subtract-mean"})
 
     @classmethod
@@ -44,7 +47,8 @@ class GaussianMixtureModelMeta:
         meta : `GaussianMixtureModelMeta`
             Meta data
         """
-        patch_norm = PatchNorm.from_dict({"type": table.meta["PNPTYPE"]})
+        patch_norm_type = table.meta.get("PNPTYPE", "subtract-mean")
+        patch_norm = PatchNorm.from_dict({"type": patch_norm_type})
 
         npix = int((table["means"].shape[-1]) ** 0.5)
         stride = npix // 2
@@ -108,7 +112,7 @@ class GaussianMixtureModel(nn.Module):
         return torch.log(self.weights)
 
     @classmethod
-    def from_numpy(cls, means, covariances, weights, stride=None):
+    def from_numpy(cls, means, covariances, weights, meta=None):
         """Gaussian mixture model
 
         Parameters
@@ -119,10 +123,8 @@ class GaussianMixtureModel(nn.Module):
             Covariances
         weights : `~numpy.ndarray`
             Weights
-        stride : int
-            Stride of the patch. Will be used to compute a correction factor for
-            overlapping patches. Overlapping pixels are down-weighted in the
-            log-likelihood computation.
+        meta : `GaussianMixtureModelMeta`
+            Meta data
 
         Returns
         -------
@@ -138,7 +140,7 @@ class GaussianMixtureModel(nn.Module):
             precisions_cholesky=torch.from_numpy(
                 precisions_cholesky.astype(np.float32)
             ),
-            stride=stride,
+            meta=meta,
         )
 
     @lazyproperty
@@ -438,8 +440,7 @@ class GaussianMixtureModel(nn.Module):
                 break
 
         data["type"] = name
-        data["stride"] = self.meta.stride
-        data["norm_patch"] = self.meta.norm_patch
+
         return data
 
     @classmethod
@@ -456,8 +457,7 @@ class GaussianMixtureModel(nn.Module):
         gmm : `~GaussianMixtureModel`
             Gaussian mixture model
         """
-        name, stride = data["type"], data["stride"]
-        return cls.from_registry(name=name, stride=stride)
+        return cls.from_registry(name=data["type"])
 
     def __str__(self):
         return format_class_str(instance=self)

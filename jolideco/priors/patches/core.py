@@ -41,7 +41,7 @@ class GMMPatchPrior(Prior):
         Random number generator
     norm : `~jolideco.utils.ImageNorm`
         Image normalisation applied before the GMM patch prior.
-    norm_patch : `~jolideco.utils.PatchNorm`
+    patch_norm : `~jolideco.utils.PatchNorm`
         Patch normalisation.
     jitter : bool
         Jitter patch positions.
@@ -57,7 +57,7 @@ class GMMPatchPrior(Prior):
         cycle_spin_subpix=False,
         generator=None,
         norm=None,
-        norm_patch=None,
+        patch_norm=None,
         jitter=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
@@ -80,10 +80,10 @@ class GMMPatchPrior(Prior):
         self.generator = generator
         self.norm = ASinhImageNorm() if norm is None else norm
 
-        if norm_patch is None:
-            norm_patch = gmm.meta.norm_patch
+        if patch_norm is None:
+            patch_norm = gmm.meta.patch_norm
 
-        self.norm_patch = norm_patch
+        self.patch_norm = patch_norm
 
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
@@ -98,7 +98,7 @@ class GMMPatchPrior(Prior):
         data["jitter"] = bool(self.jitter)
         data["gmm"] = self.gmm.to_dict()
         data["norm"] = self.norm.to_dict()
-        data["norm_patch"] = self.norm_patch.to_dict()
+        data["patch_norm"] = self.patch_norm.to_dict()
         data["device"] = str(self.device)
         return data
 
@@ -114,8 +114,8 @@ class GMMPatchPrior(Prior):
         norm_config = kwargs.pop("norm")
         kwargs["norm"] = ImageNorm.from_dict(norm_config)
 
-        norm_patch_config = kwargs.pop("norm_patch", {"type": "subtract-mean"})
-        kwargs["norm_patch"] = PatchNorm.from_dict(norm_patch_config)
+        patch_norm_config = kwargs.pop("patch_norm", {"type": "subtract-mean"})
+        kwargs["patch_norm"] = PatchNorm.from_dict(patch_norm_config)
 
         return cls(**kwargs)
 
@@ -215,7 +215,7 @@ class GMMPatchPrior(Prior):
         selection = torch.all(patches > 0, dim=1, keepdims=False)
         patches = patches[selection, :]
 
-        patches = self.norm_patch(patches)
+        patches = self.patch_norm(patches)
         loglike = self.gmm.estimate_log_prob(patches)
         return loglike, None, shifts
 
