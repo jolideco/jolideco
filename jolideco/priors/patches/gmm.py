@@ -1,5 +1,6 @@
 import json
 import os
+from dataclasses import dataclass
 from pathlib import Path
 import numpy as np
 from astropy.table import Table
@@ -8,9 +9,47 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from jolideco.utils.misc import format_class_str
+from jolideco.utils.norms import PatchNorm, SubtractMeanPatchNorm
 from jolideco.utils.numpy import compute_precision_cholesky, get_pixel_weights
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
+
+
+@dataclass
+class GaussianMixtureModelMeta:
+    """Gaussian mixture model meta data
+
+    Attributes
+    ----------
+    stride : int
+        Stride
+    patch_norm : str
+        Patch normalization
+    """
+
+    stride: int
+    patch_norm: PatchNorm = PatchNorm.from_dict({"type": "subtract-mean"})
+
+    @classmethod
+    def from_table(cls, table):
+        """Set meta data from table
+
+        Parameters
+        ----------
+        table : `~astropy.table.Table`
+            Table with meta data
+
+        Returns
+        -------
+        meta : `GaussianMixtureModelMeta`
+            Meta data
+        """
+        patch_norm = PatchNorm.from_dict({"type": table.meta["PNPTYPE"]})
+
+        npix = int((table["means"].shape[-1]) ** 0.5)
+        stride = npix // 2
+
+        return cls(stride=stride, patch_norm=patch_norm)
 
 
 class GaussianMixtureModel(nn.Module):
@@ -26,23 +65,17 @@ class GaussianMixtureModel(nn.Module):
         Weights
     precisions_cholesky : `~torch.Tensor`
         Precision matrices
-    stride : int
-        Stride of the patch. Will be used to compute a correction factor for overlapping patches.
-        Overlapping pixels are down-weighted in the log-likelihood computation.
-    meta: dict
+    meta: `GaussianMixtureModelMeta`
         Meta data
     """
 
-    def __init__(
-        self, means, covariances, weights, precisions_cholesky, stride=None, meta=None
-    ):
+    def __init__(self, means, covariances, weights, precisions_cholesky, meta=None):
         super().__init__()
         self.register_buffer("means", means)
         self.register_buffer("covariances", covariances)
         self.register_buffer("weights", weights)
         self.register_buffer("precisions_cholesky", precisions_cholesky)
-        self.stride = stride
-        self.meta = meta or {}
+        self.meta = meta or GaussianMixtureModelMeta()
 
     @lazyproperty
     def means_numpy(self):
@@ -250,11 +283,11 @@ class GaussianMixtureModel(nn.Module):
     @lazyproperty
     def pixel_weights_numpy(self):
         """Pixel weights"""
-        if self.stride is None:
+        if self.meta.stride is None:
             weights = np.ones(self.patch_shape)
         else:
             weights = get_pixel_weights(
-                patch_shape=self.patch_shape, stride=self.stride
+                patch_shape=self.patch_shape, stride=self.meta.stride
             )
         return weights.reshape((1, -1))
 
@@ -322,6 +355,9 @@ class GaussianMixtureModel(nn.Module):
             means = gmm_data["means"][0][0].T
             covariances = gmm_data["covs"][0][0].T
             weights = gmm_data["mixweights"][0][0][:, 0]
+            meta = GaussianMixtureModelMeta(
+                stride=4, patch_norm=SubtractMeanPatchNorm()
+            )
         elif format == "epll-matlab-16x16":
             gmm_dict = sio.loadmat(filename)
             gmm_data = gmm_dict["GMM"]
@@ -329,18 +365,20 @@ class GaussianMixtureModel(nn.Module):
             means = np.zeros((200, 256))
             covariances = gmm_data["covs"][0][0].T
             weights = gmm_data["mixweights"][0][0][:, 0]
+            meta = GaussianMixtureModelMeta(
+                stride=8, patch_norm=SubtractMeanPatchNorm()
+            )
         elif format == "table":
             table = Table.read(filename)
             means = table["means"].data
             weights = table["weights"].data
             covariances = table["covariances"].data
+            meta = GaussianMixtureModelMeta.from_table(table=table)
         else:
             raise ValueError(f"Not a supported format {format}")
 
-        npix = int((means.shape[-1]) ** 0.5)
-        kwargs.setdefault("stride", npix // 2)
         return cls.from_numpy(
-            means=means, covariances=covariances, weights=weights, **kwargs
+            means=means, covariances=covariances, weights=weights, meta=meta, **kwargs
         )
 
     @lazyproperty
@@ -400,7 +438,8 @@ class GaussianMixtureModel(nn.Module):
                 break
 
         data["type"] = name
-        data["stride"] = self.stride
+        data["stride"] = self.meta.stride
+        data["norm_patch"] = self.meta.norm_patch
         return data
 
     @classmethod

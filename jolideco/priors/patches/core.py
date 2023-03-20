@@ -6,18 +6,14 @@ from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
 from jolideco.priors.patches.gmm import GaussianMixtureModel
-from jolideco.utils.norms import (
-    ASinhImageNorm,
-    ImageNorm,
-    PatchNorm,
-    SubtractMeanPatchNorm,
-)
+from jolideco.utils.norms import ASinhImageNorm, ImageNorm, PatchNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
 from jolideco.utils.torch import (
     TORCH_DEFAULT_DEVICE,
     convolve_fft_torch,
     cycle_spin,
     cycle_spin_subpixel,
+    get_default_generator,
     view_as_overlapping_patches_torch,
     view_as_random_overlapping_patches_torch,
 )
@@ -73,23 +69,21 @@ class GMMPatchPrior(Prior):
         self.gmm = gmm
 
         if stride is None:
-            stride = gmm.stride
+            stride = gmm.meta.stride
 
         self.stride = stride
         self.cycle_spin = cycle_spin
 
         if generator is None:
-            try:
-                generator = torch.Generator(device=device)
-            except RuntimeError:
-                log.warning(
-                    f"Device {device} not available, falling back to {TORCH_DEFAULT_DEVICE}"
-                )
-                generator = torch.Generator(device=TORCH_DEFAULT_DEVICE)
+            generator = get_default_generator(device=device)
 
         self.generator = generator
         self.norm = ASinhImageNorm() if norm is None else norm
-        self.norm_patch = SubtractMeanPatchNorm() if norm_patch is None else norm_patch
+
+        if norm_patch is None:
+            norm_patch = gmm.meta.norm_patch
+
+        self.norm_patch = norm_patch
 
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix

@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -12,6 +13,8 @@ __all__ = [
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
+
+log = logging.getLogger(__name__)
 
 
 def transpose(x):
@@ -255,3 +258,27 @@ def convolve_fft_torch(image, kernel):
     kernel_ft = torch.fft.rfft2(kernel, s=shape)
     result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
     return _centered(result, image.shape)
+
+
+def get_default_generator(device):
+    """Get default torch generator
+
+    Parameters
+    ----------
+    device : str
+        Device name
+
+    Returns
+    -------
+    generator : `~torch.Generator`
+        Random number generator
+    """
+    try:
+        generator = torch.Generator(device=device)
+    except RuntimeError:
+        log.warning(
+            f"Device {device} not available, falling back to {TORCH_DEFAULT_DEVICE}"
+        )
+        generator = torch.Generator(device=TORCH_DEFAULT_DEVICE)
+
+    return generator
