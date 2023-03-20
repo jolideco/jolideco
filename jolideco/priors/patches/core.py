@@ -104,6 +104,7 @@ class GMMPatchPrior(Prior):
         data["jitter"] = bool(self.jitter)
         data["gmm"] = self.gmm.to_dict()
         data["norm"] = self.norm.to_dict()
+        data["norm_patch"] = self.norm_patch.to_dict()
         data["device"] = str(self.device)
         return data
 
@@ -118,7 +119,9 @@ class GMMPatchPrior(Prior):
 
         norm_config = kwargs.pop("norm")
         kwargs["norm"] = ImageNorm.from_dict(norm_config)
-        kwargs["patch_norm"] = PatchNorm.from_dict()
+
+        norm_patch_config = kwargs.pop("norm_patch", {"type": "subtract-mean"})
+        kwargs["norm_patch"] = PatchNorm.from_dict(norm_patch_config)
 
         return cls(**kwargs)
 
