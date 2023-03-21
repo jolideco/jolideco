@@ -1,5 +1,6 @@
 import copy
 import logging
+import sys
 import numpy as np
 from astropy.table import Table
 from astropy.utils import lazyproperty
@@ -127,7 +128,10 @@ class MAPDeconvolver:
         components = components.to(self.device)
 
         # Use torch's JIT compilation feature if available...
-        if version.parse(torch.__version__) >= version.parse("2.0"):
+        if (
+            version.parse(torch.__version__) >= version.parse("2.0")
+            and "win" not in sys.platform
+        ):
             components_compiled = torch.compile(components)
         else:
             components_compiled = components
