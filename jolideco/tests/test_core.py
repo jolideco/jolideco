@@ -6,6 +6,7 @@ from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_p
 from jolideco.models import FluxComponents, SpatialFluxComponent
 from jolideco.priors import GMMPatchPrior, InverseGammaPrior, UniformPrior
 from jolideco.priors.core import ExponentialPrior
+from jolideco.utils.norms import ASinhImageNorm
 from jolideco.utils.testing import requires_device
 
 
@@ -193,8 +194,9 @@ def test_map_deconvolver_gmm(datasets_disk):
     flux_init = random_state.gamma(20, size=(32, 32))
 
     components = FluxComponents()
+    prior = GMMPatchPrior(norm=ASinhImageNorm())
     components["flux-1"] = SpatialFluxComponent.from_numpy(
-        flux=flux_init, upsampling_factor=2, prior=GMMPatchPrior()
+        flux=flux_init, upsampling_factor=2, prior=prior
     )
 
     result = deco.run(
