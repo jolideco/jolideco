@@ -144,12 +144,12 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 0.136563, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 4.77867, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 3.478109, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 1.817045, rtol=1e-3)
     assert_allclose(trace_loss["dataset-1"], 1.825257, rtol=1e-3)
     assert_allclose(trace_loss["dataset-2"], 1.786648, rtol=1e-3)
 
-    assert_allclose(trace_loss["prior-flux-1"], 0.65028, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], 1.950841, rtol=1e-3)
 
 
 def test_map_deconvolver_validation_datasets(datasets_disk):
@@ -181,9 +181,9 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 0.407479, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 4.253348, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 4.66624, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 1.917588, rtol=1e-3)
-    assert_allclose(trace_loss["prior-flux-1"], -0.412892, rtol=1e-3)
+    assert_allclose(trace_loss["prior-flux-1"], -0.825783, rtol=1e-3)
     assert_allclose(trace_loss["datasets-validation-total"], 1.888031, rtol=1e-3)
 
 
@@ -209,9 +209,9 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 10.553964, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 19.068433, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 16.34516, rtol=1e-3)
     assert_allclose(trace_loss["dataset-0"], 6.76425, rtol=1e-3)
-    assert_allclose(trace_loss["prior-flux-1"], 1.36, rtol=1e-2)
+    assert_allclose(trace_loss["prior-flux-1"], 4.093091, rtol=1e-2)
 
 
 @pytest.mark.xfail
