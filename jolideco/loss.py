@@ -196,7 +196,7 @@ class TotalLoss:
         loss_priors = [_.item() for _ in self.prior_loss.evaluate(fluxes=fluxes)]
 
         loss_datasets_total = sum(loss_datasets)
-        loss_priors_total = self.beta * sum(loss_priors) / self.prior_weight
+        loss_priors_total = self.beta * sum(loss_priors)
 
         loss_total = loss_datasets_total - loss_priors_total
 
@@ -207,7 +207,7 @@ class TotalLoss:
         }
 
         for name, value in zip(self.prior_loss.priors, loss_priors):
-            row[f"prior-{name}"] = value / self.prior_weight
+            row[f"prior-{name}"] = value
 
         for name, value in zip(self.poisson_loss.names_all, loss_datasets):
             row[f"dataset-{name}"] = value
