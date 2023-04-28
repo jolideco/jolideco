@@ -1,7 +1,7 @@
 from itertools import product
 import numpy as np
 
-__all__ = ["view_as_overlapping_patches"]
+__all__ = ["view_as_overlapping_patches", "split_datasets_validation"]
 
 
 def compute_precision_cholesky(covariances):
@@ -137,3 +137,36 @@ def reconstruct_from_overlapping_patches(patches, image_shape, stride=None):
         )
 
     return image
+
+
+def split_datasets_validation(datasets, n_validation, random_state=None):
+    """Split datasets into training and validation datasets
+
+    Parameters
+    ----------
+    datasets : dict of [str, dict]
+        Dictionary containing a name of the dataset as key and a dictionary containing,
+        the data like "counts", "psf", "background" and "exposure".
+    n_validation : int
+        Number of validation datasets
+    random_state : `~numpy.random.RandomState`
+        Random state
+
+    Returns
+    -------
+    datasets_training : dict of [str, dict]
+        Training datasets
+    """
+    if random_state is None:
+        random_state = np.random.RandomState()
+
+    names = list(datasets.keys())
+    random_state.shuffle(names)
+
+    names_training = names[n_validation:]
+    names_validation = names[:n_validation]
+
+    datasets_training = {name: datasets[name] for name in names_training}
+    datasets_validation = {name: datasets[name] for name in names_validation}
+
+    return {"datasets": datasets_training, "datasets_validation": datasets_validation}
