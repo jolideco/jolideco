@@ -174,7 +174,7 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        with tqdm(total=self.n_epochs) as pbar:
+        with tqdm(total=self.n_epochs * len(datasets)) as pbar:
             for epoch in range(self.n_epochs):
                 pbar.set_description(f"Epoch {epoch + 1}")
 
@@ -195,6 +195,7 @@ class MAPDeconvolver:
 
                     loss_total.backward()
                     optimizer.step()
+                    pbar.update(1)
 
                 components_compiled.eval()
                 total_loss.append_trace(fluxes=fluxes)
@@ -213,7 +214,6 @@ class MAPDeconvolver:
                     if row["datasets-validation-total"] > loss_test_average:
                         break
 
-                pbar.update(1)
                 pbar.set_postfix(
                     total=row["total"],
                     datasets_total=row["datasets-total"],

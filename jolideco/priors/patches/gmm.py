@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +15,8 @@ from jolideco.utils.norms import PatchNorm, SubtractMeanPatchNorm
 from jolideco.utils.numpy import compute_precision_cholesky, get_pixel_weights
 
 __all__ = ["GaussianMixtureModel", "GMM_REGISTRY"]
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -469,6 +472,8 @@ def get_gmm_registry():
     # "https://raw.githubusercontent.com/adonath/jolideco-gmm-library/main/"
     filename = "$JOLIDECO_GMM_LIBRARY/jolideco-gmm-library-index.json"
     path = Path(os.path.expandvars(filename))
+
+    log.debug(f"Reading GMM registry from {path}")
 
     with path.open() as f:
         data = json.load(f)
