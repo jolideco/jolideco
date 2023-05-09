@@ -203,11 +203,11 @@ class TotalLoss:
         row = {
             "total": loss_total,
             "datasets-total": loss_datasets_total,
-            "priors-total": loss_priors_total,
+            "priors-total": -loss_priors_total,
         }
 
         for name, value in zip(self.prior_loss.priors, loss_priors):
-            row[f"prior-{name}"] = self.beta * value
+            row[f"prior-{name}"] = -self.beta * value
 
         for name, value in zip(self.poisson_loss.names_all, loss_datasets):
             row[f"dataset-{name}"] = value
