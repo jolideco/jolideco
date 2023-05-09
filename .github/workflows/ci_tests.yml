@@ -65,7 +65,7 @@ jobs:
     - name: Checkout Jolideco test data
       uses: actions/checkout@v3
       with:
-        repository: jolideco-91a763fa/jolideco-gmm-prior-library
+        repository: jolideco/jolideco-gmm-prior-library
         fetch-depth: 0
         path: jolideco-gmm-prior-library
         token: ${{ secrets.JOLIDECO_DATA_REPO }}
