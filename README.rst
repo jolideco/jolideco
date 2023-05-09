@@ -19,4 +19,4 @@ more information.
 
 Contributing
 ------------
-While contributions are welcome in general, currently I cannot review PRs and nor help with implementations, because of a lack of time. So PRs are unlikely to get merged. However any kind of bug reports or feature requests are welcome as well.
+While contributions are welcome in general, currently I cannot review PRs, nor help with implementations, because of a lack of time. So PRs are unlikely to get merged. However any kind of bug reports or feature requests are welcome as well.
