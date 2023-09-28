@@ -46,6 +46,8 @@ class MAPDeconvolver:
         Number of iterations to avergae over.
     device : `~pytorch.Device`
         Pytorch device
+    display_progress : bool
+        Whether to display a progress bar
     """
 
     _default_flux_component = "flux"
@@ -59,6 +61,7 @@ class MAPDeconvolver:
         stop_early=False,
         stop_early_n_average=10,
         device=TORCH_DEFAULT_DEVICE,
+        display_progress=True,
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -66,6 +69,7 @@ class MAPDeconvolver:
         self.compute_error = compute_error
         self.stop_early = stop_early
         self.stop_early_n_average = stop_early_n_average
+        self.display_progress = display_progress
 
         if "cuda" in device and not torch.cuda.is_available():
             log.warning(
@@ -174,7 +178,9 @@ class MAPDeconvolver:
             lr=self.learning_rate,
         )
 
-        with tqdm(total=self.n_epochs * len(datasets)) as pbar:
+        disable = not self.display_progress
+
+        with tqdm(total=self.n_epochs * len(datasets), disable=disable) as pbar:
             for epoch in range(self.n_epochs):
                 pbar.set_description(f"Epoch {epoch + 1}")
 
