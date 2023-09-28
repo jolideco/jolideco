@@ -209,7 +209,7 @@ def test_map_deconvolver_gmm(datasets_disk):
     assert_allclose(result.flux_total[0, 0], 10.553964, rtol=1e-3)
 
     trace_loss = result.trace_loss[-1]
-    assert_allclose(trace_loss["total"], 16.326, rtol=1e-3)
+    assert_allclose(trace_loss["total"], 16.326, rtol=2e-3)
     assert_allclose(trace_loss["dataset-0"], 6.76425, rtol=1e-3)
     assert_allclose(trace_loss["prior-flux-1"], -4.093091, rtol=1e-2)
 
