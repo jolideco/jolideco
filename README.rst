@@ -7,8 +7,7 @@ Jolideco: a Python package for Poisson Joint Likelihood Deconvolution
     :alt: Powered by Astropy Badge
 
 
-.. note::
-    This package is currently under development and not yet ready for use!
+**WARNING**: this package is currently under development and not yet ready for use!
 
 
 License
