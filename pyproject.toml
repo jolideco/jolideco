@@ -52,8 +52,8 @@ test = [
     "scikit-image",
 ]
 docs = [
-    "sphinx-astropy",
     "pydata-sphinx-theme",
+    "sphinx-automodapi",
     "sympy",
 ]
 
