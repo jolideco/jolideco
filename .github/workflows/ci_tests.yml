@@ -27,24 +27,24 @@ jobs:
           - name: Code style checks
             os: ubuntu-latest
             python: 3.x
-            toxenv: codestyle
+            toxenv: check-style
         
-          - name: Python 3.8 with all optional dependencies and coverage checking
+          - name: Python 3.11 with all optional dependencies
             os: ubuntu-latest
-            python: 3.8
-            toxenv: py38-test-alldeps-cov
+            python: 3.11
+            toxenv: test
             gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: macOS - Python 3.8 with all optional dependencies
+          - name: macOS - Python 3.11 with all optional dependencies
             os: macos-latest
-            python: 3.8
-            toxenv: py38-test-alldeps
+            python: 3.11
+            toxenv: test
             gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: Windows - Python 3.8 with all optional dependencies
+          - name: Windows - Python 3.11 with all optional dependencies
             os: windows-latest
-            python: 3.8
-            toxenv: py38-test-alldeps
+            python: 3.11
+            toxenv: test
             gmm_path: D:\a\jolideco\jolideco\jolideco-gmm-prior-library
 
           # - name: Python 3.8 with latest dev versions of key dependencies
@@ -52,10 +52,10 @@ jobs:
           #   python: 3.8
           #   toxenv: py38-test-devdeps
 
-          # - name: Test building of Sphinx docs
-          #   os: ubuntu-latest
-          #   python: 3.x
-          #   toxenv: build_docs
+          - name: Test building of Sphinx docs
+            os: ubuntu-latest
+            python: 3.x
+            toxenv: docs
 
     steps:
     - name: Checkout code
