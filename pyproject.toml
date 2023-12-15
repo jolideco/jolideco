@@ -10,17 +10,14 @@ build-backend = 'setuptools.build_meta'
 [project]
 name = "jolideco"
 description = "A Python package for Poisson joint likelihood deconvolution"
-edit-on-github = "False"
-github-project = "jolideco/jolideco"
 requires-python = ">=3.8"
 dependencies = [
-    "torch>=2.0",
+    "torch>=1.13",
     "numpy>=1.21",
     "astropy>=5.2",
     "tqdm",
     "click",
     "matplotlib",
-    "requests",
 ]
 
 dynamic = [ "version",]
