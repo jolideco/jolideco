@@ -6,6 +6,11 @@ Jolideco: a Python package for Poisson Joint Likelihood Deconvolution
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
 
+.. image:: https://readthedocs.org/projects/jolideco/badge/?version=latest
+    :alt: Documentation Status
+    :scale: 100%
+    :target: https://jolideco.readthedocs.io/en/latest/?badge=latest
+
 
 **WARNING**: this package is currently under development and not yet ready for use!
 
