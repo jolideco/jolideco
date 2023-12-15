@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 from jolideco.utils.io import (
     IO_FORMATS_NPRED_CALIBRATIONS_READ,
     IO_FORMATS_NPRED_CALIBRATIONS_WRITE,
@@ -21,7 +22,7 @@ __all__ = [
 
 
 class NPredModel(nn.Module):
-    """Predicted counts model with mutiple components
+    """Predicted counts model with multiple components
 
     Parameters
     ----------
@@ -118,7 +119,8 @@ class NPredModel(nn.Module):
         Parameters
         ----------
         dataset : dict of `~numpy.ndarray`
-            Dict containing `"counts"`, `"psf"` and optionally `"exposure"` and `"background"`
+            Dict containing `"counts"`, `"psf"` and optionally
+            `"exposure"` and `"background"`
         upsampling_factor : int
             Upsampling factor for exposure, background and psf.
         correct_exposure_edges : bool
@@ -359,9 +361,9 @@ class NPredCalibration(nn.Module):
         """
         size = flux.size()
 
-        scale = 2 * scale / torch.Tensor([[size[-1]], [size[-2]]])
+        scale = 2 * scale / torch.tensor([[size[-1]], [size[-2]]], device=flux.device)
 
-        diag = torch.eye(2)
+        diag = torch.eye(2, device=flux.device)
         theta = torch.cat([diag, scale * self.shift_xy.T], dim=1)[None]
 
         grid = F.affine_grid(theta=theta, size=size)
@@ -457,7 +459,7 @@ class NPredCalibrations(nn.ModuleDict):
 
     @document_io_formats(registry=_registry_write)
     def write(self, filename, format=None, overwrite=False, **kwargs):
-        """Write npred calibrations fo file
+        """Write npred calibrations to file
 
         Parameters
         ----------
