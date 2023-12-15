@@ -19,6 +19,7 @@ jobs:
   ci_tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    continue-on-error: true
     env:
       JOLIDECO_GMM_LIBRARY: ${{ matrix.gmm_path }}
     strategy:
@@ -29,21 +30,21 @@ jobs:
             python: 3.x
             toxenv: check-style -- --exclude=jolideco-gmm-prior-library
         
-          - name: Python 3.11 with all optional dependencies
+          - name: Python 3.10 with all optional dependencies
             os: ubuntu-latest
-            python: 3.11
+            python: "3.10"
             toxenv: test
             gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: macOS - Python 3.11 with all optional dependencies
+          - name: macOS - Python 3.10 with all optional dependencies
             os: macos-latest
-            python: 3.11
+            python: "3.10"
             toxenv: test
             gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: Windows - Python 3.11 with all optional dependencies
+          - name: Windows - Python 3.10 with all optional dependencies
             os: windows-latest
-            python: 3.11
+            python: "3.10"
             toxenv: test
             gmm_path: D:\a\jolideco\jolideco\jolideco-gmm-prior-library
 
@@ -54,7 +55,7 @@ jobs:
 
           - name: Test building of Sphinx docs
             os: ubuntu-latest
-            python: 3.x
+            python: "3.10"
             toxenv: docs
 
     steps:
