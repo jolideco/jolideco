@@ -1,7 +1,112 @@
 [build-system]
-
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel"]
+requires = [
+    "setuptools",
+    "setuptools_scm",
+    "wheel"
+]
 
 build-backend = 'setuptools.build_meta'
+
+[project]
+name = "jolideco"
+description = "A Python package for Poisson joint likelihood deconvolution"
+edit-on-github = "False"
+github-project = "jolideco/jolideco"
+requires-python = ">=3.8"
+dependencies = [
+    "torch>=2.0",
+    "numpy>=1.21",
+    "astropy>=5.2",
+    "tqdm",
+    "click",
+    "matplotlib",
+    "requests",
+]
+
+dynamic = [ "version",]
+
+[[project.authors]]
+name = "Axel Donath"
+email = "axel.donath@cfa.harvard.edu"
+
+[project.license]
+text = "BSD 3-Clause"
+
+[project.readme]
+file = "README.rst"
+content-type = "text/x-rst"
+
+[project.urls]
+homepage = "https://github.com/jolideco/jolideco"
+
+[project.optional-dependencies]
+all = [
+    "scikit-learn",
+    "scikit-image",
+    "asdf",
+    "asdf-astropy",
+    "ruamel.yaml",
+    "ruamel.yaml.string",
+    "scipy",
+]
+test = [
+    "pytest-astropy",
+    "scikit-learn",
+    "scikit-image",
+]
+docs = [
+    "sphinx-astropy",
+    "pydata-sphinx-theme",
+    "sympy",
+]
+
+
+[project.scripts]
+jolideco = "jolideco.cli:cli"
+
+[tool.setuptools]
+zip-safe = false
+license-files = [ "licenses/LICENSE.rst",]
+include-package-data = false
+
+[tool.setuptools.package-data]
+jolideco = [ "data/*",]
+
+[tool.pytest.ini_options]
+testpaths = [ "\"jolideco\"", "\"docs\"",]
+astropy_header = true
+doctest_plus = "enabled"
+text_file_format = "rst"
+addopts = "--doctest-rst"
+
+[tool.coverage.run]
+omit = [
+    "jolideco/_astropy_init*",
+    "jolideco/conftest.py",
+    "jolideco/*setup_package*",
+    "jolideco/tests/*",
+    "jolideco/*/tests/*",
+    "jolideco/extern/*",
+    "jolideco/version*",
+    "*/jolideco/_astropy_init*",
+    "*/jolideco/conftest.py",
+    "*/jolideco/*setup_package*",
+    "*/jolideco/tests/*",
+    "*/jolideco/*/tests/*",
+    "*/jolideco/extern/*",
+    "*/jolideco/version*",
+]
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "except ImportError",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "def main\\(.*\\):",
+    "pragma: py{ignore_python_version}",
+    "def _ipython_key_completions_",
+]
+
+[tool.setuptools.packages.find]
+namespaces = false
+
