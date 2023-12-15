@@ -1,5 +1,5 @@
-from os import read
 from pathlib import Path
+
 from .asdf import (
     read_flux_component_from_asdf,
     read_flux_components_from_asdf,

@@ -27,7 +27,7 @@ jobs:
           - name: Code style checks
             os: ubuntu-latest
             python: 3.x
-            toxenv: check-style
+            toxenv: check-style -- --exclude=jolideco-gmm-prior-library
         
           - name: Python 3.11 with all optional dependencies
             os: ubuntu-latest
