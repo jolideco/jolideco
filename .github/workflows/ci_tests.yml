@@ -19,7 +19,6 @@ jobs:
   ci_tests:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     env:
       JOLIDECO_GMM_LIBRARY: ${{ matrix.gmm_path }}
     strategy:
