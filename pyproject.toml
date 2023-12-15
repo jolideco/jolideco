@@ -47,8 +47,8 @@ all = [
     "scipy",
 ]
 test = [
-    "scikit-learn",
-    "scikit-image",
+    "pytest",
+    "pytest-doctestplus",
 ]
 docs = [
     "pydata-sphinx-theme",

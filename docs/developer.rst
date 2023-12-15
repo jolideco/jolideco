@@ -13,14 +13,14 @@ For the development you can rely on one of the pre-defined test environments::
 
 This will create a new ``venv-jolideco-env`` environment, that you can activate
 using the ``source`` command. To leave the environment again use ``deactivate``.
-The command requires that you ahve Python 3.9 installed on your system. In case
+The command requires that you have Python 3.9 installed on your system. In case
 you do not have it installed you could change the command to the corresponding
 Python version like::
 
     tox --devenv venv-jolideco-dev -e py38
     tox --devenv venv-jolideco-dev -e py37
 
-However it is recommanded to use a rather new Python version for development.
+However it is recommended to use a rather new Python version for development.
 
 Running Tests
 -------------
@@ -47,7 +47,7 @@ Building Docs
 Building the documentation is no longer done using
 ``python setup.py build_docs``. Instead you will need to run::
 
-    tox -e build_docs
+    tox -e docs
 
 If you don't already have tox installed, you can install it with::
 

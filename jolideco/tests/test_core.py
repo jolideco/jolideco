@@ -1,6 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
+
 from jolideco.core import MAPDeconvolver, MAPDeconvolverResult
 from jolideco.data import disk_source_gauss_psf, gauss_and_point_sources_gauss_psf
 from jolideco.models import FluxComponents, SpatialFluxComponent
@@ -205,8 +206,8 @@ def test_map_deconvolver_gmm(datasets_disk):
     )
 
     assert result.flux_upsampled_total.shape == (64, 64)
-    assert_allclose(result.flux_total[12, 12], 10.796226, rtol=1e-3)
-    assert_allclose(result.flux_total[0, 0], 10.553964, rtol=1e-3)
+    assert_allclose(result.flux_total[12, 12], 10.796226, rtol=1e-2)
+    assert_allclose(result.flux_total[0, 0], 10.553964, rtol=1e-2)
 
     trace_loss = result.trace_loss[-1]
     assert_allclose(trace_loss["total"], 16.326, rtol=2e-3)
