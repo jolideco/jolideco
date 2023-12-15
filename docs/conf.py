@@ -120,7 +120,7 @@ html_css_files = [
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-# html_logo = ''
+html_logo = "jolideco-logo.png"
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
@@ -161,7 +161,6 @@ man_pages = [("index", project.lower(), project + " Documentation", [author], 1)
 # -- Options for the edit_on_github extension ---------------------------------
 
 if setup_cfg.get("edit_on_github").lower() == "true":
-
     extensions += ["sphinx_astropy.ext.edit_on_github"]
 
     edit_on_github_project = setup_cfg["github_project"]

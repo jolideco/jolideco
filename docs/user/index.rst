@@ -2,6 +2,18 @@
 User Guide
 **********
 
+
+Installation
+============
+To install Jolideco, you can use pip:
+
+.. code:: bash
+    
+    pip install jolideco
+
+
+Usage
+=====
 This is how to use Jolideco:
 
 .. code::
