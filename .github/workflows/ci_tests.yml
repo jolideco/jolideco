@@ -57,6 +57,7 @@ jobs:
             os: ubuntu-latest
             python: "3.10"
             toxenv: docs
+            gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
     steps:
     - name: Checkout code
