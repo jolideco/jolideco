@@ -140,32 +140,35 @@ class MAPDeconvolver:
 
         # Use torch's JIT compilation feature if available...
         if IS_PYTORCH2:
-            components = torch.compile(components)
+            components_compiled = torch.compile(components)
+        else:
+            components_compiled = components
 
         if calibrations and IS_PYTORCH2:
-            calibrations = torch.compile(calibrations)
-            calibrations = calibrations.to(self.device)
+            calibrations_compiled = torch.compile(calibrations)
+        else:
+            calibrations_compiled = calibrations
 
-        components = components.to(self.device)
+        components_compiled = components.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets,
-            components=components,
+            components=components_compiled,
             device=self.device,
-            calibrations=calibrations,
+            calibrations=calibrations_compiled,
         )
 
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
                 datasets=datasets_validation,
-                components=components,
-                calibrations=calibrations,
+                components=components_compiled,
+                calibrations=calibrations_compiled,
                 device=self.device,
             )
         else:
             poisson_loss_validation = None
 
-        prior_loss = PriorLoss(priors=components.priors)
+        prior_loss = PriorLoss(priors=components_compiled.priors)
 
         total_loss = TotalLoss(
             poisson_loss=poisson_loss,
@@ -174,10 +177,10 @@ class MAPDeconvolver:
             beta=self.beta,
         )
 
-        parameters = list(components.parameters())
+        parameters = list(components_compiled.parameters())
 
         if calibrations:
-            parameters.extend(calibrations.parameters())
+            parameters.extend(calibrations_compiled.parameters())
 
         optimizer = torch.optim.Adam(
             params=parameters,
@@ -194,7 +197,7 @@ class MAPDeconvolver:
                 for counts, npred_model in poisson_loss.iter_by_dataset:
                     optimizer.zero_grad()
                     # evaluate npred model
-                    fluxes = components.to_flux_tuple()
+                    fluxes = components_compiled.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
 
                     # compute Poisson loss
