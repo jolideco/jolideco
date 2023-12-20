@@ -1,13 +1,15 @@
 import copy
 import logging
 import sys
+
+import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from astropy.table import Table
 from astropy.utils import lazyproperty
-import matplotlib.pyplot as plt
-import torch
 from packaging import version
 from tqdm.auto import tqdm
+
 from .loss import PoissonLoss, PriorLoss, TotalLoss
 from .models import FluxComponents, SpatialFluxComponent
 from .utils.io import (
@@ -24,6 +26,12 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 __all__ = ["MAPDeconvolver", "MAPDeconvolverResult"]
+
+
+IS_PYTORCH2 = (
+    version.parse(torch.__version__) >= version.parse("2.0")
+    and "win" not in sys.platform
+)
 
 
 class MAPDeconvolver:
@@ -104,11 +112,12 @@ class MAPDeconvolver:
         Parameters
         ----------
         datasets : dict of [str, dict]
-            Dictionary containing a name of the dataset as key and a dictionary containing,
-            the data like "counts", "psf", "background" and "exposure".
+            Dictionary containing a name of the dataset as key and a dictionary
+            containing, the data like "counts", "psf", "background" and "exposure".
         datasets_validation : dict of [str, dict]
-            Dictionary containing a name of the validation dataset as key and a dictionary containing,
-            the data like "counts", "psf", "background" and "exposure".
+            Dictionary containing a name of the validation dataset as key and a
+            dictionary containing, the data like "counts", "psf", "background"
+            and "exposure".
         components : `FluxComponents` or `FluxComponent`
             Flux components.
         calibrations : `NPredCalibrations`
@@ -129,23 +138,19 @@ class MAPDeconvolver:
         components_init = copy.deepcopy(components)
         calibrations_init = copy.deepcopy(calibrations)
 
-        components = components.to(self.device)
-
         # Use torch's JIT compilation feature if available...
-        if (
-            version.parse(torch.__version__) >= version.parse("2.0")
-            and "win" not in sys.platform
-        ):
-            components_compiled = torch.compile(components)
-        else:
-            components_compiled = components
+        if IS_PYTORCH2:
+            components = torch.compile(components)
 
-        if calibrations:
+        if calibrations and IS_PYTORCH2:
+            calibrations = torch.compile(calibrations)
             calibrations = calibrations.to(self.device)
+
+        components = components.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets,
-            components=components_compiled,
+            components=components,
             device=self.device,
             calibrations=calibrations,
         )
@@ -153,13 +158,14 @@ class MAPDeconvolver:
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
                 datasets=datasets_validation,
-                components=components_compiled,
+                components=components,
                 calibrations=calibrations,
+                device=self.device,
             )
         else:
             poisson_loss_validation = None
 
-        prior_loss = PriorLoss(priors=components_compiled.priors)
+        prior_loss = PriorLoss(priors=components.priors)
 
         total_loss = TotalLoss(
             poisson_loss=poisson_loss,
@@ -168,7 +174,7 @@ class MAPDeconvolver:
             beta=self.beta,
         )
 
-        parameters = list(components_compiled.parameters())
+        parameters = list(components.parameters())
 
         if calibrations:
             parameters.extend(calibrations.parameters())
@@ -188,7 +194,7 @@ class MAPDeconvolver:
                 for counts, npred_model in poisson_loss.iter_by_dataset:
                     optimizer.zero_grad()
                     # evaluate npred model
-                    fluxes = components_compiled.to_flux_tuple()
+                    fluxes = components.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
 
                     # compute Poisson loss
@@ -203,7 +209,7 @@ class MAPDeconvolver:
                     optimizer.step()
                     pbar.update(1)
 
-                components_compiled.eval()
+                components.eval()
                 total_loss.append_trace(fluxes=fluxes)
 
                 row = total_loss.trace[-1]
@@ -228,7 +234,7 @@ class MAPDeconvolver:
 
         if self.compute_error:
             flux_errors = total_loss.fluxes_error(fluxes=fluxes)
-            components_compiled.set_flux_errors(flux_errors=flux_errors)
+            components.set_flux_errors(flux_errors=flux_errors)
 
         config = self.to_dict()
         return MAPDeconvolverResult(
@@ -342,7 +348,7 @@ class MAPDeconvolverResult:
         return config
 
     def write(self, filename, overwrite=False, format="fits"):
-        """Write result fo file
+        """Write result to file
 
         Parameters
         ----------
@@ -360,7 +366,7 @@ class MAPDeconvolverResult:
 
     @classmethod
     def read(cls, filename, format="fits"):
-        """Write result fo file
+        """Write result to file
 
         Parameters
         ----------
