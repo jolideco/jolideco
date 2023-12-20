@@ -33,6 +33,11 @@ IS_PYTORCH2 = (
     and "win" not in sys.platform
 )
 
+OPTIMIZER = {
+    "adam": torch.optim.Adam,
+    "sgd": torch.optim.SGD,
+}
+
 
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
@@ -56,6 +61,8 @@ class MAPDeconvolver:
         Pytorch device
     display_progress : bool
         Whether to display a progress bar
+    optimizer : {"adam", "sgd"}
+        Optimizer to use
     """
 
     _default_flux_component = "flux"
@@ -70,6 +77,7 @@ class MAPDeconvolver:
         stop_early_n_average=10,
         device=TORCH_DEFAULT_DEVICE,
         display_progress=True,
+        optimizer="adam",
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -86,6 +94,7 @@ class MAPDeconvolver:
             device = TORCH_DEFAULT_DEVICE
 
         self.device = torch.device(device)
+        self.optimizer = optimizer
 
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
@@ -182,7 +191,7 @@ class MAPDeconvolver:
         if calibrations:
             parameters.extend(calibrations_compiled.parameters())
 
-        optimizer = torch.optim.Adam(
+        optimizer = OPTIMIZER[self.optimizer](
             params=parameters,
             lr=self.learning_rate,
         )
