@@ -53,6 +53,7 @@ test = [
 docs = [
     "pydata-sphinx-theme",
     "sphinx-automodapi",
+    "sphinx-design",
     "sympy",
 ]
 
