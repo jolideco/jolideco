@@ -153,25 +153,20 @@ class MAPDeconvolver:
         else:
             components_compiled = components
 
-        if calibrations and IS_PYTORCH2:
-            calibrations_compiled = torch.compile(calibrations)
-        else:
-            calibrations_compiled = calibrations
-
         components_compiled = components.to(self.device)
 
         poisson_loss = PoissonLoss.from_datasets(
             datasets=datasets,
             components=components_compiled,
             device=self.device,
-            calibrations=calibrations_compiled,
+            calibrations=calibrations,
         )
 
         if datasets_validation:
             poisson_loss_validation = PoissonLoss.from_datasets(
                 datasets=datasets_validation,
                 components=components_compiled,
-                calibrations=calibrations_compiled,
+                calibrations=calibrations,
                 device=self.device,
             )
         else:
@@ -189,7 +184,7 @@ class MAPDeconvolver:
         parameters = list(components_compiled.parameters())
 
         if calibrations:
-            parameters.extend(calibrations_compiled.parameters())
+            parameters.extend(calibrations.parameters())
 
         optimizer = OPTIMIZER[self.optimizer](
             params=parameters,
