@@ -64,7 +64,6 @@ jobs:
         repository: jolideco/jolideco-gmm-prior-library
         fetch-depth: 0
         path: jolideco-gmm-prior-library
-        token: ${{ secrets.JOLIDECO_DATA_REPO }}
     - name: Set up python ${{ matrix.python }} on ${{ matrix.os }}
       uses: actions/setup-python@v2
       with:
