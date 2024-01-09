@@ -7,6 +7,7 @@ import numpy as np
 import torch
 from astropy.table import Table
 from astropy.utils import lazyproperty
+from astropy.visualization import simple_norm
 from packaging import version
 from tqdm.auto import tqdm
 
@@ -20,6 +21,7 @@ from .utils.io import (
 )
 from .utils.misc import format_class_str
 from .utils.torch import TORCH_DEFAULT_DEVICE
+from .utils.plot import add_cbar
 
 logging.basicConfig(level=logging.INFO)
 
@@ -343,6 +345,33 @@ class MAPDeconvolverResult:
 
         plot_trace_loss(ax=ax, trace_loss=self.trace_loss, which=which, **kwargs)
         return ax
+    
+    def peek(self, figsize=(12, 5), kwargs_norm=None):
+        """Plot the result and the trace of the loss function
+
+        Parameters
+        ----------
+        figsize : tuple
+            Figure size        
+        """
+        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize)
+
+        self.plot_trace_loss(ax=axes[0])
+
+        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+
+        flux = self.components.flux_total_numpy
+
+        norm = simple_norm(flux, **kwargs_norm)
+
+        kwargs = {
+            "norm": norm,
+            "interpolation": "None"
+        }
+
+        im = axes[1].imshow(flux, origin="lower", **kwargs)
+        add_cbar(im=im, ax=axes[1], fig=fig)
+
 
     @property
     def config_table(self):
