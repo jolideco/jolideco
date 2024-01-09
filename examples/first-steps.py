@@ -15,7 +15,7 @@
 # ---
 
 # %% [markdown]
-# # Image Deconvolution Using Uniform Priors
+# # First Steps with Jolideco
 #
 # In this short tutorial we will demonstrate how to use Jolideco to perform image
 # deconvolution using uniform priors. We will motivate the usage of the patch prior.
