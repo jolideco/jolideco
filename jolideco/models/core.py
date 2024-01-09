@@ -248,8 +248,8 @@ class SparseSpatialFluxComponent(nn.Module):
         kwargs.setdefault("norm", norm)
         kwargs.setdefault("interpolation", "None")
 
-        ax.imshow(flux, origin="lower", **kwargs)
-        plt.colorbar(ax.images[0], ax=ax)
+        im = ax.imshow(flux, origin="lower", **kwargs)
+        add_cbar(im=im, ax=ax, fig=ax.figure)
         return ax
 
     def to_dict(self, **kwargs):
