@@ -29,6 +29,50 @@ patch prior; the prior is learned from astronomical images at other wavelength.
 In general Jolideco behaves rather stable during reconstruction, however there are a few
 parameters that can be tuned to improve the reconstruction.
 
+Data Reduction
+==============
+
+Jolideco does no provide any data reduction functionality. It is assumed that the data
+is already reduced to an image of counts, psf, exposure and background. For Fermi-LAT 
+and Chandra data reduction you can use the following snakemake pipelines:
+
+- `Chandra Snakemake Workflow <https://github.com/adonath/snakemake-workflow-chandra>`_
+- `Fermi-LAT Snakemake Workflow <https://github.com/adonath/snakemake-workflow-fermi-lat>`_
+
+Both workflows will produce the required image files for Jolideco.
+
+Patch Prior Library
+===================
+For reconstruction Jolideco relies on the patch prior. The patch prior is a learned from
+astronomical images at other wavelengths. The patch distribution is parametrized by a
+Gaussian mixture model (GMM). During optimization Jolideco also adapts the Prior
+parameters to the data. For convenience we provide a set of pre-trained GMM priors
+to use:
+
+.. list-table:: Title
+   :widths: 25 25 50
+   :header-rows: 1
+
+   * - Name
+     - Data Origin
+     - GMM components
+     - Analysis Scenario
+   * - `"gleam"``
+     - GLEAM Survey
+     - 128
+     - Multipurpose, Galactic Structure
+   * - `"jwst-cas-a"``
+     - JWST PR image of Cas A
+     - 128
+     - Multipurpose, Galactic Structure, SNRs
+   * - `"zoran-weiss"``
+     - Zoran et al. 2011, every day images
+     - 256
+     - No point sources, not recommended to use. But might work for extended structures.
+    
+
+To make them available, just follow the installation instructions below.
+
 
 Installation
 ============
@@ -37,6 +81,17 @@ To install Jolideco, you can use pip:
 .. code:: bash
     
     pip install jolideco
+
+
+To install the patch prior library, just clone the following  repository:
+
+.. code:: bash
+
+    git clone https://github.com/jolideco/jolideco-gmm-prior-library.git
+
+And define the environment variable ``JOLIDECO_GMM_PRIOR_LIBRARY`` to point to the
+folder where you cloned the repository.
+
 
 
 Usage
