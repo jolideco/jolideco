@@ -54,6 +54,7 @@ docs = [
     "pydata-sphinx-theme",
     "sphinx-automodapi",
     "sphinx-design",
+    "sphinx-gallery",
     "sympy",
 ]
 

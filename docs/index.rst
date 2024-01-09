@@ -24,6 +24,7 @@ Jolideco relies on `Pytorch <https://pytorch.org/>`_.
   :maxdepth: 2
 
   user/index.rst
+  user/tutorials/index
   api/index.rst
   developer.rst
   references.rst
