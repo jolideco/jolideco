@@ -1,5 +1,6 @@
 import numpy as np
 from astropy.convolution import Gaussian2DKernel, Tophat2DKernel, convolve_fft
+from jolideco import MAPDeconvolver
 
 __all__ = [
     "point_source_gauss_psf",
@@ -8,12 +9,14 @@ __all__ = [
 ]
 
 
+BACKGROUND_LEVEL_DEFAULT = 1
+
 def point_source_gauss_psf(
     shape=(32, 32),
     shape_psf=(17, 17),
     sigma_psf=3,
     source_level=1000,
-    background_level=2,
+    background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
 ):
     """Get point source with Gaussian PSF test data.
@@ -55,7 +58,7 @@ def point_source_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": psf.array,
+        "psf": {MAPDeconvolver._default_flux_component: psf.array},
         "exposure": exposure,
         "background": background,
         "flux": flux,
@@ -68,7 +71,7 @@ def disk_source_gauss_psf(
     sigma_psf=3,
     source_level=1000,
     source_radius=3,
-    background_level=2,
+    background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
 ):
     """Get disk source with Gaussian PSF test data.
@@ -116,7 +119,7 @@ def disk_source_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": psf.array,
+        "psf": {MAPDeconvolver._default_flux_component: psf.array},
         "exposure": exposure,
         "background": background,
         "flux": flux,
@@ -129,11 +132,11 @@ def gauss_and_point_sources_gauss_psf(
     sigma_psf=2,
     source_level=1000,
     source_radius=2,
-    background_level=2,
+    background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
 ):
-    """Get data with a Gaussian source in the center and point sources of varying brightness
-    of 100%, 30%, 10% and 3% of the Gaussian source.
+    """Get data with a Gaussian source in the center and point sources of
+    varying brightness of 100%, 30%, 10% and 3% of the Gaussian source.
 
     The exposure has a gradient of 50% from top to bottom.
 
@@ -183,7 +186,7 @@ def gauss_and_point_sources_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": psf.array,
+        "psf": {MAPDeconvolver._default_flux_component: psf.array},
         "exposure": exposure,
         "background": background,
         "flux": flux,

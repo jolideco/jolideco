@@ -39,6 +39,8 @@ and Chandra data reduction you can use the following snakemake pipelines:
 
 - `Chandra Snakemake Workflow <https://github.com/adonath/snakemake-workflow-chandra>`_
 - `Fermi-LAT Snakemake Workflow <https://github.com/adonath/snakemake-workflow-fermi-lat>`_
+- For TeV gamma-ray data reduction you can use `Gammapy <https://gammapy.org>`_.
+  Especially check out the `Tutorial on image data reduction <https://docs.gammapy.org/1.1/tutorials/analysis-2d/modeling_2D.html#sphx-glr-tutorials-analysis-2d-modeling-2d-py>`_.
 
 Both workflows will produce the required image files for Jolideco.
 
@@ -89,6 +91,7 @@ To install the patch prior library, just clone the following  repository:
 .. code:: bash
 
     git clone https://github.com/jolideco/jolideco-gmm-prior-library.git
+    export JOLIDECO_GMM_PRIOR_LIBRARY=/path/to/jolideco-gmm-prior-library
 
 And define the environment variable ``JOLIDECO_GMM_PRIOR_LIBRARY`` to point to the
 folder where you cloned the repository.

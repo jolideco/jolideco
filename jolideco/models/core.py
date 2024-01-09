@@ -132,7 +132,7 @@ class SparseSpatialFluxComponent(nn.Module):
         y_pos : `~numpy.ndarray`
             y position in pixel coordinates
         **kwargs : dict
-            Keyword arguments forwared to `SparseFluxComponent`
+            Keyword arguments forwarded to `SparseFluxComponent`
 
         Returns
         -------
@@ -155,7 +155,7 @@ class SparseSpatialFluxComponent(nn.Module):
 
         Parameters
         ----------
-        skycoord: `~astropy.coodinates.SkyCoord`
+        skycoord: `~astropy.coordinates.SkyCoord`
             Sky coordinates
         wcs : `~astropy.wcs.WCS`
             World coordinate transform object
@@ -249,6 +249,7 @@ class SparseSpatialFluxComponent(nn.Module):
         kwargs.setdefault("interpolation", "None")
 
         ax.imshow(flux, origin="lower", **kwargs)
+        plt.colorbar(ax.images[0], ax=ax)
         return ax
 
     def to_dict(self, **kwargs):
@@ -282,7 +283,7 @@ class SparseSpatialFluxComponent(nn.Module):
 
     @document_io_formats(registry=_registry_write)
     def write(self, filename, format=None, overwrite=False, **kwargs):
-        """Write flux component fo file
+        """Write flux component to file
 
         Parameters
         ----------
@@ -519,7 +520,8 @@ class SpatialFluxComponent(nn.Module):
         Parameters
         ----------
         datasets : list of dict
-            List of dictionaries containing, "counts", "psf", "background" and "exposure".
+            List of dictionaries containing, "counts", "psf",
+            "background" and "exposure".
         **kwargs : dict
             Keyword arguments passed to `FluxComponent`
 
@@ -625,7 +627,7 @@ class SpatialFluxComponent(nn.Module):
 
     @document_io_formats(registry=_registry_write)
     def write(self, filename, format=None, overwrite=False, **kwargs):
-        """Write flux component fo file
+        """Write flux component to file
 
         Parameters
         ----------
@@ -865,7 +867,7 @@ class FluxComponents(nn.ModuleDict):
         kwargs_norm: dict
             Keyword arguments passed to `~astropy.visualization.simple_norm`
         **kwargs : dict
-            Keywords forwared to `~matplotlib.pyplot.imshow`
+            Keywords forwarded to `~matplotlib.pyplot.imshow`
 
         Returns
         -------
