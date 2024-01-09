@@ -66,7 +66,8 @@ print(deconvolver)
 ######################################################################
 # Finally we run the deconvolution by using:
 # 
-
+# re-assign the PSF to the default flux component named "flux"
+data["psf"] = {"flux": data["psf"]}
 result = deconvolver.run(datasets={"obs-1": data}, components=component)
 
 
@@ -124,9 +125,12 @@ n_obs = 5
 datasets = {}
 
 for idx in range(n_obs):
-    datasets[f"obs-{idx}"] = gauss_and_point_sources_gauss_psf(
+    dataset = gauss_and_point_sources_gauss_psf(
         random_state=random_state, source_level=5000
     )
+    # re-assign psf
+    dataset["psf"] = {"flux": dataset["psf"]}
+    datasets[f"obs-{idx}"] = dataset
 
 ######################################################################
 # Now we re-run the deconvolution:

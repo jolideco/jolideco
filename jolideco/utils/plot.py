@@ -66,13 +66,7 @@ def plot_example_dataset(data, figsize=(12, 7), **kwargs):
         if name is None:
             ax.set_visible(False)
             continue
-        
-        array = data[name]
 
-        if isinstance(array, dict) and len(array) == 1:
-            key = list(array.keys())[0]
-            array = array[key]
-
-        im = ax.imshow(array, origin="lower", **kwargs)
+        im = ax.imshow(data[name], origin="lower", **kwargs)
         ax.set_title(name.title())
         fig.colorbar(im, ax=ax)

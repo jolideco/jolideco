@@ -1,6 +1,5 @@
 import numpy as np
 from astropy.convolution import Gaussian2DKernel, Tophat2DKernel, convolve_fft
-from jolideco import MAPDeconvolver
 
 __all__ = [
     "point_source_gauss_psf",
@@ -9,7 +8,7 @@ __all__ = [
 ]
 
 
-BACKGROUND_LEVEL_DEFAULT = 1
+BACKGROUND_LEVEL_DEFAULT = 2
 
 def point_source_gauss_psf(
     shape=(32, 32),
@@ -58,7 +57,7 @@ def point_source_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": {MAPDeconvolver._default_flux_component: psf.array},
+        "psf": psf.array,
         "exposure": exposure,
         "background": background,
         "flux": flux,
@@ -119,7 +118,7 @@ def disk_source_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": {MAPDeconvolver._default_flux_component: psf.array},
+        "psf": psf.array,
         "exposure": exposure,
         "background": background,
         "flux": flux,
@@ -186,7 +185,7 @@ def gauss_and_point_sources_gauss_psf(
     counts = random_state.poisson(npred)
     return {
         "counts": counts,
-        "psf": {MAPDeconvolver._default_flux_component: psf.array},
+        "psf": psf.array,
         "exposure": exposure,
         "background": background,
         "flux": flux,

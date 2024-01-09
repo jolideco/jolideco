@@ -76,7 +76,7 @@ testpaths = [ "\"jolideco\"", "\"docs\"",]
 astropy_header = true
 doctest_plus = "enabled"
 text_file_format = "rst"
-addopts = "--doctest-rst"
+addopts = "--doctest-rst --ignore-glob='docs/user/tutorials/*.py'"
 
 [tool.coverage.run]
 omit = [
