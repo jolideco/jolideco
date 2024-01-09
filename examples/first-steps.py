@@ -50,7 +50,8 @@ flux_init = random_state.gamma(30, size=(32, 32))
 
 component = SpatialFluxComponent.from_numpy(flux=flux_init)
 
-plt.imshow(flux_init)
+plt.imshow(flux_init, origin="lower")
+plt.show()
 
 
 ######################################################################
@@ -74,37 +75,43 @@ result = deconvolver.run(datasets={"obs-1": data}, components=component)
 # optimization has converged:
 # 
 
-result.plot_trace_loss()
-
-
-######################################################################
-# Now we take a look at the deconvolved image:
-# 
-
-result.components["flux"].plot()
+result.peek()
+plt.show()
 
 
 ######################################################################
 # The result does not look very good. This is because we have not used any
-# regularization. To do so we need to define a prior.
-# 
+# regularization. To do so we need to define a prior. Jolideco provides
+# many different built-in priors. Here we will use the patch prior.
+# For this we have to define a Gaussian mixture model (GMM) first:
 
 gmm = GaussianMixtureModel.from_registry("gleam-v0.1")
 print(gmm)
 
-patch_prior = GMMPatchPrior(gmm=gmm, cycle_spin=False, cycle_spin_subpix=True)
+######################################################################
+# Then we can define the patch prior:
+#
+patch_prior = GMMPatchPrior(gmm=gmm)
 print(patch_prior)
+
+######################################################################
+# And redefine the model component including the prior:
 
 component_patch_prior = SpatialFluxComponent.from_numpy(
     flux=flux_init, prior=patch_prior, upsampling_factor=1.0
 )
 print(component_patch_prior)
 
+######################################################################
+# Now we can run the deconvolution again:
+
 result = deconvolver.run(datasets={"obs-1": data}, components=component_patch_prior)
 
-result.plot_trace_loss()
+######################################################################
+# And plot the result:
 
-result.components["flux"].plot()
+result.peek()
+plt.show()
 
 
 ######################################################################
@@ -121,28 +128,29 @@ for idx in range(n_obs):
         random_state=random_state, source_level=5000
     )
 
+######################################################################
+# Now we re-run the deconvolution:
+    
 result = deconvolver.run(datasets=datasets, components=component_patch_prior)
 
-result.plot_trace_loss()
+######################################################################
+# And plot again the trace of the loss function and the result:
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
 flux_ref = datasets["obs-0"]["flux"]
 norm = simple_norm(flux_ref, stretch="asinh", asinh_a=0.01)
+
 axes[0].imshow(flux_ref, norm=norm, origin="lower")
+axes[0].set_title("Ground Truth")
 
 result.components["flux"].plot(ax=axes[1], norm=norm)
+axes[1].set_title("Deconvolved")
+plt.show()
 
 
 ######################################################################
 # You can also write the result to a file:
 # 
 
-result.write("jolideco-result.fits")
-
-
-
-
-######################################################################
-# 
-# 
+result.write("jolideco-result.fits", overwrite=True)
