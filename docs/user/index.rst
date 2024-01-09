@@ -39,10 +39,12 @@ and Chandra data reduction you can use the following snakemake pipelines:
 
 - `Chandra Snakemake Workflow <https://github.com/adonath/snakemake-workflow-chandra>`_
 - `Fermi-LAT Snakemake Workflow <https://github.com/adonath/snakemake-workflow-fermi-lat>`_
-- For TeV gamma-ray data reduction you can use `Gammapy <https://gammapy.org>`_.
-  Especially check out the `Tutorial on image data reduction <https://docs.gammapy.org/1.1/tutorials/analysis-2d/modeling_2D.html#sphx-glr-tutorials-analysis-2d-modeling-2d-py>`_.
 
 Both workflows will produce the required image files for Jolideco.
+
+For TeV gamma-ray data reduction you can use `Gammapy <https://gammapy.org>`_.
+Especially check out the `Tutorial on image data reduction <https://docs.gammapy.org/1.1/tutorials/analysis-2d/modeling_2D.html#sphx-glr-tutorials-analysis-2d-modeling-2d-py>`_.
+
 
 Patch Prior Library
 ===================

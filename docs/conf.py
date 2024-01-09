@@ -128,6 +128,20 @@ autoclass_content = "both"
 
 
 sphinx_gallery_conf = {
-     'examples_dirs': '../examples',   # path to your example scripts
-     'gallery_dirs': 'user/tutorials',  # path to where to save gallery generated output
+    "examples_dirs": "../examples",   # path to your example scripts
+    "gallery_dirs": "user/tutorials",  # path to where to save gallery generated output
+    "doc_module": ("jolideco",),
+    "exclude_implicit_doc": {},
+    "filename_pattern": "\.py",
+    "reset_modules": ("matplotlib",),
+    "download_all_examples": True,
+    "capture_repr": ("_repr_html_", "__repr__"),
+    "nested_sections": False,
+    "min_reported_time": 10,
+    "show_memory": False,
+    "line_numbers": False,
+    "reference_url": {
+        # The module you locally document uses None
+        "jolideco": None,
+    },
 }

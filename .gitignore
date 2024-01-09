@@ -65,3 +65,6 @@ pip-wheel-metadata/
 .DS_Store
 
 examples/*.fits
+docs/sg_execution_times.rst
+docs/user/tutorials/
+*.fits
