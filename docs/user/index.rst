@@ -17,11 +17,12 @@ does not change between the observations.
 * A single observation with one telescope with different data quality categories and different associated
   instrument response functions, such as event classes for Fermi.
 
+
 Using all available data Jolideco then reconstructs the flux estimate by deconvolution of the
 data. This requires a model of the point spread function (PSF) of the instrument and optionally
 and estimate for the exposure and background.
 
-A naive reconstruction of the flux, for example using the Richardson Lucy algorithm,
+A naive reconstruction of the flux, for example using the `Richardson Lucy algorithm <https://en.wikipedia.org/wiki/Richardson–Lucy_deconvolution>`_,
 results in very spiky and poor images. So the most important part of the method is the
 undelyong prior assumption on the structure of the images. For this Jolideco uses a
 patch prior; the prior is learned from astronomical images at other wavelength. 
@@ -49,8 +50,8 @@ Gaussian mixture model (GMM). During optimization Jolideco also adapts the Prior
 parameters to the data. For convenience we provide a set of pre-trained GMM priors
 to use:
 
-.. list-table:: Title
-   :widths: 25 25 50
+.. list-table:: Pre-trained GMM priors
+   :widths: 25 25 25 50
    :header-rows: 1
 
    * - Name
@@ -120,8 +121,8 @@ The main data types and classes are:
 
 - ``FluxComponents``: a collection of flux components, they hold the model parameters.
 - ``NPPredCalibrations``: a collection of calibration models, that hold the parameters
- for the calibratuion, including the background norm as well as positional shift per 
- observation.
+  for the calibratuion, including the background norm as well as positional shift per 
+  observation.
 - ``data``: a list of dictionaries with the required data for each observation (see below)
 
 
