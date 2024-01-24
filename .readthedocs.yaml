@@ -10,10 +10,12 @@ build:
   tools:
     python: "3.11"
   commands:
-    - git clone https://github.com/jolideco/jolideco-gmm-prior-library.git
-    - pwd
+    - git clone --depth 1 https://github.com/jolideco/jolideco-gmm-prior-library.git
     - pip install --user tox
-    - python3 -m tox -e docs -- --strict --site-dir=_readthedocs/html/
+    - python3 -m tox -e docs -- --strict
+    - mkdir -p $READTHEDOCS_OUTPUT/html/
+    - cp -r docs/_build/html/ $READTHEDOCS_OUTPUT/
+    - ls -lh $READTHEDOCS_OUTPUT/html/
 python:
   install:
     - method: pip
