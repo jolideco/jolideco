@@ -22,6 +22,7 @@ release = __version__
 # extensions coming with Sphinx (named "sphinx.ext.*") or your custom
 # ones.
 extensions = [
+    "sphinxcontrib.bibtex",
     "sphinx.ext.autodoc",
     "sphinx.ext.intersphinx",
     "sphinx.ext.todo",
@@ -128,7 +129,7 @@ autoclass_content = "both"
 
 
 sphinx_gallery_conf = {
-    "examples_dirs": "../examples",   # path to your example scripts
+    "examples_dirs": "../examples",  # path to your example scripts
     "gallery_dirs": "user/tutorials",  # path to where to save gallery generated output
     "doc_module": ("jolideco",),
     "exclude_implicit_doc": {},
@@ -145,3 +146,5 @@ sphinx_gallery_conf = {
         "jolideco": None,
     },
 }
+
+bibtex_bibfiles = ["references.bib"]

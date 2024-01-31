@@ -55,6 +55,7 @@ docs = [
     "sphinx-automodapi",
     "sphinx-design",
     "sphinx-gallery",
+    "sphinxcontrib-bibtex",
     "sympy",
     "scipy",
 ]
