@@ -112,3 +112,11 @@ to use:
     
 
 To make them available, just follow the installation instructions below.
+
+Tips and Tricks
+===============
+
+- Set `beta` such that the prior is not too strong. Aim for a value that makes the prior around 20% of the likelihood.
+- You can check the prior strength by looking at result objects `.trace_loss`
+- Start with the `gleam-v0.1` prior which is a good all purpose prior.
+- For bright sources you can work with an oversampled flux image. Typically a 2x2 oversampling is sufficient.
