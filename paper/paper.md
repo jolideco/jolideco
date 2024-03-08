@@ -11,7 +11,7 @@ tags:
   - gamma-ray astronomy
 authors:
   - name: Axel Donath
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-4568-7005
     affiliation: "1" # (Multiple affiliations must be quoted)
 affiliations:
  - name: Center for Astrophysics | Harvard & Smithsonian, 60 Garden Street, Cambridge, MA 02138, USA
