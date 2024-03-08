@@ -84,8 +84,12 @@ uses Matplotlib [@Hunter2007] to simplify the visualization of the results for u
 
 # Acknowledgements
 
-We acknowledge contributions from Brigitta Sipocz, Syrtis Major, and Semyeong
-Oh, and support from Kathryn Johnston during the genesis of this project.
+This work was conducted under the auspices of the
+CHASC International Astrostatistics Center. CHASC
+is supported by NSF grants DMS-21-13615, DMS-21-
+13397, and DMS-21-13605; by the UK Engineering and
+Physical Sciences Research Council [EP/W015080/1];
+and by NASA APRA Grant 80-NSSC21-K0285.
 
 # References
 Example paper.bib file:
