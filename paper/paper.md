@@ -66,7 +66,7 @@ the images from different observatories while accounting for their different
 instrument response functions such PSF, exposure and background.
 
 Combined fitting of simple parametric morphological models to gamma-ray
-image data is for example supported by the Gammapy package [@Gammapyv1.0].
+image data is for example supported by the Gammapy package [@Gammapy2023].
 Similarly for x-ray data there is the Sherpa [@Freeman2001] package. However, to
 our knowledge, Jolideco is first software to allow for combining data from
 different observatories to reconstruct a complete image based model.
@@ -77,7 +77,7 @@ backend. It features a modular and object oriented design, which allows for easy
 extension and customization of the main algorithm. The package is designed to be
 used in both python scripts and as well as inertactively in Jupyter notebooks.
 Jolideco uses Numpy [@Numpy2020] for additional array handling, and Astropy
-[@Astropy2013] for handling of FITS files and WCS information. The package also
+[@Astropy2018] for handling of FITS files and WCS information. The package also
 uses Matplotlib [@Hunter2007] to simplify the visualization of the results for users.
 
 ![Jolideco example code\label{fig:example}](jolideco-example.png)
