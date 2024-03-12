@@ -48,9 +48,9 @@ spatial structures contained in the image. For this Jolideco uses a special
 patch based image prior, which is trained on a real astronomical
 images from other wavelengths, such as the GLEAM readio survey and JWST
 obervations of Cassiopeia A. This method is implemented in the Jolideco Python
-package. An example result of the method is shown in Figure \autoref{fig:example}.
+package. Example results of the methods applied to x-ray and gamma-ray images
+can be found in [@Donath2024].
 
-![Jolideco applied to the source E0102\label{fig:result}](jolideco-result.png)
 
 # Statement of need
 Traditionally, the data of x-ray and gamma-ray telescopes is analyzed using
@@ -83,6 +83,10 @@ uses Matplotlib [@Hunter2007] to simplify the visualization of the results for u
 ![Jolideco example code\label{fig:example}](jolideco-example.png)
 
 # Acknowledgements
+
+The author would like to thank Aneta Siemiginowska, Vinay L. Kashyap, David A.
+van Dyk and Douglas Burke from the CHASC International Astrostatistics
+Collaboration for their support and feedback on the development of Jolideco.
 
 This work was conducted under the auspices of the
 CHASC International Astrostatistics Center. CHASC
