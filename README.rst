@@ -11,7 +11,9 @@ Jolideco: a Python package for Poisson Joint Likelihood Deconvolution
     :scale: 100%
     :target: https://jolideco.readthedocs.io/en/latest/?badge=latest
 
-![example workflow](https://github.com/jolideco/jolideco/actions/workflows/ci_tests.yml/badge.svg)
+.. image:: https://github.com/jolideco/jolideco/actions/workflows/ci_tests.yml/badge.svg?style=flat
+    :target: https://github.com/jolideco/jolideco/actions
+    :alt: GitHub actions CI
 
 Jolideco is a Python package for Joint Likelihood Deconvolution of astronomical images affected by
 Poisson noise. It allows you to deblur and denoise images and do a joint image reconstruction of
