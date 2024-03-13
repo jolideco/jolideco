@@ -17,14 +17,14 @@ a single flux image from all observations. The assumption is that the underlying
 does not change between the observations. This includes, but is not limited,
 to the following scenarios:
 
-* **Different observations with one instrument or telescope at different times** and observation conditions.
+* Different observations with one instrument or telescope at different times and observation conditions.
   For example, multiple observations of Chandra or an IACT of the same astrophysical object with different
   offset angles and exposure times
-* **Different observations from different instruments or telescopes**, which operate in the same wavelength range.
+* Different observations from different instruments or telescopes, which operate in the same wavelength range.
   For example, a Chandra and XMM observation of the same region in the sky
-* A single observation with **one telescope with different data quality categories** and different associated
+* A single observation with one telescope with different data quality categories and different associated
   instrument response functions, such as event classes for Fermi.
-* In principle also **images at different energies**, for example from the Fermi-LAT. However in this case
+* In principle also images at different energies, for example from the Fermi-LAT. However in this case
   the assumption is that the flux does not change with energy, which is not always fulfilled.
 
 For each of the observations **Jolideco can take the specific instrument response functions into account**.
