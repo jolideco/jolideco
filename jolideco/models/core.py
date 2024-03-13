@@ -1,13 +1,17 @@
 import logging
 from pathlib import Path
-import numpy as np
-from astropy.coordinates import SkyCoord
-from astropy.utils import lazyproperty
-from astropy.visualization import simple_norm
+from typing import Any
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from astropy.coordinates import SkyCoord
+from astropy.utils import lazyproperty
+from astropy.visualization import simple_norm
+from astropy.wcs import WCS
+
 from jolideco.priors.core import Prior, Priors, UniformPrior
 from jolideco.utils.io import (
     IO_FORMATS_FLUX_COMPONENT_READ,
@@ -103,17 +107,17 @@ class SparseSpatialFluxComponent(nn.Module):
             return super().parameters(recurse)
 
     @property
-    def x_pos_numpy(self):
+    def x_pos_numpy(self) -> np.ndarray:
         """x pos as numpy array"""
         return self.x_pos.detach().cpu().numpy()
 
     @property
-    def y_pos_numpy(self):
+    def y_pos_numpy(self) -> np.ndarray:
         """y pos as numpy array"""
         return self.y_pos.detach().cpu().numpy()
 
     @property
-    def sky_coord(self):
+    def sky_coord(self) -> SkyCoord:
         """Positions as SkyCoord"""
         return SkyCoord.from_pixel(
             xp=self.x_pos_numpy, yp=self.y_pos_numpy, wcs=self.wcs
@@ -169,35 +173,35 @@ class SparseSpatialFluxComponent(nn.Module):
         return cls.from_numpy(x_pos=x_pos, y_pos=y_pos, **kwargs)
 
     @property
-    def wcs(self):
+    def wcs(self) -> WCS:
         """Flux error"""
         return self._wcs
 
     @property
-    def shape(self):
+    def shape(self) -> tuple:
         """Shape of the flux component"""
         return (1, 1) + self._shape
 
     @lazyproperty
-    def indices(self):
+    def indices(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Shape of the flux component"""
         idx = torch.arange(self._shape[1], dtype=torch.float32)
         idy = torch.arange(self._shape[0], dtype=torch.float32)
         return idx.reshape(self._shape_eval_x), idy.reshape(self._shape_eval_y)
 
     @property
-    def use_log_flux(self):
-        """Use log flux (`bool`)"""
+    def use_log_flux(self) -> bool:
+        """Use log flux"""
         return self._use_log_flux
 
     @property
-    def flux_numpy(self):
-        """Flux (`~numpy.ndarray`)"""
+    def flux_numpy(self) -> np.ndarray:
+        """Flux as numpy array"""
         flux_cpu = self.flux.detach().cpu()
         return flux_cpu.numpy()[0, 0]
 
     @property
-    def flux(self):
+    def flux(self) -> torch.Tensor:
         """Flux (`~torch.Tensor`)"""
         y, x = self.indices
         x0 = self.x_pos.reshape(self._shape_eval)
@@ -215,7 +219,7 @@ class SparseSpatialFluxComponent(nn.Module):
         return flux.sum(axis=0)
 
     @property
-    def flux_upsampled(self):
+    def flux_upsampled(self) -> torch.Tensor:
         """Upsampled flux"""
         return self.flux
 
@@ -252,7 +256,7 @@ class SparseSpatialFluxComponent(nn.Module):
         add_cbar(im=im, ax=ax, fig=ax.figure)
         return ax
 
-    def to_dict(self, **kwargs):
+    def to_dict(self, **kwargs) -> dict[str, Any]:
         """Convert sparse flux component configuration to dict, with simple data types.
 
         Returns
@@ -402,7 +406,7 @@ class SpatialFluxComponent(nn.Module):
         self._wcs = wcs
         self.register_full_backward_hook(freeze_mask)
 
-    def to_dict(self, include_data=None):
+    def to_dict(self, include_data=None) -> dict[str, Any]:
         """Convert flux component configuration to dict, with simple data types.
 
         Parameters
@@ -465,7 +469,7 @@ class SpatialFluxComponent(nn.Module):
         return format_class_str(instance=self)
 
     @property
-    def wcs(self):
+    def wcs(self) -> WCS:
         """Flux error"""
         return self._wcs
 
@@ -540,23 +544,23 @@ class SpatialFluxComponent(nn.Module):
         return cls.from_numpy(flux=flux_init, **kwargs)
 
     @property
-    def shape(self):
+    def shape(self) -> tuple[int, int, int, int]:
         """Shape of the flux component"""
         return self._flux_upsampled.shape
 
     @property
-    def shape_image(self):
+    def shape_image(self) -> tuple[int, int]:
         """Image shape of the flux component"""
         return self.shape[-2:]
 
     @property
-    def use_log_flux(self):
-        """Use log flux (`bool`)"""
+    def use_log_flux(self) -> bool:
+        """Use log flux"""
         return self._use_log_flux
 
     @property
-    def flux_upsampled(self):
-        """Flux (`~torch.Tensor`)"""
+    def flux_upsampled(self) -> torch.Tensor:
+        """Flux"""
         flux = self._flux_upsampled
 
         if self.use_log_flux:
@@ -568,8 +572,8 @@ class SpatialFluxComponent(nn.Module):
         return flux
 
     @property
-    def flux(self):
-        """Flux (`~torch.Tensor`)"""
+    def flux(self) -> torch.Tensor:
+        """Flux as torch tensor"""
         flux = self.flux_upsampled
 
         if self.upsampling_factor:
@@ -581,25 +585,25 @@ class SpatialFluxComponent(nn.Module):
         return flux
 
     @property
-    def flux_upsampled_error(self):
-        """Flux error (`~torch.Tensor`)"""
+    def flux_upsampled_error(self) -> torch.Tensor:
+        """Flux error as torch tensor"""
         return self._flux_upsampled_error
 
     @property
-    def flux_numpy(self):
-        """Flux (`~numpy.ndarray`)"""
+    def flux_numpy(self) -> np.ndarray:
+        """Flux as numpy array"""
         flux_cpu = self.flux.detach().cpu()
         return flux_cpu.numpy()[0, 0]
 
     @property
-    def flux_upsampled_numpy(self):
-        """Flux (`~numpy.ndarray`)"""
+    def flux_upsampled_numpy(self) -> np.ndarray:
+        """Flux upsampled as numpy array"""
         flux_cpu = self.flux_upsampled.detach().cpu()
         return flux_cpu.numpy()[0, 0]
 
     @property
-    def flux_upsampled_error_numpy(self):
-        """Flux error (`~numpy.ndarray`)"""
+    def flux_upsampled_error_numpy(self) -> np.ndarray:
+        """Flux error upsampled as numpy array"""
         flux_error_cpu = self.flux_upsampled_error.detach().cpu()
         return flux_error_cpu.numpy()[0, 0]
 
