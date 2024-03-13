@@ -1,7 +1,16 @@
 from itertools import product
+
 import numpy as np
 
-__all__ = ["view_as_overlapping_patches", "split_datasets_validation"]
+__all__ = [
+    "view_as_overlapping_patches",
+    "split_datasets_validation",
+    "reconstruct_from_overlapping_patches",
+    "compute_precision_cholesky",
+    "split_datasets_validation",
+    "get_pixel_weights",
+    "evaluate_trapez",
+]
 
 
 def compute_precision_cholesky(covariances):

@@ -1,4 +1,5 @@
 import logging
+
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -6,10 +7,12 @@ import torch.nn.functional as F
 __all__ = [
     "convolve_fft_torch",
     "view_as_overlapping_patches_torch",
+    "view_as_random_overlapping_patches_torch",
     "view_as_windows_torch",
     "TORCH_DEFAULT_DEVICE",
     "interp1d_torch",
     "grid_weights",
+    "get_default_generator",
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
