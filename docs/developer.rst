@@ -2,37 +2,39 @@
 Development
 ***********
 
-This is the developer documentation.
+This is the developer documentation. For handling the development and test
+environments Jolideco uses the tool `tox <https://tox.wiki/>`_. You can start
+from any Python environment and install tox first for example using pip::
+
+    pip install tox
+
+From there all the necessary dependencies will be installed automatically
+and be handled by tox.
 
 Setup
 -----
 For the development you can rely on one of the pre-defined test environments::
 
-    tox --devenv venv-jolideco-dev -e py39
+    tox --devenv venv-jolideco-dev -e py310
     source venv-jolieco-dev/bin/activate
 
 This will create a new ``venv-jolideco-env`` environment, that you can activate
 using the ``source`` command. To leave the environment again use ``deactivate``.
-The command requires that you have Python 3.9 installed on your system. In case
+The command requires that you have Python 3.10 installed on your system. In case
 you do not have it installed you could change the command to the corresponding
 Python version like::
 
-    tox --devenv venv-jolideco-dev -e py38
-    tox --devenv venv-jolideco-dev -e py37
+    tox --devenv venv-jolideco-dev -e py311
 
 However it is recommended to use a rather new Python version for development.
 
 Running Tests
 -------------
 
-Note: running tests is no longer done using ``python setup.py test``. Instead
-you will need to run::
+To run the unit test you can use the following ``tox`` command::
 
     tox -e test
 
-If you don't already have tox installed, you can install it with::
-
-    pip install tox
 
 If you only want to run part of the test suite, you can also use pytest
 directly with::
@@ -49,9 +51,6 @@ Building the documentation is no longer done using
 
     tox -e docs
 
-If you don't already have tox installed, you can install it with::
-
-    pip install tox
 
 You can also build the documentation with Sphinx directly using::
 
