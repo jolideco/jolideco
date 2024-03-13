@@ -6,18 +6,27 @@ Getting Started
 Data Reduction
 ==============
 
-To run your first Jolideco analysis you need to have the following data:
+Jolideco is a deconvolution package for any astronomical image affected by Poisson noise.
+It is not designed to work with any specific instrument, but rather a combination of
+instruments. However this also means Jolideco only operates on already reduced data,
+typically as `FITS images <https://en.wikipedia.org/wiki/FITS>`_.
 
-- Counts image
-- PSF image
-- Exposure image (optional)
-- Background image (optional)
+So before you can run your first Jolideco analysis, for each observation
+you need to have the following data ready:
 
-Jolideco does no provide any data reduction functionality. To reduce the data you
-can typically use the data reduction software provided by the observatory you got
-the data from.
+===================== =================================================
+Quantity              Definition
+===================== =================================================
+counts                An image containing the binned events
+psf                   An image with a model of the point spread function (PSF)
+exposure (optional)   An image containing the exposure, typically as product of the lifetime and effective area
+background (optional) An image of the instrumental background, typically as predicted counts
+===================== =================================================
 
-For Fermi-LAT and Chandra data reduction you can use the following snakemake pipelines:
+As Jolideco does no provide any data reduction functionality you have to
+reduce the data using the software provided by the observatory you got
+the data from. However to simplify the process for Fermi-LAT and Chandra 
+you can use the following snakemake pipelines:
 
 - `Chandra Snakemake Workflow <https://github.com/adonath/snakemake-workflow-chandra>`_
 - `Fermi-LAT Snakemake Workflow <https://github.com/adonath/snakemake-workflow-fermi-lat>`_
