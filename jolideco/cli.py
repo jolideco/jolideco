@@ -1,6 +1,8 @@
 import logging
 import warnings
+
 import click
+
 from jolideco import __version__
 
 
@@ -47,3 +49,14 @@ def cli(log_level, ignore_warnings):  # noqa: D301
 
     if ignore_warnings:
         warnings.simplefilter("ignore")
+
+
+@cli.command("test")
+def test():
+    from jolideco import test
+
+    test()
+
+
+if __name__ == "__main__":
+    cli()
