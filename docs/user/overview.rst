@@ -37,4 +37,7 @@ In general Jolideco behaves rather stable during reconstruction, however there a
 parameters that can be tuned to improve the reconstruction.
 
 
+Jolideco is mostly build on `Pytorch <https://pytorch.org>`_, `Numpy <https://numpy.org>`_ and `Astropy <https://www.astropy.org>`_.
+
+
 Jolideco builds on ideas of :cite:t:`Zoran2011`, :cite:t:`Bouman2016` and :cite:t:`Ingaramo2014`.
