@@ -15,6 +15,14 @@ does not change between the observations. This includes the following scenarios:
   instrument response functions, such as event classes for Fermi.
 
 
+.. image:: ../jolideco-illustration.png
+    :width: 600
+    :alt: Jolideco illustration
+    :align: center
+    :caption: Illustration of the Jolideco method. The input data are multiple images of the observed counts,
+              a model of the PSF and the exposure map. The output is a single reconstructed flux image.
+
+
 Using all available data Jolideco then reconstructs the flux estimate by deconvolution of the
 data. This requires a model of the point spread function (PSF) of the instrument and optionally
 and estimate for the exposure and background.
