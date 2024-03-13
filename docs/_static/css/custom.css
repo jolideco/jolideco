@@ -28,3 +28,8 @@ html[data-theme="dark"] {
 .sphx-glr-download a:hover {
     background-color: #d9edf7 !important;
 }
+
+
+section {
+    text-align: justify;
+}

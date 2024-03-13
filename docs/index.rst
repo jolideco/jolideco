@@ -2,10 +2,6 @@
     :width: 500
     :align: center
 
-**********************
-Jolideco Documentation
-**********************
-
 Jolideco is a Python library for Joint Likelihood deconvolution of a set of observations 
 in the presence of Poisson noise. It can be used to combine data from multiple x-ray instruments
 such as `Chandra <https://cxc.harvard.edu/chandra/>`_, 
@@ -21,14 +17,9 @@ and signal to noise ratio.
 
 Jolideco relies on `Pytorch <https://pytorch.org/>`_.
 
-.. warning::
-
-    Jolideco is still in development!
-
 
 .. toctree::
   :maxdepth: 2
-  :hidden:
 
   user/index.rst
   user/tutorials/index
