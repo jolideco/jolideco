@@ -51,7 +51,7 @@ test = [
     "pytest-doctestplus",
 ]
 docs = [
-    "pydata-sphinx-theme",
+    "sphinx-book-theme",
     "sphinx-automodapi",
     "sphinx-design",
     "sphinx-gallery",
