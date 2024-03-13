@@ -41,6 +41,17 @@ When using Jolideco, please cite the following paper references:
 
 TBD
 
+Further Resources
+------------------
+
+Please also take a look at the following associated repositories:
+
+- `Jolideco GMM Library <https://github.com/jolideco/jolideco-gmm-prior-library>`_
+- `Jolideco Fermi-LAT example <https://github.com/jolideco/jolideco-fermi-examples>`_
+- `Jolideco Chandra example <https://github.com/jolideco/jolideco-chandra-examples>`_
+- `Webpage with eesult comparisons for toy datasets <https://jolideco.github.io/jolideco-comparison/>`_
+- `Jolideco Performance Benchmarks <https://github.com/jolideco/jolideco-performance-benchmark>`_
+
 
 Contributing
 ------------
