@@ -1,7 +1,8 @@
-import matplotlib.pyplot as plt
 from itertools import zip_longest
 
-__all__ = ["plot_trace_loss"]
+import matplotlib.pyplot as plt
+
+__all__ = ["plot_trace_loss", "plot_example_dataset", "add_cbar"]
 
 
 def add_cbar(im, ax, fig):

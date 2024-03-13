@@ -36,6 +36,7 @@ extensions = [
     "sphinx_automodapi.smart_resolver",
     "sphinx_design",
     "sphinx_gallery.gen_gallery",
+    "sphinxemoji.sphinxemoji",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -153,3 +154,6 @@ sphinx_gallery_conf = {
 }
 
 bibtex_bibfiles = ["references.bib"]
+
+
+sphinxemoji_style = "twemoji"

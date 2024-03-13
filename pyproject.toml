@@ -58,6 +58,7 @@ docs = [
     "sphinxcontrib-bibtex",
     "sympy",
     "scipy",
+    "sphinxemoji",
 ]
 
 
