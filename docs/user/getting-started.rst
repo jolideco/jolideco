@@ -64,19 +64,8 @@ The main data types and classes are:
 - ``NPPredCalibrations``: a collection of calibration models, that hold the parameters
   for the calibratuion, including the background norm as well as positional shift per 
   observation.
-- ``data``: a list of dictionaries with the required data for each observation (see below)
+- ``data``: a list of dictionaries with the required data for each observation (see above)
 
-
-The ``data`` object is a simple Python ``dict`` containing the following quantities:
-
-===================== =================================================
-Quantity              Definition
-===================== =================================================
-counts                2D Numpy array containing the counts image
-psf                   2D Numpy array containing an image of the PSF
-exposure (optional)   2D Numpy array containing the exposure image
-background (optional) 2D Numpy array containing the background / baseline image
-===================== =================================================
 
 From these quantities the predicted number of counts is computed like:
 

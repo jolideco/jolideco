@@ -10,6 +10,6 @@ exposed in ``jolideco.*`` namespace are public.
 
     core
     models
-    priors
     data
-    utils/index
+    priors
+

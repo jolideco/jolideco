@@ -1,8 +1,8 @@
 .. _api_core:
 
-********
-Main API
-********
+***************
+core - Main API
+***************
 
 .. currentmodule:: jolideco.core
 
