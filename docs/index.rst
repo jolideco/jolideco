@@ -13,8 +13,6 @@
 
 .. image:: https://img.shields.io/pypi/v/jolideco
 
-| 
-
 Welcome to Jolideco's documentation! Jolideco [#]_ is a **Python library for Joint Likelihood 
 deconvolution** of a set of observations  in the presence of Poisson noise.
 It can be used to **combine data from multiple x-ray instruments**

@@ -39,3 +39,12 @@ command:
     jolideco test
 
 If all tests pass, the installation was successful and you are ready to go!
+
+
+.. admonition:: What's next?
+
+   |:books:| If you would like to first learn Jolideco on example datasets checkout 
+   the :doc:`tutorials/index`. 
+
+   |:rocket:| If you would like to directly start with your own data, rather checkout
+   the :doc:`getting-started` page.

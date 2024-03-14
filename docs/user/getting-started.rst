@@ -77,40 +77,7 @@ Where :math:`\mathcal{E}` is the exposure, :math:`F` the deconvovled
 flux image, :math:`B` the background and :math:`PSF` the PSF image.
 
 For more detailed analysis example check out the `tutorials page`_.
-
-
-Patch Prior Library
-===================
-For reconstruction Jolideco relies on the patch prior. The patch prior is a learned from
-astronomical images at other wavelengths. The patch distribution is parametrized by a
-Gaussian mixture model (GMM). During optimization Jolideco also adapts the Prior
-parameters to the data. For convenience we provide a set of pre-trained GMM priors
-to use:
-
-.. list-table:: Pre-trained GMM priors
-   :widths: 25 25 25 50
-   :header-rows: 1
-
-   * - Name
-     - Data Origin
-     - GMM components
-     - Analysis Scenario
-   * - `"gleam"``
-     - GLEAM Survey
-     - 128
-     - Multipurpose, Galactic Structure
-   * - `"jwst-cas-a"``
-     - JWST PR image of Cas A
-     - 128
-     - Multipurpose, Galactic Structure, SNRs
-   * - `"zoran-weiss"``
-     - Zoran et al. 2011, every day images
-     - 256
-     - No point sources, not recommended to use. But might work for extended structures.
     
-
-To make them available, just follow the installation instructions below.
-
 Tips and Tricks
 ===============
 
