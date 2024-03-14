@@ -1,8 +1,8 @@
 .. _api_models:
 
-*************
-Model classes
-*************
+**********************
+models - Model classes
+**********************
 
 .. currentmodule:: jolideco.models
 
