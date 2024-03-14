@@ -3,8 +3,8 @@ Getting Started
 ***************
 
 
-Data Reduction
-==============
+Data Preparation
+================
 
 Jolideco is a deconvolution package for any astronomical image affected by Poisson noise.
 It is not designed to work with any specific instrument, but rather a combination of
@@ -38,6 +38,9 @@ Especially check out the `Tutorial on image data reduction <https://docs.gammapy
 
 Usage
 =====
+Once you have prepared the data you can use Jolideco to deconvolve it. 
+
+
 This is how to use Jolideco:
 
 .. code::
@@ -76,12 +79,18 @@ From these quantities the predicted number of counts is computed like:
 Where :math:`\mathcal{E}` is the exposure, :math:`F` the deconvovled
 flux image, :math:`B` the background and :math:`PSF` the PSF image.
 
-For more detailed analysis example check out the `tutorials page`_.
+For more detailed analysis example check out the :doc:`tutorials/index`.
     
 Tips and Tricks
 ===============
 
-- Set `beta` such that the prior is not too strong. Aim for a value that makes the prior around 20% of the likelihood.
-- You can check the prior strength by looking at result objects `.trace_loss`
-- Start with the `gleam-v0.1` prior which is a good all purpose prior.
+Here is a list of tips and tricks that might help you to get started with Jolideco. 
+They have been collected from the experience of the developers and users of Jolideco.
+
+- Start with a uniform prior for the flux and "overfit" to the data. Convergence should be really fast.
+- This image you can use as a starting point for the patch prior later.
+- The patch prior is normalized such that it is roughly equally informative as one observation.
+- If you only have few data (low statistics), ``beta`` should be chosen such that the prior is not too strong. Aim for a value that makes the prior around 20% of the likelihood.
+- You can check the prior strength by looking at ``MapDeconvolverResult.trace_loss``
+- Start with the ``"gleam-v0.1"`` prior which is a good all purpose prior.
 - For bright sources you can work with an oversampled flux image. Typically a 2x2 oversampling is sufficient.

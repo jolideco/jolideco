@@ -4,6 +4,7 @@
 
 |
 
+
 .. image:: https://github.com/jolideco/jolideco/actions/workflows/ci_tests.yml/badge.svg?style=flat
     :target: https://github.com/jolideco/jolideco/actions
     :alt: GitHub actions CI
@@ -12,6 +13,10 @@
    :target: https://github.com/jolideco/jolideco/discussions
 
 .. image:: https://img.shields.io/pypi/v/jolideco
+
+.. raw:: html
+
+   <hr>
 
 Welcome to Jolideco's documentation! Jolideco [#]_ is a **Python library for Joint Likelihood 
 deconvolution** of a set of observations  in the presence of Poisson noise.
@@ -26,7 +31,7 @@ It has a nice user interface and is designed to be simple to use.
 
     |:computer:| The best place to start is with the :doc:`user/installation` and then continue with the :doc:`user/tutorials/index`.
     
-    |:book:| If you are interested in the details and theory behind Joledeco, check out the :doc:`user/index` section.
+    |:book:| If you are interested in the details and ideas behind Jolideco, check out the :doc:`user/overview` section.
     
     |:bug:| If you find a bug or have a feature request, please `open an issue <https://github.com/jolideco/jolideco/issues/new/choose>`_ .
     For general support and questions you can also use the `GitHub Discussions <https://github.com/jolideco/jolideco/discussions>`_.
