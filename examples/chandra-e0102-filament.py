@@ -203,7 +203,13 @@ print(calibrations)
 
 datasets_train = split_datasets_validation(datasets, n_validation=4)
 
-deconvolve = MAPDeconvolver(n_epochs=250, learning_rate=0.1, beta=1.0)
+######################################################################
+# And we define the deconvolver. We will use a learning rate of 0.1 and
+# a beta of 1.0. The number of epochs is set to 250. We also specify
+# that the computation should be done on the CPU. If you have a GPU
+# you can set the device to "cuda:0" or any other valid PyTorch device.
+
+deconvolve = MAPDeconvolver(n_epochs=250, learning_rate=0.1, beta=1.0, device="cpu")
 print(deconvolve)
 
 ######################################################################
