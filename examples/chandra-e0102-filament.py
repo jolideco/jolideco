@@ -48,12 +48,12 @@ device = "cuda:0" if torch.cuda.is_available() else "cpu"
 ######################################################################
 # First we download and extract the data files:
 
-path = Path("chandra-e0102-filament-all")
+path = Path("").absolute() / "chandra-e0102-filament-all"
 
 if not path.exists():
     filename = download_file(URL, cache=True)
     with tarfile.open(filename, "r:gz") as tar:
-        tar.extractall(".", filter=lambda member, path: member)
+        tar.extractall(path.parent, filter=lambda member, path: member)
 
 
 ######################################################################
