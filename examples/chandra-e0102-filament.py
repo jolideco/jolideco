@@ -22,6 +22,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import torch
 from astropy.io import fits
 from astropy.utils.data import download_file
 from astropy.visualization import simple_norm
@@ -41,6 +42,8 @@ random_state = np.random.RandomState(428723)
 
 
 URL = "https://zenodo.org/records/10844655/files/chandra-e0102-filament-all.tar.gz"
+
+device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 ######################################################################
 # First we download and extract the data files:
@@ -150,7 +153,12 @@ plt.show()
 ######################################################################
 # Now we can define the patch prior:
 
-patch_prior = GMMPatchPrior(gmm=gmm, cycle_spin=True, norm=IdentityImageNorm())
+patch_prior = GMMPatchPrior(
+    gmm=gmm,
+    cycle_spin=True,
+    norm=IdentityImageNorm(),
+    device=device,
+)
 
 ######################################################################
 # We have specified to use cycle spinning, which is a technique to
@@ -209,7 +217,7 @@ datasets_train = split_datasets_validation(datasets, n_validation=4)
 # that the computation should be done on the CPU. If you have a GPU
 # you can set the device to "cuda:0" or any other valid PyTorch device.
 
-deconvolve = MAPDeconvolver(n_epochs=250, learning_rate=0.1, beta=1.0, device="cpu")
+deconvolve = MAPDeconvolver(n_epochs=250, learning_rate=0.1, beta=1.0, device=device)
 print(deconvolve)
 
 ######################################################################
