@@ -37,7 +37,7 @@ def plot_trace_loss(ax, trace_loss, which=None, **kwargs):
     ax.semilogy()
     ax.set_xlabel("# Iteration")
     ax.set_ylabel("Loss value")
-    plt.legend()
+    ax.legend()
 
 
 def plot_example_dataset(data, figsize=(12, 7), **kwargs):
