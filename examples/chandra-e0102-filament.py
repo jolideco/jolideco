@@ -43,7 +43,11 @@ random_state = np.random.RandomState(428723)
 
 URL = "https://zenodo.org/records/10844655/files/chandra-e0102-filament-all.tar.gz"
 
+# Run decomvolution or use precomputed result
+RUN_DECONVOLUTION = True
+
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
+device = "mps"
 
 ######################################################################
 # First we download and extract the data files:
@@ -131,7 +135,7 @@ plt.show()
 # provide a background. For now we will just use a constant background:
 
 for dataset in datasets.values():
-    dataset["background"] = 1e-2 * np.ones_like(dataset["counts"])
+    dataset["background"] = 0.1 * np.ones_like(dataset["counts"])
 
 
 ######################################################################
@@ -225,15 +229,15 @@ print(deconvolve)
 # M1 cpu), so we will not run it in this notebook. But if you have GPU
 # acceleration it should not take more than a few minutes.
 
-filename_result = path / "chandra-0102-filement-jolideco.fits"
+filename_result = path / "chandra-0102-filament-jolideco.fits"
 
-if not filename_result.exists():
+if RUN_DECONVOLUTION:
     result = deconvolve.run(
         components=components,
         calibrations=calibrations,
         **datasets_train,
     )
-    result.write("chandra-0102-filement-jolideco.fits", overwrite=True)
+    result.write(filename_result, overwrite=True)
 
 ######################################################################
 # It is very good practice to always write the result to disk, after
@@ -242,6 +246,6 @@ if not filename_result.exists():
 #
 # Thus we just continue with the precomputed result:
 
-result = MAPDeconvolverResult.read(path / "chandra-0102-filement-jolideco.fits")
+result = MAPDeconvolverResult.read(filename_result)
 result.peek()
 plt.show()
