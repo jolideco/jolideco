@@ -10,6 +10,7 @@ __all__ = [
 
 BACKGROUND_LEVEL_DEFAULT = 2
 
+
 def point_source_gauss_psf(
     shape=(32, 32),
     shape_psf=(17, 17),
@@ -17,6 +18,7 @@ def point_source_gauss_psf(
     source_level=1000,
     background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
+    dtype=np.float32,
 ):
     """Get point source with Gaussian PSF test data.
 
@@ -36,6 +38,8 @@ def point_source_gauss_psf(
         Background level in counts / pixel.
     random_state : `~numpy.random.RandomState`
         Random state
+    dtype : `~numpy.dtype`
+        Data type
 
     Returns
     -------
@@ -56,11 +60,11 @@ def point_source_gauss_psf(
 
     counts = random_state.poisson(npred)
     return {
-        "counts": counts,
-        "psf": psf.array,
-        "exposure": exposure,
-        "background": background,
-        "flux": flux,
+        "counts": counts.astype(dtype),
+        "psf": psf.array.astype(dtype),
+        "exposure": exposure.astype(dtype),
+        "background": background.astype(dtype),
+        "flux": flux.astype(dtype),
     }
 
 
@@ -72,6 +76,7 @@ def disk_source_gauss_psf(
     source_radius=3,
     background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
+    dtype=np.float32,
 ):
     """Get disk source with Gaussian PSF test data.
 
@@ -93,6 +98,7 @@ def disk_source_gauss_psf(
         Background level in counts / pixel.
     random_state : `~numpy.random.RandomState`
         Random state
+    dtype : `~numpy.dtype`
 
     Returns
     -------
@@ -117,11 +123,11 @@ def disk_source_gauss_psf(
 
     counts = random_state.poisson(npred)
     return {
-        "counts": counts,
-        "psf": psf.array,
-        "exposure": exposure,
-        "background": background,
-        "flux": flux,
+        "counts": counts.astype(dtype),
+        "psf": psf.array.astype(dtype),
+        "exposure": exposure.astype(dtype),
+        "background": background.astype(dtype),
+        "flux": flux.astype(dtype),
     }
 
 
@@ -133,6 +139,7 @@ def gauss_and_point_sources_gauss_psf(
     source_radius=2,
     background_level=BACKGROUND_LEVEL_DEFAULT,
     random_state=None,
+    dtype=np.float32,
 ):
     """Get data with a Gaussian source in the center and point sources of
     varying brightness of 100%, 30%, 10% and 3% of the Gaussian source.
@@ -155,6 +162,8 @@ def gauss_and_point_sources_gauss_psf(
         Background level in counts / pixel.
     random_state : `~numpy.random.RandomState`
         Random state
+    dtype : `~numpy.dtype`
+        Data type
 
     Returns
     -------
@@ -184,9 +193,9 @@ def gauss_and_point_sources_gauss_psf(
 
     counts = random_state.poisson(npred)
     return {
-        "counts": counts,
-        "psf": psf.array,
-        "exposure": exposure,
-        "background": background,
-        "flux": flux,
+        "counts": counts.astype(dtype),
+        "psf": psf.array.astype(dtype),
+        "exposure": exposure.astype(dtype),
+        "background": background.astype(dtype),
+        "flux": flux.astype(dtype),
     }
