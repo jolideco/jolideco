@@ -40,7 +40,7 @@ from jolideco.utils.norms import IdentityImageNorm
 random_state = np.random.RandomState(428723)
 
 
-URL = "https://zenodo.org/records/10844655/files/chandra-e0102-filament-all.tar.gz"
+URL = "https://zenodo.org/records/10849740/files/chandra-e0102-filament-all.tar.gz"
 
 # Run decomvolution or use precomputed result
 RUN_DECONVOLUTION = False
@@ -220,7 +220,7 @@ print(deconvolve)
 # M1 cpu), so we will not run it in this notebook. But if you have GPU
 # acceleration it should not take more than a few minutes.
 
-filename_result = path / "chandra-0102-filament-jolideco.fits"
+filename_result = path / "chandra-e0102-filament-jolideco.fits"
 
 if RUN_DECONVOLUTION:
     result = deconvolve.run(
