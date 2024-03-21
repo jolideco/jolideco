@@ -309,8 +309,8 @@ class NPredCalibration(nn.Module):
         """Parameter list"""
         if self.frozen:
             return []
-        else:
-            return super().parameters(recurse)
+
+        return super().parameters(recurse)
 
     def to_dict(self):
         """Convert calibration model to dict, with simple data types.
