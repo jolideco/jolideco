@@ -36,7 +36,6 @@ from jolideco.models import (
 )
 from jolideco.priors import GaussianMixtureModel, GMMPatchPrior
 from jolideco.utils.norms import IdentityImageNorm
-from jolideco.utils.numpy import split_datasets_validation
 
 random_state = np.random.RandomState(428723)
 
@@ -44,10 +43,9 @@ random_state = np.random.RandomState(428723)
 URL = "https://zenodo.org/records/10844655/files/chandra-e0102-filament-all.tar.gz"
 
 # Run decomvolution or use precomputed result
-RUN_DECONVOLUTION = True
+RUN_DECONVOLUTION = False
 
 device = "cuda:0" if torch.cuda.is_available() else "cpu"
-device = "mps"
 
 ######################################################################
 # First we download and extract the data files:
@@ -103,7 +101,7 @@ for obs_id in obs_ids:
 fig, axes = plt.subplots(4, 6, figsize=(12, 8))
 
 for ax, (name, dataset) in zip(axes.flat, datasets.items()):
-    ax.imshow(dataset["counts"], cmap="inferno", origin="lower")
+    ax.imshow(dataset["counts"], origin="lower")
     ax.set_title(name)
 
 plt.tight_layout()
@@ -121,7 +119,7 @@ fig, axes = plt.subplots(4, 6, figsize=(12, 8))
 for ax, (name, dataset) in zip(axes.flat, datasets.items()):
     psf = dataset["psf"]["filament-flux"]
     norm = simple_norm(psf, stretch="log")
-    ax.imshow(psf, cmap="inferno", origin="lower", norm=norm)
+    ax.imshow(psf, origin="lower", norm=norm)
     ax.set_title(name)
 
 plt.tight_layout()
@@ -208,13 +206,6 @@ calibrations[f"obs-{obs_id_ref}"].shift_xy.requires_grad = False
 
 print(calibrations)
 
-
-######################################################################
-# Now we can run the deconvolution. As we have many obervations we will
-# split the datasets into a training and validation set:
-
-datasets_train = split_datasets_validation(datasets, n_validation=4)
-
 ######################################################################
 # And we define the deconvolver. We will use a learning rate of 0.1 and
 # a beta of 1.0. The number of epochs is set to 250. We also specify
@@ -235,7 +226,7 @@ if RUN_DECONVOLUTION:
     result = deconvolve.run(
         components=components,
         calibrations=calibrations,
-        **datasets_train,
+        datasets=datasets,
     )
     result.write(filename_result, overwrite=True)
 
@@ -247,5 +238,26 @@ if RUN_DECONVOLUTION:
 # Thus we just continue with the precomputed result:
 
 result = MAPDeconvolverResult.read(filename_result)
-result.peek()
+
+
+######################################################################
+# Now we can plot the result:
+
+fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+counts_all = np.sum([_["counts"] for _ in datasets.values()], axis=0)
+
+axes[0].imshow(counts_all, origin="lower")
+axes[0].set_title("Counts")
+
+axes[1].imshow(result.flux_total, origin="lower")
+axes[1].set_title("Flux Jolideco")
+
 plt.show()
+
+######################################################################
+# The result looks very promising. The filament is clearly visible in the
+# deconvolved image. However, the result is not perfect. There are still
+# some artifacts visible in the deconvolved image, which comes from the
+# fact that there is an individual shift per observation and currently
+# there is no dedicated boundary handling for this.
