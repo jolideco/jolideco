@@ -59,6 +59,7 @@ docs = [
     "sympy",
     "scipy",
     "sphinxemoji",
+    "gammapy",
 ]
 
 
