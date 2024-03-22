@@ -1,10 +1,12 @@
 import logging
 from math import sqrt
+
 import numpy as np
-from astropy.convolution import Gaussian2DKernel
-from astropy.utils import lazyproperty
 import torch
 import torch.nn.functional as F
+from astropy.convolution import Gaussian2DKernel
+from astropy.utils import lazyproperty
+
 from jolideco.priors.patches.gmm import GaussianMixtureModel
 from jolideco.utils.norms import IdentityImageNorm, ImageNorm
 from jolideco.utils.numpy import reconstruct_from_overlapping_patches
@@ -17,6 +19,7 @@ from jolideco.utils.torch import (
     view_as_overlapping_patches_torch,
     view_as_random_overlapping_patches_torch,
 )
+
 from ..core import Prior
 
 __all__ = ["GMMPatchPrior", "MultiScalePrior"]
@@ -59,6 +62,7 @@ class GMMPatchPrior(Prior):
         norm=IdentityImageNorm(),
         patch_norm=None,
         jitter=False,
+        marginalize=False,
         device=TORCH_DEFAULT_DEVICE,
     ):
         super().__init__()
@@ -87,6 +91,7 @@ class GMMPatchPrior(Prior):
 
         self.jitter = jitter
         self.cycle_spin_subpix = cycle_spin_subpix
+        self.marginalize = marginalize
         self.device = torch.device(device)
 
     def to_dict(self):
@@ -234,8 +239,12 @@ class GMMPatchPrior(Prior):
             Summed log prior over all overlapping patches.
         """
         loglike, _, _ = self._evaluate_log_like(flux=flux, mask=mask)
-        max_loglike = torch.max(loglike, dim=1)
-        return torch.sum(max_loglike.values) * self.log_like_weight / flux.numel()
+
+        if self.marginalize:
+            values = torch.logsumexp(loglike, dim=1)
+        else:
+            values = torch.max(loglike, dim=1).values
+        return torch.sum(values) * self.log_like_weight / flux.numel()
 
 
 class MultiScalePrior(Prior):
