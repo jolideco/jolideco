@@ -1,15 +1,20 @@
 """
-Fermi Data Analysis With Jolideco
+Fermi Data Analysis with Jolideco
 =================================
 
-In this utorial we will demonstrate how to use Jolideco together with Gammapy
+In this tutorial we will demonstrate how to use Jolideco together with Gammapy
 to perform image deconvolution of Fermi-LAT data.
 
 If you start from a full Gammapy dataset, you can use the following code to reduce it to a 2D image:
 
 https://github.com/jolideco/jolideco-fermi-examples/blob/main/workflow/scripts/prepare-datasets.py
 
-This tutorial will require to have `Gammapy installed <https://docs.gammapy.org/stable/getting-started/index.html>`_. 
+
+For Fermi-LAT data in general, you can use the following workflow to prepare the data:
+
+https://github.com/adonath/snakemake-workflow-fermi-lat
+
+This tutorial will require to have `Gammapy installed <https://docs.gammapy.org/1.2/getting-started/index.html>`_. 
 
 Let's start with the following imports:
 """

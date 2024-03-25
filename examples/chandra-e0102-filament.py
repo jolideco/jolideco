@@ -2,19 +2,20 @@
 Chandra Data Analysis With Jolideco
 ===================================
 
-In this utorial we will demonstrate how to use Jolideco 
-together with an example Chandra dataset to perform image deconvolution.
+In this tutorial we will demonstrate how to use Jolideco together with an example
+Chandra dataset to perform image deconvolution. We will use 24 observations of 
+a small region with an elomgated filament of the supernova remnant E0102. The
+dataset is available from Zenodo: https://zenodo.org/records/10849740
 
-    wget
-    tar -xvzf chandra-e0102-filament-all.tar.gz
+To prepare Chandra data for analysis with Joldideco you can use the
+following workflow: https://github.com/adonath/snakemake-workflow-chandra
 
-
-The analysis from the Jolideco paper can be found in the following repository:
+A similar analysis from the Jolideco paper can be found in the following repository:
 
 https://github.com/jolideco/jolideco-chandra-e0102-zoom-a
 
 
-We start with the following imports:
+Let's start with the following imports:
 """
 
 import tarfile
