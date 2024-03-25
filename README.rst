@@ -11,6 +11,10 @@
     :target: https://github.com/jolideco/jolideco/actions
     :alt: GitHub actions CI
 
+.. image:: https://zenodo.org/badge/493477451.svg
+    :target: https://zenodo.org/doi/10.5281/zenodo.10870554
+    :alt: DOI
+
 
 Jolideco: a Python package for Poisson Joint Likelihood Deconvolution
 ---------------------------------------------------------------------
@@ -37,9 +41,13 @@ in contributing, please get in contact with the maintainers and make sure to rea
 Citation
 --------
 
-When using Jolideco, please cite the following paper references:
+When using Jolideco, please cite the `version you used from Zenodo <https://zenodo.org/doi/10.5281/zenodo.10870554>`_ 
+and the following paper reference:
 
-TBD
+.. code-block:: bibtex
+
+    TBD
+
 
 Further Resources
 ------------------
