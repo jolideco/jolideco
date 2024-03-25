@@ -1,16 +1,13 @@
 .. image:: http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat
     :target: http://www.astropy.org
     :alt: Powered by Astropy Badge
-
 .. image:: https://readthedocs.org/projects/jolideco/badge/?version=latest
     :alt: Documentation Status
     :scale: 100%
     :target: https://jolideco.readthedocs.io/en/latest/?badge=latest
-
 .. image:: https://github.com/jolideco/jolideco/actions/workflows/ci_tests.yml/badge.svg?style=flat
     :target: https://github.com/jolideco/jolideco/actions
     :alt: GitHub actions CI
-
 .. image:: https://zenodo.org/badge/493477451.svg
     :target: https://zenodo.org/doi/10.5281/zenodo.10870554
     :alt: DOI
