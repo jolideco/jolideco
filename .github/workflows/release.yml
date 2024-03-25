@@ -29,6 +29,8 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
 
   release-github:
+    permissions:
+      contents: write
     if: github.repository_owner == 'jolideco' && !contains(github.ref_name, 'rc')
     needs: release-pypi
     runs-on: ubuntu-latest
