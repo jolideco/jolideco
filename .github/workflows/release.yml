@@ -25,9 +25,6 @@ jobs:
           python -m build --sdist
       - name: Publish package
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          user: __token__
-          password: ${{ secrets.PYPI_TOKEN }}
 
   release-github:
     if: github.repository_owner == 'jolideco' && !contains(github.ref_name, 'rc')
