@@ -4,6 +4,8 @@
 # should keep this content at the top.
 # ----------------------------------------------------------------------------
 from ._astropy_init import *  # noqa
+
+from ._version import __version__  # noqa
 from .core import *  # noqa
 from .loss import *  # noqa
 from .models import *  # noqa
