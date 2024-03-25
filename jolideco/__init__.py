@@ -5,11 +5,11 @@
 # ----------------------------------------------------------------------------
 from ._astropy_init import *  # noqa
 
-from ._version import __version__  # noqa
 from .core import *  # noqa
 from .loss import *  # noqa
 from .models import *  # noqa
 from .priors import *  # noqa
 from .utils import *  # noqa
+from .version import version as __version__  # noqa
 
 # ----------------------------------------------------------------------------

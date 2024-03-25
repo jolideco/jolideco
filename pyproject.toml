@@ -75,7 +75,7 @@ include-package-data = false
 jolideco = [ "data/*",]
 
 [tool.setuptools_scm]
-version_file = "jolideco/_version.py"
+version_file = "jolideco/version.py"
 
 [tool.pytest.ini_options]
 testpaths = [ "\"jolideco\"", "\"docs\"",]
