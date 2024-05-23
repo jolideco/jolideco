@@ -1,5 +1,5 @@
 """
-Chandra Data Analysis With Jolideco
+Chandra Data Analysis with Jolideco
 ===================================
 
 In this tutorial we will demonstrate how to use Jolideco together with an example
