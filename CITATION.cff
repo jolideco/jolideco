@@ -1,0 +1,41 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: "Jolideco: a Python library for Joint Likelihood deconvolution"
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Axel
+    family-names: Donath
+    email: axel.donath@cfa.harvard.edu
+    affiliation: Center for Astrophysics | Harvard & Smithsonian
+    orcid: 'https://orcid.org/0000-0003-4568-7005'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10870554
+repository-code: 'https://github.com/jolideco/jolideco'
+url: 'https://jolideco.readthedocs.io/'
+abstract: >-
+  Jolideco is a Python library for Joint Likelihood
+  deconvolution of a set of observations in the presence of
+  Poisson noise. It can be used to combine data from
+  multiple x-ray instruments such as Chandra, XMM-Newton or
+  gamma-ray instruments such as Fermi-LAT or H.E.S.S.. In
+  general Jolideco is designed to work with data from any
+  instrument affected by Poisson noise. It has a nice user
+  interface and is designed to be simple to use.
+keywords:
+  - gamma-ray
+  - x-ray
+  - astronomy
+  - deblurring
+  - deconvolution
+  - denoising
+  - python
+  - PyTorch
+license: BSD-3-Clause
+version: v0.2
+date-released: '2024-03-25'
