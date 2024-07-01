@@ -1,8 +1,9 @@
 import numpy as np
-from astropy.table import Table
-from astropy.utils import lazyproperty
 import torch
 import torch.nn as nn
+from astropy.table import Table
+from astropy.utils import lazyproperty
+
 from .models import NPredModels
 from .utils.torch import TORCH_DEFAULT_DEVICE
 
@@ -18,15 +19,27 @@ class PoissonLoss:
         List of counts
     npred_models_all : list of `~NPredModels`
         List of predicted counts models
+    names_all : list of str
+        List of dataset names
+    weights: `~torch.tensor`
+        Fixed weights for each dataset
     """
 
-    def __init__(self, counts_all, npred_models_all, names_all):
+    def __init__(self, counts_all, npred_models_all, names_all, weights=None):
         self.counts_all = counts_all
         self.npred_models_all = npred_models_all
         self.loss_function = nn.PoissonNLLLoss(
             log_input=False, reduction="mean", eps=1e-25, full=True
         )
         self.names_all = names_all
+
+        if weights is not None:
+            weights = torch.tensor(weights)
+
+            if weights.size(0) != len(counts_all):
+                raise ValueError("Weights must have the same length as counts_all")
+
+        self.weights = weights
 
     @property
     def n_datasets(self):
@@ -48,7 +61,7 @@ class PoissonLoss:
             loss = self.loss_function(npred, counts)
             loss_datasets.append(loss)
 
-        return loss_datasets
+        return torch.tensor(loss_datasets)
 
     @property
     def iter_by_dataset(self):
@@ -65,8 +78,8 @@ class PoissonLoss:
         Parameters
         ----------
         datasets : dict of [str, dict]
-            Dictionary containing a name of the dataset as key and a dictionary containing,
-            the data like "counts", "psf", "background" and "exposure".
+            Dictionary containing a name of the dataset as key and a dictionary
+            containing, the data like "counts", "psf", "background" and "exposure".
         components : `FluxComponents`
             Flux components
         calibrations: `NPredCalibrations`
@@ -106,6 +119,10 @@ class PoissonLoss:
     def __call__(self, fluxes):
         """Evaluate and sum all losses"""
         losses = self.evaluate(fluxes=fluxes)
+
+        if self.weights is not None:
+            losses = losses * self.weights
+
         return torch.sum(losses)
 
 
