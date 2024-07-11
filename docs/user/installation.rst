@@ -26,7 +26,7 @@ To install the patch prior library, just clone the following  repository:
 .. code:: bash
 
     git clone https://github.com/jolideco/jolideco-gmm-prior-library.git
-    export JOLIDECO_GMM_PRIOR_LIBRARY=/path/to/jolideco-gmm-prior-library
+    export JOLIDECO_GMM_LIBRARY=/path/to/jolideco-gmm-prior-library
 
 And define the environment variable ``JOLIDECO_GMM_PRIOR_LIBRARY`` to point to the
 folder where you cloned the repository.
@@ -39,6 +39,9 @@ command:
     jolideco test
 
 If all tests pass, the installation was successful and you are ready to go!
+
+Note: some test might fail if you do not have required packages install, such as pytest,
+astropy-test, scipy, asdf, etc.
 
 
 .. admonition:: What's next?
