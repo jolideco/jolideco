@@ -41,7 +41,7 @@ command:
 If all tests pass, the installation was successful and you are ready to go!
 
 Note: some test might fail if you do not have required packages install, such as pytest,
-astropy-test, scipy, asdf, etc.
+pytest-astropy, scipy, asdf, etc.
 
 
 .. admonition:: What's next?
