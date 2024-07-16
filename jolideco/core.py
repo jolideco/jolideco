@@ -20,8 +20,8 @@ from .utils.io import (
     get_writer,
 )
 from .utils.misc import format_class_str
-from .utils.torch import TORCH_DEFAULT_DEVICE
 from .utils.plot import add_cbar
+from .utils.torch import TORCH_DEFAULT_DEVICE
 
 logging.basicConfig(level=logging.INFO)
 
@@ -345,14 +345,14 @@ class MAPDeconvolverResult:
 
         plot_trace_loss(ax=ax, trace_loss=self.trace_loss, which=which, **kwargs)
         return ax
-    
+
     def peek(self, figsize=(12, 5), kwargs_norm=None):
         """Plot the result and the trace of the loss function
 
         Parameters
         ----------
         figsize : tuple
-            Figure size        
+            Figure size
         """
         fig, axes = plt.subplots(nrows=1, ncols=2, figsize=figsize)
 
@@ -364,14 +364,10 @@ class MAPDeconvolverResult:
 
         norm = simple_norm(flux, **kwargs_norm)
 
-        kwargs = {
-            "norm": norm,
-            "interpolation": "None"
-        }
+        kwargs = {"norm": norm, "interpolation": "None"}
 
         im = axes[1].imshow(flux, origin="lower", **kwargs)
         add_cbar(im=im, ax=axes[1], fig=fig)
-
 
     @property
     def config_table(self):

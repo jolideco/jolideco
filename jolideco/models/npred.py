@@ -283,6 +283,8 @@ class NPredCalibration(nn.Module):
         Background normalisation parameter
     frozen : bool
         Whether to freeze component.
+    weight : `~torch.Tensor` or float
+        Likelihood weight.
     """
 
     _grid_sample_kwargs = {"align_corners": False}
@@ -293,12 +295,14 @@ class NPredCalibration(nn.Module):
         shift_y=0.0,
         background_norm=1.0,
         frozen=False,
+        weight=1.0,
     ):
         super().__init__()
         self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
         value = torch.log(torch.Tensor([background_norm]))
         self._background_norm = nn.Parameter(value)
         self.frozen = frozen
+        self.weight = weight
 
     @property
     def background_norm(self):
@@ -326,6 +330,7 @@ class NPredCalibration(nn.Module):
         data["shift_y"] = float(shift_xy[0, 1])
         data["background_norm"] = float(self.background_norm.detach().cpu().numpy())
         data["frozen"] = self.frozen
+        data["weight"] = float(self.weight)
         return data
 
     @classmethod

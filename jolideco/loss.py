@@ -21,11 +21,15 @@ class PoissonLoss:
         List of predicted counts models
     names_all : list of str
         List of dataset names
-    weights: `~torch.tensor`
-        Fixed weights for each dataset
     """
 
-    def __init__(self, counts_all, npred_models_all, names_all, weights=None):
+    def __init__(self, counts_all, npred_models_all, names_all):
+
+        if len(counts_all) != len(npred_models_all):
+            raise ValueError(
+                "counts_all and npred_models_all must have the same length"
+            )
+
         self.counts_all = counts_all
         self.npred_models_all = npred_models_all
         self.loss_function = nn.PoissonNLLLoss(
@@ -33,13 +37,16 @@ class PoissonLoss:
         )
         self.names_all = names_all
 
-        if weights is not None:
-            weights = torch.tensor(weights)
+    @lazyproperty
+    def weights(self):
+        """Weights"""
+        weights = []
 
-            if weights.size(0) != len(counts_all):
-                raise ValueError("Weights must have the same length as counts_all")
+        for model in self.npred_models_all:
+            if model.calibration is not None:
+                weights.append(model.calibration.weight)
 
-        self.weights = weights
+        return torch.tensor(weights)
 
     @property
     def n_datasets(self):
