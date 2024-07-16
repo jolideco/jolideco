@@ -43,7 +43,7 @@ def unflatten_dict(d, sep="."):
 
 def recursive_update(d, u):
     """Recursively update a dict object"""
-    for key in reversed(u.keys()):
+    for key in reversed(list(u.keys())):
         if key in ["asdf_library", "history"]:
             continue
 
