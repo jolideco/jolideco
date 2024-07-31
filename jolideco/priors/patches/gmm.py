@@ -225,7 +225,7 @@ class GaussianMixtureModel(nn.Module):
             y = torch.matmul(mu, prec_chol)
             means_precisions.append(y)
 
-        return torch.stack(means_precisions)
+        return torch.stack(means_precisions).unsqueeze(1)
 
     @lazyproperty
     def log_det_cholesky_numpy(self):
@@ -261,15 +261,19 @@ class GaussianMixtureModel(nn.Module):
 
     def estimate_log_prob(self, x):
         """Compute log likelihood for given feature vector"""
-        n_samples, n_features = x.shape
+        _, n_features = x.shape
 
-        log_prob = torch.empty((n_samples, self.n_components), device=self.means.device)
+        # Reshape x to (n_samples, 1, 1, n_features) for broadcasting
+        x_expanded = x.unsqueeze(1).unsqueeze(2)
 
-        iterate = zip(self.means_precisions_cholesky, self.precisions_cholesky)
+        # Perform batched matrix multiplication
+        y = (
+            torch.matmul(x_expanded, self.precisions_cholesky.unsqueeze(0))
+            - self.means_precisions_cholesky
+        )
 
-        for k, (mu_prec, prec_chol) in enumerate(iterate):
-            y = torch.matmul(x, prec_chol) - mu_prec
-            log_prob[:, k] = torch.sum(torch.square(y) * self.pixel_weights, axis=1)
+        # Calculate squared distances and apply pixel weights
+        log_prob = torch.sum(torch.square(y) * self.pixel_weights, dim=(2, 3))
 
         # Since we are using the precision of the Cholesky decomposition,
         # `- 0.5 * log_det_precision` becomes `+ log_det_precision_chol`
