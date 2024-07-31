@@ -6,6 +6,7 @@ import torch.nn.functional as F
 
 __all__ = [
     "convolve_fft_torch",
+    "convolve_fft_fourier_kernel_torch",
     "view_as_overlapping_patches_torch",
     "view_as_random_overlapping_patches_torch",
     "view_as_windows_torch",
@@ -259,6 +260,26 @@ def convolve_fft_torch(image, kernel):
 
     image_ft = torch.fft.rfft2(image, s=shape)
     kernel_ft = torch.fft.rfft2(kernel, s=shape)
+    result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
+    return _centered(result, image.shape)
+
+
+def convolve_fft_fourier_kernel_torch(image, kernel_ft, shape):
+    """Convolve FFT for torch tensors with precomputed Fourier kernel
+
+    Parameters
+    ----------
+    image : `~torch.Tensor`
+        Image tensor
+    kernel_ft : `~torch.Tensor`
+        Fourier kernel tensor
+
+    Returns
+    -------
+    result : `~torch.Tensor`
+        Convolution result
+    """
+    image_ft = torch.fft.rfft2(image, s=shape)
     result = torch.fft.irfft2(image_ft * kernel_ft, s=shape)
     return _centered(result, image.shape)
 

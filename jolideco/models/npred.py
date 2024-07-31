@@ -1,3 +1,5 @@
+from functools import cached_property
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -11,7 +13,11 @@ from jolideco.utils.io import (
     get_writer,
 )
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.torch import convolve_fft_torch, transpose
+from jolideco.utils.torch import (
+    convolve_fft_fourier_kernel_torch,
+    convolve_fft_torch,
+    transpose,
+)
 
 __all__ = [
     "NPredModel",
@@ -107,6 +113,18 @@ class NPredModel(nn.Module):
 
         return cls(**kwargs)
 
+    @cached_property
+    def psf_fourier_and_shape(self):
+        """Cached fourier transform of the psf"""
+        im_shape, ker_shape = self.exposure[0][0].shape, self.psf[0][0].shape
+
+        shape = [im_shape[i] + ker_shape[i] - 1 for i in range(len(im_shape))]
+
+        return {
+            "kernel_ft": torch.fft.rfft2(self.psf, s=shape),
+            "shape": shape,
+        }
+
     @classmethod
     def from_dataset_numpy(
         cls,
@@ -154,7 +172,9 @@ class NPredModel(nn.Module):
         npred = flux * self.exposure
 
         if self.psf is not None:
-            npred = convolve_fft_torch(npred, self.psf)
+            npred = convolve_fft_fourier_kernel_torch(
+                npred, **self.psf_fourier_and_shape
+            )
 
         if self.upsampling_factor:
             npred = F.avg_pool2d(

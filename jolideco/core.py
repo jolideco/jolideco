@@ -65,6 +65,8 @@ class MAPDeconvolver:
         Whether to display a progress bar
     optimizer : {"adam", "sgd"}
         Optimizer to use
+    keep_image_trace: bool
+        Whether to keep the image trace.
     """
 
     _default_flux_component = "flux"
@@ -80,6 +82,7 @@ class MAPDeconvolver:
         device=TORCH_DEFAULT_DEVICE,
         display_progress=True,
         optimizer="adam",
+        checkpoint_path=None,
     ):
         self.n_epochs = n_epochs
         self.beta = beta
@@ -96,6 +99,12 @@ class MAPDeconvolver:
             device = TORCH_DEFAULT_DEVICE
 
         self.device = torch.device(device)
+
+        if optimizer not in OPTIMIZER:
+            raise ValueError(
+                f"Unknown optimizer: {optimizer}, must be one of {OPTIMIZER}"
+            )
+
         self.optimizer = optimizer
 
     def to_dict(self):
@@ -269,6 +278,12 @@ class MAPDeconvolverResult:
         Initial flux components.
     trace_loss : `~astropy.table.Table` or dict
         Trace of the total loss.
+    calibrations : `NPredCalibrations`
+        Optional model calibrations.
+    calibrations_init : `NPredCalibrations`
+        Initial model calibrations.
+    wcs : `astropy.wcs.WCS`
+        World coordinate system.
     """
 
     def __init__(
