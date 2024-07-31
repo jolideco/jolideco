@@ -4,12 +4,14 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
-import numpy as np
-from astropy.table import Table
-from astropy.utils import lazyproperty
+
 import matplotlib.pyplot as plt
+import numpy as np
 import torch
 import torch.nn as nn
+from astropy.table import Table
+from astropy.utils import lazyproperty
+
 from jolideco.utils.misc import format_class_str
 from jolideco.utils.norms import PatchNorm, SubtractMeanPatchNorm
 from jolideco.utils.numpy import compute_precision_cholesky, get_pixel_weights
@@ -223,7 +225,7 @@ class GaussianMixtureModel(nn.Module):
             y = torch.matmul(mu, prec_chol)
             means_precisions.append(y)
 
-        return means_precisions
+        return torch.stack(means_precisions)
 
     @lazyproperty
     def log_det_cholesky_numpy(self):
