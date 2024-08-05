@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from jolideco.jolideco.utils.torch import rescale_image_torch
 from jolideco.utils.io import (
     IO_FORMATS_NPRED_CALIBRATIONS_READ,
     IO_FORMATS_NPRED_CALIBRATIONS_WRITE,
@@ -13,11 +14,7 @@ from jolideco.utils.io import (
     get_writer,
 )
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.torch import (
-    convolve_fft_fourier_kernel_torch,
-    convolve_fft_torch,
-    transpose,
-)
+from jolideco.utils.torch import convolve_fft_torch, transpose
 
 __all__ = [
     "NPredModel",
@@ -156,13 +153,15 @@ class NPredModel(nn.Module):
             correct_exposure_edges=correct_exposure_edges,
         )
 
-    def forward(self, flux):
+    def forward(self, flux, psf_scale=torch.tensor(1.0)):
         """Forward folding model evaluation.
 
         Parameters
         ----------
         flux : `~torch.Tensor`
             Flux tensor
+        psf_scale : float
+            PSF scale parameter
 
         Returns
         -------
@@ -172,9 +171,8 @@ class NPredModel(nn.Module):
         npred = flux * self.exposure
 
         if self.psf is not None:
-            npred = convolve_fft_fourier_kernel_torch(
-                npred, **self.psf_fourier_and_shape
-            )
+            psf = rescale_image_torch(self.psf, scale=psf_scale)
+            npred = convolve_fft_torch(npred, psf)
 
         if self.upsampling_factor:
             npred = F.avg_pool2d(
@@ -224,7 +222,7 @@ class NPredModels(nn.ModuleDict):
             if self.calibration is not None:
                 flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
 
-            npreds[name] = npred_model(flux=flux)
+            npreds[name] = npred_model(flux=flux, psf_scale=self.calibration.psf_scale)
 
         if self.calibration is not None:
             npreds["background"] = self.background * self.calibration.background_norm
@@ -301,6 +299,8 @@ class NPredCalibration(nn.Module):
         Shift in y direction
     background_norm: `~torch.Tensor`
         Background normalisation parameter
+    psf_scale : `~torch.Tensor`
+        PSF scale parameter
     frozen : bool
         Whether to freeze component.
     weight : `~torch.Tensor` or float
@@ -314,6 +314,7 @@ class NPredCalibration(nn.Module):
         shift_x=0.0,
         shift_y=0.0,
         background_norm=1.0,
+        psf_scale=1.0,
         frozen=False,
         weight=1.0,
     ):
@@ -321,6 +322,8 @@ class NPredCalibration(nn.Module):
         self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
         value = torch.log(torch.Tensor([background_norm]))
         self._background_norm = nn.Parameter(value)
+        # TODO: makes psf scale fittable
+        self.psf_scale = nn.Parameter(torch.tensor([psf_scale]), requires_grad=False)
         self.frozen = frozen
         self.weight = weight
 
@@ -349,6 +352,7 @@ class NPredCalibration(nn.Module):
         data["shift_x"] = float(shift_xy[0, 0])
         data["shift_y"] = float(shift_xy[0, 1])
         data["background_norm"] = float(self.background_norm.detach().cpu().numpy())
+        data["psf_scale"] = float(self.psf_scale.detach().cpu().numpy())
         data["frozen"] = self.frozen
         data["weight"] = float(self.weight)
         return data

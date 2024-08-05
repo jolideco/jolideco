@@ -133,6 +133,9 @@ def rescale_image_torch(image, factor, **kwargs):
     rescaled : `~torch.Tensor`
         Rescaled image
     """
+    if torch.isclose(factor, torch.tensor(1.0)):
+        return image
+
     diag = torch.eye(2)
     theta = torch.cat([diag / factor, torch.tensor([[0], [0]])], dim=1)[None]
     grid = F.affine_grid(theta=theta, size=image.size())
