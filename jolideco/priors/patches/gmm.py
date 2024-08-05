@@ -388,6 +388,28 @@ class GaussianMixtureModel(nn.Module):
             means=means, covariances=covariances, weights=weights, meta=meta, **kwargs
         )
 
+    def reduce_to_topk(self, k):
+        """Reduce to top-k components based on weights
+
+        Parameters
+        ----------
+        k : int
+            Number of components to keep
+
+        Returns
+        -------
+        gmm : `~GaussianMixtureModel`
+            Reduced GMM
+        """
+        idx = np.argsort(self.weights_numpy)[::-1][:k]
+
+        return self.__class__.from_numpy(
+            means=self.means_numpy[idx],
+            covariances=self.covariances_numpy[idx],
+            weights=self.weights_numpy[idx],
+            meta=self.meta,
+        )
+
     @lazyproperty
     def covariance_det(self):
         """Covariance determinant"""
