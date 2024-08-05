@@ -14,6 +14,7 @@ __all__ = [
     "interp1d_torch",
     "grid_weights",
     "get_default_generator",
+    "rescale_image_torch",
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
@@ -115,6 +116,27 @@ def interp1d_torch(x, xp, fp, **kwargs):
     weights = (x - x0) / (x1 - x0)
 
     return torch.lerp(y0, y1, weights, **kwargs)
+
+
+def rescale_image_torch(image, factor, **kwargs):
+    """Rescale image
+
+    Parameters
+    ----------
+    image : `~torch.Tensor`
+        Image tensor
+    factor : float
+        Rescale factor
+
+    Returns
+    -------
+    rescaled : `~torch.Tensor`
+        Rescaled image
+    """
+    diag = torch.eye(2)
+    theta = torch.cat([diag / factor, torch.tensor([[0], [0]])], dim=1)[None]
+    grid = F.affine_grid(theta=theta, size=image.size())
+    return F.grid_sample(image, grid=grid, **kwargs)
 
 
 def view_as_windows_torch(image, shape, stride):
