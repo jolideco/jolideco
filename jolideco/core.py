@@ -242,6 +242,7 @@ class MAPDeconvolver:
                     filename = self._default_checkpoint_filename.format(epoch=epoch)
                     checkpoint = MAPDeconvolverResult(
                         config=self.to_dict(),
+                        trace_loss=total_loss.trace,
                         components=components,
                         calibrations=calibrations,
                     )
