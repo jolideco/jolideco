@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from jolideco.jolideco.utils.torch import rescale_image_torch
 from jolideco.utils.io import (
     IO_FORMATS_NPRED_CALIBRATIONS_READ,
     IO_FORMATS_NPRED_CALIBRATIONS_WRITE,
@@ -14,7 +13,7 @@ from jolideco.utils.io import (
     get_writer,
 )
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.torch import convolve_fft_torch, transpose
+from jolideco.utils.torch import convolve_fft_torch, rescale_image_torch, transpose
 
 __all__ = [
     "NPredModel",
@@ -153,7 +152,7 @@ class NPredModel(nn.Module):
             correct_exposure_edges=correct_exposure_edges,
         )
 
-    def forward(self, flux, psf_scale=torch.tensor(1.0)):
+    def forward(self, flux, psf_scale=None):
         """Forward folding model evaluation.
 
         Parameters
@@ -171,7 +170,7 @@ class NPredModel(nn.Module):
         npred = flux * self.exposure
 
         if self.psf is not None:
-            psf = rescale_image_torch(self.psf, scale=psf_scale)
+            psf = rescale_image_torch(self.psf, factor=psf_scale)
             npred = convolve_fft_torch(npred, psf)
 
         if self.upsampling_factor:
@@ -221,8 +220,11 @@ class NPredModels(nn.ModuleDict):
         for (name, npred_model), flux in zip(self.items(), fluxes):
             if self.calibration is not None:
                 flux = self.calibration(flux=flux, scale=npred_model.upsampling_factor)
-
-            npreds[name] = npred_model(flux=flux, psf_scale=self.calibration.psf_scale)
+                npreds[name] = npred_model(
+                    flux=flux, psf_scale=self.calibration.psf_scale
+                )
+            else:
+                npreds[name] = npred_model(flux=flux)
 
         if self.calibration is not None:
             npreds["background"] = self.background * self.calibration.background_norm
