@@ -319,7 +319,6 @@ class MAPDeconvolverResult:
         calibrations=None,
         calibrations_init=None,
         wcs=None,
-        checkpoint_path=None,
     ):
         self._components = components
         self._components_init = components_init
