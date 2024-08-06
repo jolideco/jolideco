@@ -188,8 +188,8 @@ def test_map_deconvolver_validation_datasets(datasets_disk):
     assert_allclose(trace_loss["datasets-validation-total"], 1.888031, rtol=1e-3)
 
 
-def test_map_deconvolver_gmm(datasets_disk):
-    deco = MAPDeconvolver(n_epochs=10, learning_rate=0.1)
+def test_map_deconvolver_gmm_and_checkpoints(datasets_disk, tmpdir):
+    deco = MAPDeconvolver(n_epochs=10, learning_rate=0.1, checkpoint_path=tmpdir)
 
     random_state = np.random.RandomState(642020)
     flux_init = random_state.gamma(20, size=(32, 32))
@@ -204,6 +204,11 @@ def test_map_deconvolver_gmm(datasets_disk):
         datasets=datasets_disk,
         components=components,
     )
+
+    filename = result.checkpoint_path / result.trace_loss["filename"][-1]
+    result_checkpoint = MAPDeconvolverResult.read(filename=filename)
+
+    assert result_checkpoint.flux_upsampled_total.shape == (64, 64)
 
     assert result.flux_upsampled_total.shape == (64, 64)
     assert_allclose(result.flux_total[12, 12], 10.796226, rtol=1e-2)

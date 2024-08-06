@@ -205,16 +205,20 @@ class TotalLoss:
         if self.poisson_loss_validation:
             names += ["datasets-validation-total"]
 
-        return Table(names=names)
+        names += ["filename"]
+        dtypes = [float] * (len(names) - 1) + [str]
+        return Table(names=names, dtype=dtypes)
 
     @torch.no_grad()
-    def append_trace(self, fluxes):
+    def append_trace(self, fluxes, filename):
         """Append trace
 
         Parameters
         ----------
         fluxes : tuple of  `~torch.tensor`
             Flux components
+        filename : str
+            Filename for checkpoints
         """
         loss_datasets = [_.item() for _ in self.poisson_loss.evaluate(fluxes=fluxes)]
         loss_priors = [_.item() for _ in self.prior_loss.evaluate(fluxes=fluxes)]
@@ -228,6 +232,7 @@ class TotalLoss:
             "total": loss_total,
             "datasets-total": loss_datasets_total,
             "priors-total": -loss_priors_total,
+            "filename": filename,
         }
 
         for name, value in zip(self.prior_loss.priors, loss_priors):

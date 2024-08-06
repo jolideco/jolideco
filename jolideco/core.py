@@ -1,6 +1,7 @@
 import copy
 import logging
 import sys
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -65,11 +66,12 @@ class MAPDeconvolver:
         Whether to display a progress bar
     optimizer : {"adam", "sgd"}
         Optimizer to use
-    keep_image_trace: bool
-        Whether to keep the image trace.
+    checkpoint_path : str
+        Path to save checkpoints
     """
 
     _default_flux_component = "flux"
+    _default_checkpoint_filename = "checkpoint-epoch-{epoch}.fits"
 
     def __init__(
         self,
@@ -107,6 +109,12 @@ class MAPDeconvolver:
 
         self.optimizer = optimizer
 
+        if checkpoint_path is not None:
+            checkpoint_path = Path(checkpoint_path)
+            checkpoint_path.mkdir(exist_ok=True, parents=True)
+
+        self.checkpoint_path = checkpoint_path
+
     def to_dict(self):
         """Convert deconvolver configuration to dict, with simple data types.
 
@@ -118,6 +126,7 @@ class MAPDeconvolver:
         data = {}
         data.update(self.__dict__)
         data["device"] = str(self.device)
+        data["checkpoint_path"] = str(self.checkpoint_path)
         return data
 
     def __str__(self):
@@ -228,7 +237,20 @@ class MAPDeconvolver:
                     pbar.update(1)
 
                 components.eval()
-                total_loss.append_trace(fluxes=fluxes)
+
+                if self.checkpoint_path:
+                    filename = self._default_checkpoint_filename.format(epoch=epoch)
+                    checkpoint = MAPDeconvolverResult(
+                        config=self.to_dict(),
+                        components=components,
+                        calibrations=calibrations,
+                    )
+                    log.info(f"Writing checkpoint to {self.checkpoint_path / filename}")
+                    checkpoint.write(filename=self.checkpoint_path / filename)
+                else:
+                    filename = ""
+
+                total_loss.append_trace(fluxes=fluxes, filename=filename)
 
                 row = total_loss.trace[-1]
 
@@ -262,6 +284,8 @@ class MAPDeconvolver:
             trace_loss=total_loss.trace,
             calibrations=calibrations,
             calibrations_init=calibrations_init,
+            checkpoint_path=self.checkpoint_path,
+            wcs=None,
         )
 
 
@@ -284,17 +308,20 @@ class MAPDeconvolverResult:
         Initial model calibrations.
     wcs : `astropy.wcs.WCS`
         World coordinate system.
+    checkpoint_path : str
+        Path where checkpoints are stored.
     """
 
     def __init__(
         self,
         config,
         components,
-        components_init,
-        trace_loss,
+        components_init=None,
+        trace_loss=None,
         calibrations=None,
         calibrations_init=None,
         wcs=None,
+        checkpoint_path=None,
     ):
         self._components = components
         self._components_init = components_init
@@ -303,6 +330,11 @@ class MAPDeconvolverResult:
         self._calibrations_init = calibrations_init
         self._config = config
         self._wcs = wcs
+
+        if checkpoint_path is not None:
+            checkpoint_path = Path(checkpoint_path)
+
+        self._checkpoint_path = checkpoint_path
 
     @property
     def components(self):
