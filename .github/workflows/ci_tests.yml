@@ -29,27 +29,27 @@ jobs:
             python: 3.x
             toxenv: check-style -- --exclude=jolideco-gmm-prior-library
         
-          - name: Python 3.10 with all optional dependencies
+          - name: Python 3.11 with all optional dependencies
             os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: test
             gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: macOS - Python 3.10 with all optional dependencies
+          - name: macOS - Python 3.11 with all optional dependencies
             os: macos-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: test
             gmm_path: /Users/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
-          - name: Windows - Python 3.10 with all optional dependencies
+          - name: Windows - Python 3.11 with all optional dependencies
             os: windows-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: test
             gmm_path: D:\a\jolideco\jolideco\jolideco-gmm-prior-library
 
           - name: Test building of Sphinx docs
             os: ubuntu-latest
-            python: "3.10"
+            python: "3.11"
             toxenv: docs
             gmm_path: /home/runner/work/jolideco/jolideco/jolideco-gmm-prior-library
 
