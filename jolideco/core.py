@@ -285,7 +285,6 @@ class MAPDeconvolver:
             trace_loss=total_loss.trace,
             calibrations=calibrations,
             calibrations_init=calibrations_init,
-            checkpoint_path=self.checkpoint_path,
             wcs=None,
         )
 
@@ -309,8 +308,6 @@ class MAPDeconvolverResult:
         Initial model calibrations.
     wcs : `astropy.wcs.WCS`
         World coordinate system.
-    checkpoint_path : str
-        Path where checkpoints are stored.
     """
 
     def __init__(
@@ -332,10 +329,10 @@ class MAPDeconvolverResult:
         self._config = config
         self._wcs = wcs
 
-        if checkpoint_path is not None:
-            checkpoint_path = Path(checkpoint_path)
-
-        self._checkpoint_path = checkpoint_path
+    @property
+    def checkpoint_path(self):
+        """Path to checkpoints"""
+        return Path(self.config.get("checkpoint_path", None))
 
     @property
     def components(self):

@@ -1,8 +1,10 @@
 import logging
+
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
 from astropy.wcs import WCS
+
 from jolideco.utils.misc import flatten_dict, unflatten_dict
 
 log = logging.getLogger(__name__)
