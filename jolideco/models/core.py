@@ -347,6 +347,8 @@ class SpatialFluxComponent(nn.Module):
         Initial flux tensor
     flux_upsampled_error : `~torch.Tensor`
         Flux tensor error
+    mask : `~torch.Tensor`
+        Mask for the flux
     use_log_flux : bool
         Use log scaling for flux
     upsampling_factor : None
@@ -428,6 +430,12 @@ class SpatialFluxComponent(nn.Module):
 
         if include_data == "numpy":
             data["flux_upsampled"] = self.flux_upsampled_numpy
+
+            if self.flux_upsampled_error_numpy is not None:
+                data["flux_upsampled_error"] = self.flux_upsampled_error_numpy
+
+            if self.mask is not None:
+                data["mask"] = self.mask.numpy()
 
         return data
 
