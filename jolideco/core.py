@@ -423,7 +423,7 @@ class MAPDeconvolverResult:
 
         return config
 
-    def write(self, filename, overwrite=False, format="fits"):
+    def write(self, filename, overwrite=False, format=None):
         """Write result to file
 
         Parameters
@@ -432,7 +432,7 @@ class MAPDeconvolverResult:
             Output filename
         overwrite : bool
             Overwrite file.
-        format : {"fits"}
+        format : {"fits", "asdf"}
             Format to use.
         """
         writer = get_writer(
@@ -441,14 +441,14 @@ class MAPDeconvolverResult:
         writer(result=self, filename=filename, overwrite=overwrite)
 
     @classmethod
-    def read(cls, filename, format="fits"):
+    def read(cls, filename, format=None):
         """Write result to file
 
         Parameters
         ----------
         filename : str or `Path`
             Output filename
-        format : {"fits"}
+        format : {"fits", "asdf"}
             Format to use.
 
         Returns
