@@ -444,7 +444,7 @@ class SpatialFluxComponent(nn.Module):
         if include_data == "numpy":
             data["flux_upsampled"] = self.flux_upsampled_numpy
 
-            if self.flux_upsampled_error_numpy is not None:
+            if self.flux_upsampled_error is not None:
                 data["flux_upsampled_error"] = self.flux_upsampled_error_numpy
 
             if self.mask is not None:
