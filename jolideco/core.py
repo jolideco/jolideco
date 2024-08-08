@@ -71,7 +71,7 @@ class MAPDeconvolver:
     """
 
     _default_flux_component = "flux"
-    _default_checkpoint_filename = "checkpoint-epoch-{epoch}.fits"
+    _default_checkpoint_filename = "checkpoint-epoch-{epoch}.asdf"
 
     def __init__(
         self,
