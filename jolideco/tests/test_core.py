@@ -38,6 +38,9 @@ def datasets_disk():
         )
         datasets[f"{idx}"] = dataset
 
+    for _, dataset in datasets.items():
+        dataset["psf"] = {"flux-1": dataset["psf"]}
+
     return datasets
 
 
@@ -134,9 +137,6 @@ def test_map_deconvolver_inverse_gamma_prior(datasets_disk):
     components["flux-1"] = SpatialFluxComponent.from_numpy(
         flux=flux_init, upsampling_factor=1, prior=InverseGammaPrior(alpha=10)
     )
-
-    for name, dataset in datasets_disk.items():
-        dataset["psf"] = {"flux-1": dataset["psf"]}
 
     result = deco.run(datasets=datasets_disk, components=components)
 
@@ -246,7 +246,7 @@ def test_map_deconvolver_gmm_odd_stride_jitter():
     assert_allclose(trace_loss["total"], 5.180159, rtol=1e-3)
 
 
-def test_map_deconvolver_compute_error(datasets_disk):
+def test_map_deconvolver_compute_error(datasets_disk, tmpdir):
     deco = MAPDeconvolver(
         n_epochs=100,
         learning_rate=0.1,
@@ -261,13 +261,21 @@ def test_map_deconvolver_compute_error(datasets_disk):
         flux=flux_init, upsampling_factor=1, prior=InverseGammaPrior(alpha=0.1)
     )
 
-    for name, dataset in datasets_disk.items():
-        dataset["psf"] = {"flux-1": dataset["psf"]}
-
     result = deco.run(datasets=datasets_disk, components=components)
 
     assert_allclose(
         result.components["flux-1"].flux_upsampled_error_numpy[3, 3],
+        24.106102,
+        rtol=1e-3,
+    )
+
+    filename = tmpdir / "result.asdf"
+    result.write(filename)
+
+    result_new = MAPDeconvolverResult.read(filename)
+
+    assert_allclose(
+        result_new.components["flux-1"].flux_upsampled_error_numpy[3, 3],
         24.106102,
         rtol=1e-3,
     )
