@@ -38,6 +38,19 @@ __all__ = [
 ]
 
 
+def parse_flux_tensor(value, cls):
+    """Parse flux tensor"""
+    if isinstance(value, str):
+        filename = Path(value)
+        flux = cls.read(filename).flux_upsampled
+    elif not isinstance(value, torch.Tensor):
+        flux = torch.from_numpy(value[np.newaxis, np.newaxis].astype(np.float32))
+    else:
+        flux = value
+
+    return flux
+
+
 class SparseSpatialFluxComponent(nn.Module):
     """Sparse flux component to represent a list of point sources
 
@@ -459,17 +472,18 @@ class SpatialFluxComponent(nn.Module):
         if prior_data:
             kwargs["prior"] = Prior.from_dict(data=prior_data)
 
-        value = kwargs["flux_upsampled"]
+        kwargs["flux_upsampled"] = parse_flux_tensor(
+            value=kwargs["flux_upsampled"], cls=cls
+        )
 
-        if isinstance(value, str):
-            filename = Path(value)
-            flux = cls.read(filename).flux_upsampled
-        elif not isinstance(value, torch.Tensor):
-            flux = torch.from_numpy(value[np.newaxis, np.newaxis].astype(np.float32))
-        else:
-            flux = value
+        if "flux_upsampled_error" in kwargs:
+            kwargs["flux_upsampled_error"] = parse_flux_tensor(
+                value=kwargs["flux_upsampled_error"], cls=cls
+            )
 
-        kwargs["flux_upsampled"] = flux
+        if "mask" in kwargs:
+            kwargs["mask"] = torch.from_numpy(kwargs["mask"].astype(bool))
+
         return cls(**kwargs)
 
     def __str__(self):
