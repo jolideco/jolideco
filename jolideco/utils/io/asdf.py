@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+
 from jolideco.utils.misc import recursive_update
 
 log = logging.getLogger(__name__)
@@ -50,6 +51,7 @@ def read_flux_component_from_asdf(filename):
         Flux component
     """
     import asdf
+
     from jolideco.models import SpatialFluxComponent
 
     path = Path(filename)
@@ -92,6 +94,7 @@ def read_flux_components_from_asdf(filename):
         Flux components
     """
     import asdf
+
     from jolideco.models import FluxComponents
 
     path = Path(filename)
@@ -150,6 +153,7 @@ def read_map_result_from_asdf(filename):
        Dictionary with init parameters for `MAPDeconvolverResult`
     """
     import asdf
+
     from jolideco.core import MAPDeconvolverResult
     from jolideco.models import FluxComponents
 
