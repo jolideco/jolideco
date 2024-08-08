@@ -298,10 +298,10 @@ class MAPDeconvolverResult:
         Configuration from the `LIRADeconvolver`
     components: `FluxComponents`
         Flux components.
-    components_init : `FluxComponents`
-        Initial flux components.
     trace_loss : `~astropy.table.Table` or dict
         Trace of the total loss.
+    components_init : `FluxComponents`
+        Initial flux components.
     calibrations : `NPredCalibrations`
         Optional model calibrations.
     calibrations_init : `NPredCalibrations`
@@ -314,8 +314,8 @@ class MAPDeconvolverResult:
         self,
         config,
         components,
+        trace_loss,
         components_init=None,
-        trace_loss=None,
         calibrations=None,
         calibrations_init=None,
         wcs=None,
@@ -332,6 +332,22 @@ class MAPDeconvolverResult:
     def checkpoint_path(self):
         """Path to checkpoints"""
         return Path(self.config.get("checkpoint_path", None))
+
+    def read_checkpoint(self, epoch):
+        """Read checkpoint
+
+        Parameters
+        ----------
+        epoch : int
+            Epoch number
+
+        Returns
+        -------
+        checkpoint : `MAPDeconvolverResult`
+            Checkpoint object
+        """
+        filename = self.checkpoint_path / self.trace_loss["filename"][epoch]
+        return self.__class__.read(filename=filename)
 
     @property
     def components(self):

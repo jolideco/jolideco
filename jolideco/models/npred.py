@@ -321,8 +321,8 @@ class NPredCalibration(nn.Module):
         weight=1.0,
     ):
         super().__init__()
-        self.shift_xy = nn.Parameter(torch.Tensor([[shift_x, shift_y]]))
-        value = torch.log(torch.Tensor([background_norm]))
+        self.shift_xy = nn.Parameter(torch.tensor([[shift_x, shift_y]]))
+        value = torch.log(torch.tensor([background_norm]))
         self._background_norm = nn.Parameter(value)
         # TODO: makes psf scale fittable
         self.psf_scale = nn.Parameter(torch.tensor([psf_scale]), requires_grad=False)
@@ -351,10 +351,10 @@ class NPredCalibration(nn.Module):
         """
         data = {}
         shift_xy = self.shift_xy.detach().cpu().numpy()
-        data["shift_x"] = float(shift_xy[0, 0])
-        data["shift_y"] = float(shift_xy[0, 1])
-        data["background_norm"] = float(self.background_norm.detach().cpu().numpy())
-        data["psf_scale"] = float(self.psf_scale.detach().cpu().numpy())
+        data["shift_x"] = shift_xy[0, 0].item()
+        data["shift_y"] = shift_xy[0, 1].item()
+        data["background_norm"] = self.background_norm.detach().cpu().numpy().item()
+        data["psf_scale"] = self.psf_scale.detach().cpu().numpy().item()
         data["frozen"] = self.frozen
         data["weight"] = float(self.weight)
         return data

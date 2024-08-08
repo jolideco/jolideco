@@ -122,7 +122,10 @@ def write_map_result_to_asdf(result, filename, overwrite, **kwargs):
 
     data = {}
     data["components"] = result.components.to_dict(include_data="numpy")
-    data["components-init"] = result.components_init.to_dict(include_data="numpy")
+
+    if result.components_init is not None:
+        data["components-init"] = result.components_init.to_dict(include_data="numpy")
+
     data["trace-loss"] = result.trace_loss
     data["config"] = result.config
 
@@ -164,7 +167,12 @@ def read_map_result_from_asdf(filename):
     with asdf.open(path, copy_arrays=True) as af:
         data = recursive_update({}, af)
         components = FluxComponents.from_dict(data=data["components"])
-        components_init = FluxComponents.from_dict(data=data["components-init"])
+
+        if "components-init" in data:
+            components_init = FluxComponents.from_dict(data=data["components-init"])
+        else:
+            components_init = None
+
         config = data["config"]
         trace_loss = data["trace-loss"]
 
