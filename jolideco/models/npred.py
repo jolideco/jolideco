@@ -13,7 +13,12 @@ from jolideco.utils.io import (
     get_writer,
 )
 from jolideco.utils.misc import format_class_str
-from jolideco.utils.torch import convolve_fft_torch, rescale_image_torch, transpose
+from jolideco.utils.torch import (
+    convolve_fft_torch,
+    rescale_image_torch,
+    shift_image_torch,
+    transpose,
+)
 
 __all__ = [
     "NPredModel",
@@ -390,16 +395,7 @@ class NPredCalibration(nn.Module):
         flux : `~torch.Tensor`
             Flux tensor
         """
-        size = flux.size()
-
-        scale = 2 * scale / torch.tensor([[size[-1]], [size[-2]]], device=flux.device)
-
-        diag = torch.eye(2, device=flux.device)
-        theta = torch.cat([diag, scale * self.shift_xy.T], dim=1)[None]
-
-        grid = F.affine_grid(theta=theta, size=size)
-        flux_shift = F.grid_sample(flux, grid=grid, **self._grid_sample_kwargs)
-        return flux_shift
+        return shift_image_torch(flux, self.shift_xy, scale=scale)
 
     def __str__(self):
         """String representation"""

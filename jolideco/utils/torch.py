@@ -15,6 +15,7 @@ __all__ = [
     "grid_weights",
     "get_default_generator",
     "rescale_image_torch",
+    "shift_image_torch",
 ]
 
 TORCH_DEFAULT_DEVICE = "cpu"
@@ -140,6 +141,36 @@ def rescale_image_torch(image, factor, **kwargs):
     theta = torch.cat([diag / factor, torch.tensor([[0], [0]])], dim=1)[None]
     grid = F.affine_grid(theta=theta, size=image.size())
     return F.grid_sample(image, grid=grid, **kwargs)
+
+
+def shift_image_torch(image, shift_xy, scale=1, **kwargs):
+    """Shift image
+
+    Parameters
+    ----------
+    image : `~torch.Tensor`
+        Image tensor
+    shift : tuple
+        Shift values
+
+    Returns
+    -------
+    shifted : `~torch.Tensor`
+        Shifted image
+    """
+    if shift_xy is None or torch.all(torch.isclose(shift_xy, torch.tensor(0.0))):
+        return image
+
+    size = image.size()
+
+    scale = 2 * scale / torch.tensor([[size[-1]], [size[-2]]], device=image.device)
+
+    diag = torch.eye(2, device=image.device)
+    theta = torch.cat([diag, scale * shift_xy.T], dim=1)[None]
+
+    grid = F.affine_grid(theta=theta, size=size)
+    image_shifted = F.grid_sample(image, grid=grid, **kwargs)
+    return image_shifted
 
 
 def view_as_windows_torch(image, shape, stride):
