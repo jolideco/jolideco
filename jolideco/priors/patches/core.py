@@ -188,10 +188,9 @@ class GMMPatchPrior(Prior):
 
     def _evaluate_log_like(self, flux, mask=None):
         normed = self.norm(flux)
-        shifts = (0, 0)
 
         if self.cycle_spin:
-            normed, shifts = cycle_spin(
+            normed = cycle_spin(
                 image=normed, patch_shape=self.patch_shape, generator=self.generator
             )
 
@@ -218,7 +217,7 @@ class GMMPatchPrior(Prior):
 
         patches = self.patch_norm(patches)
         loglike = self.gmm.estimate_log_prob(patches)
-        return loglike, None, shifts
+        return loglike
 
     @lazyproperty
     def log_like_weight(self):
@@ -238,7 +237,7 @@ class GMMPatchPrior(Prior):
         log_prior : float
             Summed log prior over all overlapping patches.
         """
-        loglike, _, _ = self._evaluate_log_like(flux=flux, mask=mask)
+        loglike = self._evaluate_log_like(flux=flux, mask=mask)
 
         if self.marginalize:
             values = torch.logsumexp(loglike, dim=1)

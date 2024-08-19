@@ -38,6 +38,56 @@ def grid_weights(x, y, x0, y0):
     return dx * dy
 
 
+def uniform_torch(x_min, x_max, size, generator):
+    """Uniform random tensor
+
+    Parameters
+    ----------
+    x_min : float
+        Minimum value
+    x_max : float
+        Maximum value
+    size : tuple
+        Size of the tensor
+    generator : `~torch.Generator`
+        Random number generator
+
+    Returns
+    -------
+    x : `~torch.Tensor`
+        Random tensor
+    """
+    return (x_max - x_min) * torch.rand(size, generator=generator) + x_min
+
+
+def cycle_spin_interp(image, patch_shape, scale, generator):
+    """Cycle spin
+
+    Parameters
+    ----------
+    image : `~pytorch.Tensor`
+        Image tensor
+    patch_shape : tuple of int
+        Patch shape
+    scale : float
+        Scale factor
+    generator : `~torch.Generator`
+        Random number generator
+
+    Returns
+    -------
+    image, shifts: `~pytorch.Tensor`, tuple of `~pytorch.Tensor`
+        Shifted tensor
+    """
+    x_max, y_max = patch_shape
+    x_width, y_width = x_max // 4, y_max // 4
+
+    shift_x = uniform_torch(-x_width, x_width, (1,), generator=generator)
+    shift_y = uniform_torch(-y_width, y_width, (1,), generator=generator)
+    shifts = scale * torch.tensor([shift_x, shift_y])
+    return shift_image_torch(image, shift_xy=shifts), shifts
+
+
 def cycle_spin(image, patch_shape, generator):
     """Cycle spin
 
@@ -66,7 +116,7 @@ def cycle_spin(image, patch_shape, generator):
     shifts = (int(shift_x), int(shift_y))
 
     dims = (image.ndim - 2, image.ndim - 1)
-    return torch.roll(image, shifts=shifts, dims=dims), shifts
+    return torch.roll(image, shifts=shifts, dims=dims)
 
 
 def cycle_spin_subpixel(image, generator):
