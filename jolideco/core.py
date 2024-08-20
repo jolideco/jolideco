@@ -12,7 +12,7 @@ from astropy.visualization import simple_norm
 from packaging import version
 from tqdm.auto import tqdm
 
-from .loss import PoissonLoss, PriorLoss, TotalLoss
+from .loss import TotalLoss
 from .models import FluxComponents, SpatialFluxComponent
 from .utils.io import (
     IO_FORMATS_MAP_RESULT_READ,
@@ -175,30 +175,12 @@ class MAPDeconvolver:
 
         components_compiled = components.to(self.device)
 
-        poisson_loss = PoissonLoss.from_datasets(
+        total_loss = TotalLoss.from_datasets_and_components(
             datasets=datasets,
+            datasets_validation=datasets_validation,
             components=components_compiled,
-            device=self.device,
-            calibrations=calibrations,
-        )
-
-        if datasets_validation:
-            poisson_loss_validation = PoissonLoss.from_datasets(
-                datasets=datasets_validation,
-                components=components_compiled,
-                calibrations=calibrations,
-                device=self.device,
-            )
-        else:
-            poisson_loss_validation = None
-
-        prior_loss = PriorLoss(priors=components_compiled.priors)
-
-        total_loss = TotalLoss(
-            poisson_loss=poisson_loss,
-            poisson_loss_validation=poisson_loss_validation,
-            prior_loss=prior_loss,
             beta=self.beta,
+            device=self.device,
         )
 
         parameters = list(components_compiled.parameters())
@@ -218,17 +200,17 @@ class MAPDeconvolver:
                 pbar.set_description(f"Epoch {epoch + 1}")
 
                 components.train()
-                for counts, npred_model in poisson_loss.iter_by_dataset:
+                for counts, npred_model in total_loss.poisson_loss.iter_by_dataset:
                     optimizer.zero_grad()
                     # evaluate npred model
                     fluxes = components_compiled.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
 
                     # compute Poisson loss
-                    loss = poisson_loss.loss_function(npred, counts)
+                    loss = total_loss.poisson_loss.loss_function(npred, counts)
 
                     # compute prior losses
-                    loss_prior = prior_loss(fluxes=fluxes)
+                    loss_prior = total_loss.prior_loss(fluxes=fluxes)
 
                     loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 

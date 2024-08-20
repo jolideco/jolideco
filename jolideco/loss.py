@@ -275,7 +275,7 @@ class TotalLoss:
         """
         shapes = tuple([_.size() for _ in fluxes])
         unit_vectors = tuple([torch.ones(shape) for shape in shapes])
-        results = torch.autograd.functional.hvp(self, inputs=fluxes, v=unit_vectors)[1]
+        results = torch.autograd.functional.vhp(self, inputs=fluxes, v=unit_vectors)[1]
         return tuple(results)
 
     def fluxes_error(self, fluxes):
@@ -298,3 +298,63 @@ class TotalLoss:
             fluxes_error[name] = torch.sqrt(1 / hessian)
 
         return fluxes_error
+
+    @classmethod
+    def from_datasets_and_components(
+        cls,
+        datasets,
+        components,
+        datasets_validation=None,
+        beta=1,
+        calibrations=None,
+        device=TORCH_DEFAULT_DEVICE,
+    ):
+        """Create total loss function from datasets and components
+
+        Parameters
+        ----------
+        datasets : dict of [str, dict]
+            Dictionary containing a name of the dataset as key and a dictionary
+            containing, the data like "counts", "psf", "background" and "exposure".
+        components : `FluxComponents`
+            Flux components
+        datasets_validation : dict of [str, dict]
+            Dictionary containing a name of the dataset as key and a dictionary
+            containing, the data like "counts", "psf", "background" and "exposure".
+        beta : float
+            Relative weight of the prior.
+        calibrations: `NPredCalibrations`
+            NPred calibrations
+        device : `~pytorch.Device`
+            Pytorch device
+
+        Returns
+        -------
+        total_loss : `TotalLoss`
+            Total loss function.
+        """
+        poisson_loss = PoissonLoss.from_datasets(
+            datasets=datasets,
+            components=components,
+            device=device,
+            calibrations=calibrations,
+        )
+
+        if datasets_validation:
+            poisson_loss_validation = PoissonLoss.from_datasets(
+                datasets=datasets_validation,
+                components=components,
+                calibrations=calibrations,
+                device=device,
+            )
+        else:
+            poisson_loss_validation = None
+
+        prior_loss = PriorLoss(priors=components.priors)
+
+        return cls(
+            poisson_loss=poisson_loss,
+            poisson_loss_validation=poisson_loss_validation,
+            prior_loss=prior_loss,
+            beta=beta,
+        )
