@@ -36,9 +36,18 @@ IS_PYTORCH2 = (
     and "win" not in sys.platform
 )
 
+
+def schedule_free_adamw(*args, **kwargs):
+    """Schedule-free AdamW optimizer"""
+    from schedulefree import AdamWScheduleFree
+
+    return AdamWScheduleFree(*args, **kwargs)
+
+
 OPTIMIZER = {
     "adam": torch.optim.Adam,
     "sgd": torch.optim.SGD,
+    "schedulefree-adamw": schedule_free_adamw,
 }
 
 
@@ -179,6 +188,7 @@ class MAPDeconvolver:
             datasets=datasets,
             datasets_validation=datasets_validation,
             components=components_compiled,
+            calibrations=calibrations,
             beta=self.beta,
             device=self.device,
         )
@@ -200,6 +210,7 @@ class MAPDeconvolver:
                 pbar.set_description(f"Epoch {epoch + 1}")
 
                 components.train()
+                optimizer.train()
                 for counts, npred_model in total_loss.poisson_loss.iter_by_dataset:
                     optimizer.zero_grad()
                     # evaluate npred model
@@ -219,6 +230,7 @@ class MAPDeconvolver:
                     pbar.update(1)
 
                 components.eval()
+                optimizer.eval()
 
                 if self.checkpoint_path:
                     filename = self._default_checkpoint_filename.format(epoch=epoch)
