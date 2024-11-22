@@ -43,7 +43,20 @@ and the following paper reference:
 
 .. code-block:: bibtex
 
-    TBD
+    @article{Jolideco2024,
+        doi = {10.3847/1538-3881/ad6b98},
+        url = {https://dx.doi.org/10.3847/1538-3881/ad6b98},
+        year = {2024},
+        month = {sep},
+        publisher = {The American Astronomical Society},
+        volume = {168},
+        number = {4},
+        pages = {182},
+        author = {Axel Donath and Aneta Siemiginowska and Vinay L. Kashyap and David A. van Dyk and Douglas Burke},
+        title = {Joint Deconvolution of Astronomical Images in the Presence of Poisson Noise},
+        journal = {The Astronomical Journal},
+    }
+
 
 
 Further Resources
