@@ -1,6 +1,5 @@
 import copy
 import logging
-import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -9,7 +8,6 @@ import torch
 from astropy.table import Table
 from astropy.utils import lazyproperty
 from astropy.visualization import simple_norm
-from packaging import version
 from tqdm.auto import tqdm
 
 from .loss import TotalLoss
@@ -30,11 +28,6 @@ log = logging.getLogger(__name__)
 
 __all__ = ["MAPDeconvolver", "MAPDeconvolverResult"]
 
-
-IS_PYTORCH2 = (
-    version.parse(torch.__version__) >= version.parse("2.0")
-    and "win" not in sys.platform
-)
 
 def optimizer_to_dict(optim):
     """Create dict seialization of an optimizer instance"""
@@ -178,12 +171,7 @@ class MAPDeconvolver:
         components_init = copy.deepcopy(components)
         calibrations_init = copy.deepcopy(calibrations)
 
-        # Use torch's JIT compilation feature if available...
-        if IS_PYTORCH2:
-            components_compiled = torch.compile(components)
-        else:
-            components_compiled = components
-
+        components_compiled = torch.compile(components)
         components_compiled = components.to(self.device)
 
         total_loss = TotalLoss.from_datasets_and_components(

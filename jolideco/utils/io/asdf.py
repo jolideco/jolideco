@@ -56,7 +56,7 @@ def read_flux_component_from_asdf(filename):
 
     path = Path(filename)
 
-    with asdf.open(path, copy_arrays=True) as af:
+    with asdf.open(path, memmap=False) as af:
         data = recursive_update({}, af)
         return SpatialFluxComponent.from_dict(data=data)
 
@@ -99,7 +99,7 @@ def read_flux_components_from_asdf(filename):
 
     path = Path(filename)
 
-    with asdf.open(path, copy_arrays=True) as af:
+    with asdf.open(path, memmap=False) as af:
         data = recursive_update({}, af)
         return FluxComponents.from_dict(data=data)
 
@@ -164,7 +164,7 @@ def read_map_result_from_asdf(filename):
 
     log.info(f"Reading {filename}")
 
-    with asdf.open(path, copy_arrays=True) as af:
+    with asdf.open(path, memmap=False) as af:
         data = recursive_update({}, af)
         components = FluxComponents.from_dict(data=data["components"])
 
