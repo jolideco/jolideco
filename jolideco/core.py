@@ -36,6 +36,11 @@ IS_PYTORCH2 = (
     and "win" not in sys.platform
 )
 
+def optimizer_to_dict(optim):
+    """Create dict seialization of an optimizer instance"""
+    lookup = {value: key for key, value in OPTIMIZER.items()}
+    return lookup[optim.__class__]
+
 
 OPTIMIZER = {
     "adam": torch.optim.Adam,
@@ -65,7 +70,7 @@ class MAPDeconvolver:
         Pytorch device
     display_progress : bool
         Whether to display a progress bar
-    optimizer : {"adam", "sgd"}
+    optimizer : {"adam", "sgd"} or instance of `torch.optim.Optimizer`
         Optimizer to use
     checkpoint_path : str
         Path to save checkpoints
@@ -103,11 +108,15 @@ class MAPDeconvolver:
 
         self.device = torch.device(device)
 
-        if optimizer not in OPTIMIZER:
-            raise ValueError(
-                f"Unknown optimizer: {optimizer}, must be one of {OPTIMIZER}"
-            )
-
+        if isinstance(optimizer, str):
+            if optimizer not in OPTIMIZER:
+                raise ValueError(
+                    f"Unknown optimizer: {optimizer}, must be one of {OPTIMIZER}"
+                )
+            
+            dummy = torch.nn.Parameter(torch.tensor([0.], requires_grad=False))
+            optimizer = OPTIMIZER[optimizer](params=[dummy], lr=learning_rate)
+        
         self.optimizer = optimizer
 
         if checkpoint_path is not None:
@@ -128,6 +137,7 @@ class MAPDeconvolver:
         data.update(self.__dict__)
         data["device"] = str(self.device)
         data["checkpoint_path"] = str(self.checkpoint_path)
+        data["optimizer"] = optimizer_to_dict(self.optimizer)
         return data
 
     def __str__(self):
@@ -190,10 +200,13 @@ class MAPDeconvolver:
         if calibrations:
             parameters.extend(calibrations.parameters())
 
-        optimizer = OPTIMIZER[self.optimizer](
-            params=parameters,
-            lr=self.learning_rate,
-        )
+        if hasattr(self.optimizer, "param_groups"):
+            self.optimizer.param_groups.clear()
+
+        if hasattr(self.optimizer, "state"):
+           self.optimizer.state.clear()
+
+        self.optimizer.add_param_group({"params": parameters})
 
         disable = not self.display_progress
 
@@ -204,7 +217,7 @@ class MAPDeconvolver:
                 components.train()
 
                 for counts, npred_model in total_loss.poisson_loss.iter_by_dataset:
-                    optimizer.zero_grad()
+                    self.optimizer.zero_grad()
                     # evaluate npred model
                     fluxes = components_compiled.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
@@ -218,7 +231,7 @@ class MAPDeconvolver:
                     loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
                     loss_total.backward()
-                    optimizer.step()
+                    self.optimizer.step()
                     pbar.update(1)
 
                 components.eval()
