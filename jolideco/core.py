@@ -63,8 +63,10 @@ class MAPDeconvolver:
         Pytorch device
     display_progress : bool
         Whether to display a progress bar
-    optimizer : {"adam", "sgd"} or instance of `torch.optim.Optimizer`
+    optimizer_type : {"adam", "sgd"}
         Optimizer to use
+    optimizer_kwargs: dict
+        Optimizer keywords
     checkpoint_path : str
         Path to save checkpoints
     """
@@ -82,7 +84,8 @@ class MAPDeconvolver:
         stop_early_n_average=10,
         device=TORCH_DEFAULT_DEVICE,
         display_progress=True,
-        optimizer="adam",
+        optimizer_type="adam",
+        optimizer_kwargs=None,
         checkpoint_path=None,
     ):
         self.n_epochs = n_epochs
@@ -101,17 +104,20 @@ class MAPDeconvolver:
 
         self.device = torch.device(device)
 
-        if isinstance(optimizer, str):
-            if optimizer not in OPTIMIZER:
-                raise ValueError(
-                    f"Unknown optimizer: {optimizer}, must be one of {OPTIMIZER}"
-                )
+        if optimizer_type not in OPTIMIZER:
+            raise ValueError(
+                f"Unknown optimizer: {optimizer_type}, must be one of {OPTIMIZER}"
+            )
             
-            dummy = torch.nn.Parameter(torch.tensor([0.], requires_grad=False))
-            optimizer = OPTIMIZER[optimizer](params=[dummy], lr=learning_rate)
         
-        self.optimizer = optimizer
+        self.optimizer_type = optimizer_type
 
+        if optimizer_kwargs is None:
+            optimizer_kwargs = {}
+
+        self.optimizer_kwargs = optimizer_kwargs
+        self.optimizer_kwargs.setdefault("lr", self.learning_rate)
+        
         if checkpoint_path is not None:
             checkpoint_path = Path(checkpoint_path)
             checkpoint_path.mkdir(exist_ok=True, parents=True)
@@ -130,7 +136,7 @@ class MAPDeconvolver:
         data.update(self.__dict__)
         data["device"] = str(self.device)
         data["checkpoint_path"] = str(self.checkpoint_path)
-        data["optimizer"] = optimizer_to_dict(self.optimizer)
+        data.pop("optimizer", None)
         return data
 
     def __str__(self):
@@ -188,13 +194,9 @@ class MAPDeconvolver:
         if calibrations:
             parameters.extend(calibrations.parameters())
 
-        if hasattr(self.optimizer, "param_groups"):
-            self.optimizer.param_groups.clear()
-
-        if hasattr(self.optimizer, "state"):
-           self.optimizer.state.clear()
-
-        self.optimizer.add_param_group({"params": parameters})
+        self.optimizer = OPTIMIZER[self.optimizer_type](
+            params=parameters, **self.optimizer_kwargs
+        )
 
         disable = not self.display_progress
 
@@ -219,6 +221,7 @@ class MAPDeconvolver:
                     loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
                     loss_total.backward()
+                    
                     self.optimizer.step()
                     pbar.update(1)
 

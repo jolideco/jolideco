@@ -46,8 +46,6 @@ jobs:
             python: "3.11"
             toxenv: test
             gmm_path: D:\a\jolideco\jolideco\jolideco-gmm-prior-library
-            env:
-              USERNAME: runneradmin
 
           - name: Test building of Sphinx docs
             os: ubuntu-latest

@@ -41,7 +41,7 @@ all = [
     "scikit-learn",
     "scikit-image",
     "asdf>=4.0",
-    "asdf-astropy",
+    "asdf-astropy>=0.6.1",
     "ruamel.yaml",
     "ruamel.yaml.string",
     "scipy",

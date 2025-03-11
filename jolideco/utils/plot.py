@@ -31,6 +31,9 @@ def plot_trace_loss(ax, trace_loss, which=None, **kwargs):
         which = trace_loss.colnames
 
     for name in which:
+        if name == "filename":
+            continue
+        
         ax.plot(trace_loss[name], label=name, **kwargs)
 
     ax.semilogx()
