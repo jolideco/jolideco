@@ -137,6 +137,7 @@ class MAPDeconvolver:
         data["device"] = str(self.device)
         data["checkpoint_path"] = str(self.checkpoint_path)
         data.pop("optimizer", None)
+        data.pop("optimizer_kwargs", None)
         return data
 
     def __str__(self):
