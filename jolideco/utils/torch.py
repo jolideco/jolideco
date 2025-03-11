@@ -208,7 +208,7 @@ def shift_image_torch(image, shift_xy, scale=1, **kwargs):
     shifted : `~torch.Tensor`
         Shifted image
     """
-    if shift_xy is None or torch.all(torch.isclose(shift_xy, torch.tensor(0.0))):
+    if shift_xy is None or torch.all(torch.isclose(shift_xy, torch.zeros_like(shift_xy))):
         return image
 
     size = image.size()
