@@ -34,6 +34,8 @@ FITS_META = {
     "prior.norm.beta": "PNORMBET",
     "prior.patch_norm.type": "PNPTYPE",
     "prior.device": "PDEVICE",
+    "flux_norm.type": "NORMTYPE",
+    "flux_norm.alpha": "NORMALPH",
 }
 
 

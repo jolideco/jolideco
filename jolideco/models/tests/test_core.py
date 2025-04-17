@@ -1,8 +1,9 @@
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
-from astropy.convolution import Gaussian2DKernel
+import pytest
 import torch
+from astropy.convolution import Gaussian2DKernel
+from numpy.testing import assert_allclose
+
 from jolideco.models import (
     FluxComponents,
     NPredModel,
@@ -10,6 +11,7 @@ from jolideco.models import (
     SpatialFluxComponent,
 )
 from jolideco.priors import PRIOR_REGISTRY, UniformPrior
+from jolideco.utils.norms import IdentityImageNorm
 
 
 @pytest.fixture
@@ -144,7 +146,7 @@ def test_flux_component_io(prior_class, format, tmpdir):
 
     assert component.shape == component_new.shape
     assert component.upsampling_factor == component_new.upsampling_factor
-    assert component.use_log_flux == component_new.use_log_flux
+    assert isinstance(component_new.flux_norm, IdentityImageNorm)
     assert isinstance(component_new.prior, prior_class)
 
 

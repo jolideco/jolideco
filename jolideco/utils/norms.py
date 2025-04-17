@@ -1,6 +1,8 @@
 import abc
+
 import numpy as np
 import torch
+
 from .misc import format_class_str
 from .torch import interp1d_torch
 
@@ -374,7 +376,7 @@ class LogImageNorm(ImageNorm):
 
     def __init__(self, alpha=1, **kwargs):
         super().__init__(**kwargs)
-        self.alpha = torch.nn.Parameter(torch.Tensor([alpha]))
+        self.alpha = torch.Tensor([alpha])
 
     def __call__(self, image):
         return torch.log(image / self.alpha)

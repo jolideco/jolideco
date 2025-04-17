@@ -25,6 +25,7 @@ from jolideco.utils.io import (
     get_writer,
 )
 from jolideco.utils.misc import format_class_str
+from jolideco.utils.norms import NORMS_REGISTRY, ImageNorm
 from jolideco.utils.plot import add_cbar
 from jolideco.utils.torch import grid_weights
 
@@ -362,6 +363,8 @@ class SpatialFluxComponent(nn.Module):
         Flux tensor error
     mask : `~torch.Tensor`
         Mask for the flux
+    flux_norm :  `ImageNorm`
+        Normalization (scaling) function applied to the flux.
     use_log_flux : bool
         Use log scaling for flux
     upsampling_factor : None
@@ -384,6 +387,7 @@ class SpatialFluxComponent(nn.Module):
         flux_upsampled_error=None,
         mask=None,
         use_log_flux=True,
+        flux_norm="log",
         upsampling_factor=1,
         prior=None,
         frozen=False,
@@ -396,12 +400,6 @@ class SpatialFluxComponent(nn.Module):
                 f"Flux tensor must be four dimensional. Got {flux_upsampled.ndim}"
             )
 
-        if use_log_flux:
-            flux_upsampled = torch.log(flux_upsampled)
-
-        self._flux_upsampled = nn.Parameter(flux_upsampled)
-        self._flux_upsampled_error = flux_upsampled_error
-
         if mask is not None and not mask.shape == flux_upsampled.shape:
             raise ValueError(
                 "Flux and mask need to have the same shape, got "
@@ -410,7 +408,22 @@ class SpatialFluxComponent(nn.Module):
 
         self.mask = mask
 
-        self._use_log_flux = use_log_flux
+        if not use_log_flux:
+            flux_norm = "identity"
+
+        
+        if isinstance(flux_norm, str):
+            flux_norm = NORMS_REGISTRY.get(flux_norm, flux_norm)()
+
+        if not isinstance(flux_norm, ImageNorm):
+            message = ("An instance of `ImageNorm` is need for `flux_norm`,"
+                       f" got {type(flux_norm)} instead")
+            raise ValueError(message)
+        
+        self.flux_norm = flux_norm
+        self._flux_upsampled = nn.Parameter(self.flux_norm(flux_upsampled))
+        self._flux_upsampled_error = flux_upsampled_error
+
         self.upsampling_factor = int(upsampling_factor)
 
         if prior is None:
@@ -436,7 +449,7 @@ class SpatialFluxComponent(nn.Module):
         """
         # TODO: add all parameters, flux_upsampled could be filename
         data = {}
-        data["use_log_flux"] = self.use_log_flux
+        data["flux_norm"] = self.flux_norm.to_dict()
         data["upsampling_factor"] = int(self.upsampling_factor)
         data["frozen"] = self.frozen
         data["prior"] = self.prior.to_dict()
@@ -484,6 +497,8 @@ class SpatialFluxComponent(nn.Module):
         if "mask" in kwargs:
             kwargs["mask"] = torch.from_numpy(kwargs["mask"].astype(bool))
 
+
+        kwargs["flux_norm"] = ImageNorm.from_dict(kwargs["flux_norm"])
         return cls(**kwargs)
 
     def __str__(self):
@@ -576,17 +591,11 @@ class SpatialFluxComponent(nn.Module):
         return self.shape[-2:]
 
     @property
-    def use_log_flux(self) -> bool:
-        """Use log flux"""
-        return self._use_log_flux
-
-    @property
     def flux_upsampled(self) -> torch.Tensor:
         """Flux"""
         flux = self._flux_upsampled
 
-        if self.use_log_flux:
-            flux = torch.exp(flux)
+        flux = self.flux_norm.inverse(flux)
 
         if self.mask is not None:
             flux = flux * self.mask
