@@ -178,8 +178,7 @@ class MAPDeconvolver:
         components_init = copy.deepcopy(components)
         calibrations_init = copy.deepcopy(calibrations)
 
-        components_compiled = torch.compile(components)
-        components_compiled = components.to(self.device)
+        components_compiled = torch.compile(components.to(self.device))
 
         total_loss = TotalLoss.from_datasets_and_components(
             datasets=datasets,
@@ -205,7 +204,7 @@ class MAPDeconvolver:
             for epoch in range(self.n_epochs):
                 pbar.set_description(f"Epoch {epoch + 1}")
 
-                components.train()
+                components_compiled.train()
 
                 for counts, npred_model in total_loss.poisson_loss.iter_by_dataset:
                     self.optimizer.zero_grad()
@@ -222,7 +221,9 @@ class MAPDeconvolver:
                     loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
                     loss_total.backward()
-                    
+                    for _ in parameters:
+                        print(_.grad)
+                    1/0
                     self.optimizer.step()
                     pbar.update(1)
 
