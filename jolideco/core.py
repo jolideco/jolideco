@@ -221,9 +221,6 @@ class MAPDeconvolver:
                     loss_total = loss - self.beta * loss_prior / total_loss.prior_weight
 
                     loss_total.backward()
-                    for _ in parameters:
-                        print(_.grad)
-                    1/0
                     self.optimizer.step()
                     pbar.update(1)
 
