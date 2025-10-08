@@ -256,7 +256,7 @@ class SparseSpatialFluxComponent(nn.Module):
         if ax is None:
             ax = plt.subplot(projection=self.wcs)
 
-        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+        kwargs_norm = kwargs_norm or {"vmin": 0, "stretch": "asinh", "asinh_a": 0.01}
 
         flux = self.flux_numpy
 
@@ -692,7 +692,7 @@ class SpatialFluxComponent(nn.Module):
         if ax is None:
             ax = plt.subplot(projection=self.wcs)
 
-        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+        kwargs_norm = kwargs_norm or {"vmin": 0, "stretch": "asinh", "asinh_a": 0.01}
 
         flux = self.flux_upsampled_numpy
 
@@ -912,7 +912,7 @@ class FluxComponents(nn.ModuleDict):
             figsize=figsize,
         )
 
-        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+        kwargs_norm = kwargs_norm or {"vmin": 0, "stretch": "asinh", "asinh_a": 0.01}
 
         flux = self.flux_total_numpy
 

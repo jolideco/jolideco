@@ -411,7 +411,7 @@ class MAPDeconvolverResult:
 
         self.plot_trace_loss(ax=axes[0])
 
-        kwargs_norm = kwargs_norm or {"min_cut": 0, "stretch": "asinh", "asinh_a": 0.01}
+        kwargs_norm = kwargs_norm or {"vmin": 0, "stretch": "asinh", "asinh_a": 0.01}
 
         flux = self.components.flux_total_numpy
 
