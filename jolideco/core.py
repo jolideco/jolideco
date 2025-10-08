@@ -273,7 +273,7 @@ class MAPDeconvolver:
         config = self.to_dict()
         return MAPDeconvolverResult(
             config=config,
-            components=components,
+            components=components._orig_mod,
             components_init=components_init,
             trace_loss=total_loss.trace,
             calibrations=calibrations,
