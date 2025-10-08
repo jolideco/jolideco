@@ -1,5 +1,6 @@
 import copy
 import logging
+import platform
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -40,6 +41,7 @@ OPTIMIZER = {
     "sgd": torch.optim.SGD,
 }
 
+COMPILE_MODEL = (platform.system() != "Windows")
 
 class MAPDeconvolver:
     """Maximum A-Posteriori deconvolver
@@ -178,18 +180,21 @@ class MAPDeconvolver:
         components_init = copy.deepcopy(components)
         calibrations_init = copy.deepcopy(calibrations)
 
-        components_compiled = torch.compile(components.to(self.device))
+        if COMPILE_MODEL:
+            components = torch.compile(components)
+
+        components = components.to(self.device)
 
         total_loss = TotalLoss.from_datasets_and_components(
             datasets=datasets,
             datasets_validation=datasets_validation,
-            components=components_compiled,
+            components=components,
             calibrations=calibrations,
             beta=self.beta,
             device=self.device,
         )
 
-        parameters = list(components_compiled.parameters())
+        parameters = list(components.parameters())
 
         if calibrations:
             parameters.extend(calibrations.parameters())
@@ -204,12 +209,12 @@ class MAPDeconvolver:
             for epoch in range(self.n_epochs):
                 pbar.set_description(f"Epoch {epoch + 1}")
 
-                components_compiled.train()
+                components.train()
 
                 for counts, npred_model in total_loss.poisson_loss.iter_by_dataset:
                     self.optimizer.zero_grad()
                     # evaluate npred model
-                    fluxes = components_compiled.to_flux_tuple()
+                    fluxes = components.to_flux_tuple()
                     npred = npred_model.evaluate(fluxes=fluxes)
 
                     # compute Poisson loss
